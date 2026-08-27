@@ -1,0 +1,690 @@
+{
+  "schema": "GVAULT_BUTTON_LAB_BROWSER_QA_V1",
+  "at": "2026-08-27T17:42:42.196Z",
+  "url": "http://127.0.0.1:4173/alpha/button-lab/",
+  "noSas": true,
+  "privateData": false,
+  "consoleErrors": [],
+  "internal": {
+    "schema": "GVAULT_BUTTON_LAB_REPORT_V1",
+    "at": "2026-08-27T17:42:38.380Z",
+    "surface": "GVAULT_BUTTON_LAB_NOSAS_V1",
+    "noSas": true,
+    "privateData": false,
+    "total": 44,
+    "ok": 43,
+    "backendIsolated": 1,
+    "broken": 0,
+    "rows": [
+      {
+        "index": 1,
+        "label": "▦ PROJETS",
+        "action": "projects",
+        "expect": "view",
+        "got": "view",
+        "error": "",
+        "status": "OK"
+      },
+      {
+        "index": 2,
+        "label": "✦ OUVRIR CONCEPTEUR",
+        "action": "designer",
+        "expect": "view",
+        "got": "view",
+        "error": "",
+        "status": "OK"
+      },
+      {
+        "index": 3,
+        "label": "◫ MIRROR AUDIT LAB",
+        "action": "mirror",
+        "expect": "view",
+        "got": "view",
+        "error": "",
+        "status": "OK"
+      },
+      {
+        "index": 4,
+        "label": "🧠 PROFILE LAB",
+        "action": "profile",
+        "expect": "view",
+        "got": "view",
+        "error": "",
+        "status": "OK"
+      },
+      {
+        "index": 5,
+        "label": "↻ ÉTAT ACTUEL / MAJ",
+        "action": "state",
+        "expect": "view",
+        "got": "view",
+        "error": "",
+        "status": "OK"
+      },
+      {
+        "index": 6,
+        "label": "☁ SYNCHRO CHATGPT",
+        "action": "sync",
+        "expect": "isolated",
+        "got": "isolated",
+        "error": "",
+        "status": "BACKEND_ISOLATED"
+      },
+      {
+        "index": 7,
+        "label": "☷ SYSTÈME",
+        "action": "system",
+        "expect": "view",
+        "got": "view",
+        "error": "",
+        "status": "OK"
+      },
+      {
+        "index": 8,
+        "label": "▦ FICHIERS VAULT",
+        "action": "vfs",
+        "expect": "view",
+        "got": "view",
+        "error": "",
+        "status": "OK"
+      },
+      {
+        "index": 9,
+        "label": "⚒ GAME FORGE",
+        "action": "forge",
+        "expect": "view",
+        "got": "view",
+        "error": "",
+        "status": "OK"
+      },
+      {
+        "index": 10,
+        "label": "◇ ASSISTANT CONFIG",
+        "action": "assistant",
+        "expect": "view",
+        "got": "view",
+        "error": "",
+        "status": "OK"
+      },
+      {
+        "index": 11,
+        "label": "⌘ GRID STUDIO",
+        "action": "grid",
+        "expect": "view",
+        "got": "view",
+        "error": "",
+        "status": "OK"
+      },
+      {
+        "index": 12,
+        "label": "← VAULT",
+        "action": "home",
+        "expect": "view",
+        "got": "view",
+        "error": "",
+        "status": "OK"
+      },
+      {
+        "index": 13,
+        "label": "↻ ACTUALISER",
+        "action": "refresh",
+        "expect": "state",
+        "got": "state",
+        "error": "",
+        "status": "OK"
+      },
+      {
+        "index": 14,
+        "label": "✓ CHECK-UP",
+        "action": "checkup",
+        "expect": "state",
+        "got": "state",
+        "error": "",
+        "status": "OK"
+      },
+      {
+        "index": 15,
+        "label": "📦 ZIP COMPLET",
+        "action": "zip",
+        "expect": "download",
+        "got": "download",
+        "error": "",
+        "status": "OK"
+      },
+      {
+        "index": 16,
+        "label": "💾 PACK COMPLET",
+        "action": "pack",
+        "expect": "download",
+        "got": "download",
+        "error": "",
+        "status": "OK"
+      },
+      {
+        "index": 17,
+        "label": "↑ MAJ + DÉCOUVERTE · CRÉER DEMANDE",
+        "action": "updateRequest",
+        "expect": "dialog",
+        "got": "dialog",
+        "error": "",
+        "status": "OK"
+      },
+      {
+        "index": 18,
+        "label": "🐞 RAPPORT DE BUG",
+        "action": "bug",
+        "expect": "dialog",
+        "got": "dialog",
+        "error": "",
+        "status": "OK"
+      },
+      {
+        "index": 19,
+        "label": "JEUX · 11 ENTRÉES",
+        "action": "censusGames",
+        "expect": "state",
+        "got": "state",
+        "error": "",
+        "status": "OK"
+      },
+      {
+        "index": 20,
+        "label": "MODULES · 6 ENTRÉES",
+        "action": "censusModules",
+        "expect": "state",
+        "got": "state",
+        "error": "",
+        "status": "OK"
+      },
+      {
+        "index": 21,
+        "label": "OUTILS · 75 ENTRÉES",
+        "action": "censusTools",
+        "expect": "state",
+        "got": "state",
+        "error": "",
+        "status": "OK"
+      },
+      {
+        "index": 22,
+        "label": "QA · 19 ENTRÉES",
+        "action": "censusQA",
+        "expect": "state",
+        "got": "state",
+        "error": "",
+        "status": "OK"
+      },
+      {
+        "index": 23,
+        "label": "← VAULT",
+        "action": "home",
+        "expect": "view",
+        "got": "view",
+        "error": "",
+        "status": "OK"
+      },
+      {
+        "index": 24,
+        "label": "＋ IMPORTER",
+        "action": "pickProject",
+        "expect": "file",
+        "got": "file",
+        "error": "",
+        "status": "OK"
+      },
+      {
+        "index": 25,
+        "label": "← VAULT",
+        "action": "home",
+        "expect": "view",
+        "got": "view",
+        "error": "",
+        "status": "OK"
+      },
+      {
+        "index": 26,
+        "label": "＋ CRÉER UN ÉCRAN",
+        "action": "designerCreate",
+        "expect": "state",
+        "got": "state",
+        "error": "",
+        "status": "OK"
+      },
+      {
+        "index": 27,
+        "label": "▶ PRÉVISUALISER",
+        "action": "designerPreview",
+        "expect": "dialog",
+        "got": "dialog",
+        "error": "",
+        "status": "OK"
+      },
+      {
+        "index": 28,
+        "label": "← VAULT",
+        "action": "home",
+        "expect": "view",
+        "got": "view",
+        "error": "",
+        "status": "OK"
+      },
+      {
+        "index": 29,
+        "label": "LANCER SCAN",
+        "action": "mirrorScan",
+        "expect": "state",
+        "got": "state",
+        "error": "",
+        "status": "OK"
+      },
+      {
+        "index": 30,
+        "label": "← VAULT",
+        "action": "home",
+        "expect": "view",
+        "got": "view",
+        "error": "",
+        "status": "OK"
+      },
+      {
+        "index": 31,
+        "label": "＋ NOUVEAU PROFIL QA",
+        "action": "profileNew",
+        "expect": "state",
+        "got": "state",
+        "error": "",
+        "status": "OK"
+      },
+      {
+        "index": 32,
+        "label": "← VAULT",
+        "action": "home",
+        "expect": "view",
+        "got": "view",
+        "error": "",
+        "status": "OK"
+      },
+      {
+        "index": 33,
+        "label": "RECALCULER ÉTAT QA",
+        "action": "stateRefresh",
+        "expect": "state",
+        "got": "state",
+        "error": "",
+        "status": "OK"
+      },
+      {
+        "index": 34,
+        "label": "← VAULT",
+        "action": "home",
+        "expect": "view",
+        "got": "view",
+        "error": "",
+        "status": "OK"
+      },
+      {
+        "index": 35,
+        "label": "＋ CRÉER FICHIER QA",
+        "action": "vfsNew",
+        "expect": "state",
+        "got": "state",
+        "error": "",
+        "status": "OK"
+      },
+      {
+        "index": 36,
+        "label": "EFFACER SANDBOX QA",
+        "action": "vfsReset",
+        "expect": "state",
+        "got": "state",
+        "error": "",
+        "status": "OK"
+      },
+      {
+        "index": 37,
+        "label": "← VAULT",
+        "action": "home",
+        "expect": "view",
+        "got": "view",
+        "error": "",
+        "status": "OK"
+      },
+      {
+        "index": 38,
+        "label": "GÉNÉRER PROMPT QA",
+        "action": "forgeGenerate",
+        "expect": "state",
+        "got": "state",
+        "error": "",
+        "status": "OK"
+      },
+      {
+        "index": 39,
+        "label": "← VAULT",
+        "action": "home",
+        "expect": "view",
+        "got": "view",
+        "error": "",
+        "status": "OK"
+      },
+      {
+        "index": 40,
+        "label": "ENREGISTRER CONFIG QA",
+        "action": "assistantSave",
+        "expect": "state",
+        "got": "state",
+        "error": "",
+        "status": "OK"
+      },
+      {
+        "index": 41,
+        "label": "← VAULT",
+        "action": "home",
+        "expect": "view",
+        "got": "view",
+        "error": "",
+        "status": "OK"
+      },
+      {
+        "index": 42,
+        "label": "DÉPLACER BLOC QA",
+        "action": "gridMove",
+        "expect": "state",
+        "got": "state",
+        "error": "",
+        "status": "OK"
+      },
+      {
+        "index": 43,
+        "label": "RÉINITIALISER GRID QA",
+        "action": "gridReset",
+        "expect": "state",
+        "got": "state",
+        "error": "",
+        "status": "OK"
+      },
+      {
+        "index": 44,
+        "label": "×",
+        "action": "closeModal",
+        "expect": "dialog",
+        "got": "dialog",
+        "error": "",
+        "status": "OK"
+      }
+    ]
+  },
+  "smoke": [
+    {
+      "label": "NO SAS bootstrap",
+      "ok": true,
+      "detail": "GVAULT_BUTTON_LAB_NOSAS_V1"
+    },
+    {
+      "label": "Internal declared-effect audit",
+      "ok": true,
+      "detail": "44 controls · 0 broken"
+    },
+    {
+      "label": {},
+      "ok": true,
+      "detail": "expected=view got=view"
+    },
+    {
+      "label": {},
+      "ok": true,
+      "detail": "expected=state got=state"
+    },
+    {
+      "label": {},
+      "ok": true,
+      "detail": "expected=state got=state"
+    },
+    {
+      "label": "/ZIP COMPLET/",
+      "ok": true,
+      "detail": "gvault-button-lab.zip"
+    },
+    {
+      "label": "/PACK COMPLET/",
+      "ok": true,
+      "detail": "gvault-button-lab-pack.json"
+    },
+    {
+      "label": {},
+      "ok": true,
+      "detail": "expected=dialog got=dialog"
+    },
+    {
+      "label": {},
+      "ok": true,
+      "detail": "expected=dialog got=dialog"
+    },
+    {
+      "label": {},
+      "ok": true,
+      "detail": "expected=dialog got=dialog"
+    },
+    {
+      "label": {},
+      "ok": true,
+      "detail": "expected=state got=state"
+    },
+    {
+      "label": {},
+      "ok": true,
+      "detail": "expected=state got=state"
+    },
+    {
+      "label": {},
+      "ok": true,
+      "detail": "expected=state got=state"
+    },
+    {
+      "label": "Bug report download",
+      "ok": true,
+      "detail": "gvault-qa-bug-report.json"
+    },
+    {
+      "label": {},
+      "ok": true,
+      "detail": "expected=dialog got=dialog"
+    },
+    {
+      "label": {},
+      "ok": true,
+      "detail": "expected=state got=state"
+    },
+    {
+      "label": {},
+      "ok": true,
+      "detail": "expected=state got=state"
+    },
+    {
+      "label": {},
+      "ok": true,
+      "detail": "expected=state got=state"
+    },
+    {
+      "label": {},
+      "ok": true,
+      "detail": "expected=state got=state"
+    },
+    {
+      "label": {},
+      "ok": true,
+      "detail": "expected=view got=view"
+    },
+    {
+      "label": {},
+      "ok": true,
+      "detail": "expected=view got=view"
+    },
+    {
+      "label": "Project file import",
+      "ok": true,
+      "detail": "matches=1"
+    },
+    {
+      "label": {},
+      "ok": true,
+      "detail": "expected=view got=view"
+    },
+    {
+      "label": {},
+      "ok": true,
+      "detail": "expected=view got=view"
+    },
+    {
+      "label": {},
+      "ok": true,
+      "detail": "expected=state got=state"
+    },
+    {
+      "label": {},
+      "ok": true,
+      "detail": "expected=dialog got=dialog"
+    },
+    {
+      "label": {},
+      "ok": true,
+      "detail": "expected=dialog got=dialog"
+    },
+    {
+      "label": {},
+      "ok": true,
+      "detail": "expected=view got=view"
+    },
+    {
+      "label": {},
+      "ok": true,
+      "detail": "expected=view got=view"
+    },
+    {
+      "label": {},
+      "ok": true,
+      "detail": "expected=state got=state"
+    },
+    {
+      "label": {},
+      "ok": true,
+      "detail": "expected=view got=view"
+    },
+    {
+      "label": {},
+      "ok": true,
+      "detail": "expected=view got=view"
+    },
+    {
+      "label": {},
+      "ok": true,
+      "detail": "expected=state got=state"
+    },
+    {
+      "label": {},
+      "ok": true,
+      "detail": "expected=view got=view"
+    },
+    {
+      "label": {},
+      "ok": true,
+      "detail": "expected=view got=view"
+    },
+    {
+      "label": {},
+      "ok": true,
+      "detail": "expected=state got=state"
+    },
+    {
+      "label": {},
+      "ok": true,
+      "detail": "expected=view got=view"
+    },
+    {
+      "label": {},
+      "ok": true,
+      "detail": "expected=isolated got=isolated"
+    },
+    {
+      "label": "Private backend isolation",
+      "ok": true,
+      "detail": "matches=1"
+    },
+    {
+      "label": {},
+      "ok": true,
+      "detail": "expected=dialog got=dialog"
+    },
+    {
+      "label": {},
+      "ok": true,
+      "detail": "expected=view got=view"
+    },
+    {
+      "label": {},
+      "ok": true,
+      "detail": "expected=state got=state"
+    },
+    {
+      "label": {},
+      "ok": true,
+      "detail": "expected=state got=state"
+    },
+    {
+      "label": {},
+      "ok": true,
+      "detail": "expected=view got=view"
+    },
+    {
+      "label": {},
+      "ok": true,
+      "detail": "expected=view got=view"
+    },
+    {
+      "label": {},
+      "ok": true,
+      "detail": "expected=state got=state"
+    },
+    {
+      "label": {},
+      "ok": true,
+      "detail": "expected=view got=view"
+    },
+    {
+      "label": {},
+      "ok": true,
+      "detail": "expected=view got=view"
+    },
+    {
+      "label": {},
+      "ok": true,
+      "detail": "expected=state got=state"
+    },
+    {
+      "label": {},
+      "ok": true,
+      "detail": "expected=view got=view"
+    },
+    {
+      "label": {},
+      "ok": true,
+      "detail": "expected=view got=view"
+    },
+    {
+      "label": {},
+      "ok": true,
+      "detail": "expected=state got=state"
+    },
+    {
+      "label": {},
+      "ok": true,
+      "detail": "expected=state got=state"
+    },
+    {
+      "label": {},
+      "ok": true,
+      "detail": "expected=view got=view"
+    }
+  ],
+  "pass": true
+}
