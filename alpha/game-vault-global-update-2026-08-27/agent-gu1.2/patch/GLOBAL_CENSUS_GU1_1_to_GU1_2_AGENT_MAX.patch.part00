@@ -1,0 +1,109 @@
+--- GAME_VAULT_v67_VFS_ALPHA4_9_GLOBAL_CENSUS_GU1_1_CHECKUP_REPAIR_SOURCE.html
++++ GAME_VAULT_v67_VFS_ALPHA4_9_GLOBAL_CENSUS_GU1_2_AGENT_MAX_SOURCE.html
+@@ -4,7 +4,7 @@
+ <meta charset="utf-8">
+ <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+ <meta name="theme-color" content="#090b10">
+-<title>GAME VAULT v67 · VFS α4.9 · GLOBAL CENSUS GU1.1 · CHECKUP REPAIR</title>
++<title>GAME VAULT v67 · VFS α4.9 · GLOBAL CENSUS GU1.2 · AGENT MAX</title>
+ <style>
+ :root{
+   --bg:#090b10;--bg2:#0e1118;--panel:#121722;--panel2:#171d29;--line:#273246;
+@@ -4027,7 +4027,7 @@
+ })();
+ </script>
+ <script>
+-const VAULT_RUNTIME_VERSION='v67 · VFS α4.9 · GLOBAL CENSUS GU1.1 · CHECKUP REPAIR';
++const VAULT_RUNTIME_VERSION='v67 · VFS α4.9 · GLOBAL CENSUS GU1.2 · AGENT MAX';
+ const GLOBAL_CENSUS_GU11_REPAIR=Object.freeze({schema:1,base:'GLOBAL CENSUS GU1',fixes:['metadata-only-build-contract','vfs-current-build-reconciliation','core-launchers','dojo-dynamic-registry-expectations'],rollback:'GLOBAL CENSUS GU1'});
+ window.VAULT_RUNTIME_VERSION=VAULT_RUNTIME_VERSION;
+ const GAME_BUILDS={};
+@@ -8467,6 +8467,7 @@
+ }
+ function reactivateAgentManually(){
+  agentCircuitOpen=false;
++ saveAgentFaultHistory([]);
+  setAgentShutdownVisual(false);
+  closeAgentCrashReport();
+  try{
+@@ -8479,17 +8480,46 @@
+  }
+ }
+ 
++const AGENT_FAULT_KEY='game_vault_agent_faults_v2';
++const AGENT_FAULT_WINDOW_MS=30000;
++const AGENT_FAULT_BUDGET=3;
++const AGENT_CRITICAL_PHASES=new Set(['context-init','send-message','send-message-enter','manual-reactivation']);
++function agentFaultHistory(){
++ try{const v=JSON.parse(storageGet(AGENT_FAULT_KEY)||'[]');return Array.isArray(v)?v:[]}
++ catch(e){return []}
++}
++function saveAgentFaultHistory(list){storageSet(AGENT_FAULT_KEY,JSON.stringify((Array.isArray(list)?list:[]).slice(-40)))}
++function recordAgentFault(err,phase){
++ const now=Date.now(),list=agentFaultHistory().filter(x=>now-(Number(x.atMs)||0)<86400000);
++ list.push({phase:String(phase||'unknown').slice(0,80),message:String(err?.message||err).slice(0,500),at:new Date(now).toISOString(),atMs:now});
++ saveAgentFaultHistory(list);return list;
++}
++function handleAgentFault(err,phase='unknown'){
++ const list=recordAgentFault(err,phase),now=Date.now();
++ const recent=list.filter(x=>now-(Number(x.atMs)||0)<=AGENT_FAULT_WINDOW_MS);
++ const critical=AGENT_CRITICAL_PHASES.has(String(phase));
++ if(critical||recent.length>=AGENT_FAULT_BUDGET){shutdownAgent(err,phase);return 'shutdown'}
++ try{
++  agentCrashReportText=buildAgentCrashReport(err,phase)+`
++
++Mode : DEGRADE_NON_FATAL
++Budget : ${recent.length}/${AGENT_FAULT_BUDGET} sur ${AGENT_FAULT_WINDOW_MS/1000}s`;
++  storageSet(AGENT_CRASH_KEY,agentCrashReportText);
++  showToast(`Agent dégradé · ${phase} · ${recent.length}/${AGENT_FAULT_BUDGET}`);
++ }catch(reportErr){console.error('AGENT DEGRADED REPORT',reportErr)}
++ console.error('VAULT AGENT NONFATAL',phase,err);return 'degraded';
++}
+ function safeAgentExec(phase,fn){
+  if(agentCircuitOpen){openAgentCrashReport();return undefined}
+  agentExecutionDepth++;
+  try{return fn()}
+- catch(e){shutdownAgent(e,phase);return undefined}
++ catch(e){handleAgentFault(e,phase);return undefined}
+  finally{agentExecutionDepth=Math.max(0,agentExecutionDepth-1)}
+ }
+ function safeAgentAsync(phase,fn){
+  if(agentCircuitOpen){openAgentCrashReport();return Promise.resolve(undefined)}
+  agentExecutionDepth++;
+- return Promise.resolve().then(fn).catch(e=>{shutdownAgent(e,phase)}).finally(()=>{agentExecutionDepth=Math.max(0,agentExecutionDepth-1)});
++ return Promise.resolve().then(fn).catch(e=>{handleAgentFault(e,phase)}).finally(()=>{agentExecutionDepth=Math.max(0,agentExecutionDepth-1)});
+ }
+ 
+ 
+@@ -9335,19 +9365,79 @@
+ const AGENT_RULES_KEY='game_vault_agent_custom_rules_v1';
+ const AGENT_UNKNOWN_KEY='game_vault_agent_unknown_queries_v1';
+ const AGENT_PROJECT_ALIASES={
+- paa:['paa','pixel agent arena','arena'],
+- infinite:['infinite','pixel agent infinite','agent infinite'],
++ paa:['paa','pixel agent arena','arena','alpha 2.44','alpha 2.50'],
++ infinite:['infinite','pixel agent infinite','agent infinite','trial 0.83','noyaux omega','humains omega'],
+  binome:['binome','binôme','compagnon ia','jeu ia compagnon'],
+  zero:['zero multiworld','multiworld','aquarium','str rpg aquarium'],
+  'zero-classic':['zero classic','alpha 41','str rpg classic','zero alpha 41'],
+  'zero-rebuild':['zero rebuild','rebuild','str rpg rebuild'],
+- kingdom:['kingdom','autonomous kingdom','royaume autonome','branche kingdom'],
+- td:['td','trypozomic','trypozomic td','tower defense'],
++ kingdom:['kingdom','autonomous kingdom','royaume autonome','branche kingdom','branche 03','a39'],
++ td:['td','trypozomic','trypozomic td','tower defense','v27'],
+  oculus:['oculus','oculus geometrica'],
+  geolife:['geolife','geolife engine'],
+  octospire:['octospire','octospire engine']
+ };
+ const AGENT_STOP_WORDS=new Set(('quel quelle quels quelles le la les un une des de du d dans sur pour avec et ou est sont ce cette ces qui que quoi parle parlant projet projets jeu jeux trouve trouver recherche rechercher donne dis moi me version fichier build état etat actuel actuelle système systeme systèmes systemes').split(/\s+/));
++
++
++// GU1.2 — Agent Max: connaissances privées SANITISÉES, embarquées comme snapshot de provenance.
++// Aucun token, secret, contenu utilisateur brut, fetch GitHub ou exécution distante n'est embarqué ici.
++const AGENT_KNOWLEDGE_SNAPSHOT_AT='2026-08-27T15:50:00Z';
++const AGENT_KNOWLEDGE_SOURCES=[
++ {id:'che-kca',title:'Che_kCa canonique 1.1',path:'protocoles/Che_kCa.contract.json',sha:'e8f90dc8c61cfa3e5aa4d98af1044120f806e96e',status:'VALIDATED_CANONICAL',confidence:'confirmed',tags:['che kca','che_kca','test','qa','bug','fic sa','ficsa','inverse','normal','preuve','evidence','regression'],facts:['Tester dans des mondes contrôlés et réalistes quand c’est possible.','Ne pas affaiblir les assertions pour obtenir du vert.','FiCsa s’exécute INVERSE puis NORMAL.','Après correction, retester et dire explicitement ce qui n’a pas pu être testé réellement.']},
++ {id:'github-continuity',title:'Continuité GitHub V2',path:'docs/GITHUB_CONTINUITY_PROTOCOL.md',sha:'ef12be60475e15492dcd357fb1f1ecaeeb3741c3',status:'CANONIQUE',confidence:'confirmed',tags:['github','git','rollback','undo','revert','commit','sha','action ledger','action-ledger','continuité','continuite'],facts:['Une action atomique est corrélée à un commit et à l’action-ledger.','Revenir à une action signifie conserver cette action puis REVERT ses descendants, sans reset/force-push canonique.','Une réussite publique n’est déclarée qu’après preuve observable.']},
++ {id:'action-ledger-latest',title:'Action-ledger · dernier snapshot connu',path:'ops/action-ledger/LATEST.json @ audit/action-ledger',sha:'2c7f98dc0c60c343ab0ce29d7e2920c02710fcf7',status:'SNAPSHOT_2026-08-27',confidence:'confirmed',tags:['action ledger','action-ledger','derniere action','dernier commit','undo anchor','recovery','workflow'],facts:['Action connue : ACT-20260827-GITHUB-RECOVERY-01.','Commit : 2c7f98dc0c60c343ab0ce29d7e2920c02710fcf7.','Undo anchor : 4169cf102fe22e11197a9da00390a13b51735ded.','Stratégie : REVERT_DESCENDANTS_NON_DESTRUCTIVE.']},
++ {id:'vigie',title:'Vigie · contrat audit réel V2',path:'modules/vigie/README.md',sha:'e5e388a7380d5834a48c6fd430385372a5c7d823',status:'CONTRACT_V2',confidence:'confirmed',tags:['vigie','alerte','erreur','workflow','blob','preuve','telemetrie','télémétrie','unproven','gadmin'],facts:['Les preuves structurées sont conservées sur la branche privée vigie-state.','Une donnée inaccessible vaut unproven, jamais OK inventé.','Le code provenant d’un événement externe est traité comme donnée et n’est jamais exécuté.','Les faits viennent de vrais événements GitHub/intake, pas des clics de la page publique.','Les blobs Git restent les preuves récupérables ; le flux ne duplique pas le contenu brut.']},
++ {id:'conversation-trace',title:'Conversation Workflow Engine · ESSAI v1',path:'essai/conversation-workflow/README.md',sha:'6a5bc98545bcc860c327d7d8f454672e11537ac2',status:'FUNCTIONAL_ESSAI_NOT_PROMOTED',confidence:'confirmed',tags:['conversation','workflow conversation','trace','mémoire','memoire','checkpoint','bifurcation','confirmed','deduced','hypothesis','to verify','performed','proposed'],facts:['Schéma : GVAULT_CONVERSATION_TRACE_V1.','Confiance : confirmed, deduced, hypothesis, to_verify, abandoned.','Actions : proposed, performed, failed, cancelled.','Le moteur conserve checkpoints, bifurcations, fichiers, liens GitHub et prochaine action.']},
