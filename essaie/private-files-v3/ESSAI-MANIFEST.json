@@ -1,0 +1,22 @@
+{
+  "schema": "GVAULT_STABLE_ESSAI_PRIVATE_FILES_V3",
+  "status": "ESSAI",
+  "generatedAt": "2026-08-27T15:27:00Z",
+  "stagingPath": "essaie/private-files-v3",
+  "liveUrl": "https://mourchoua-commits.github.io/GvaultStable/essaie/private-files-v3/",
+  "base": "essaie/private-files-v2/",
+  "routing": {
+    "ESSAI": "GVaultOfficialPreview.open",
+    "PRIVE": "GVaultOfficialPreview.open",
+    "CHOISIR": "GVaultOfficialPreview.open",
+    "OUVRIR": "launchPrivateCatalogItem",
+    "TELECHARGER": "downloadPrivateCatalogItem"
+  },
+  "policy": {
+    "v2Preserved": true,
+    "rootStableUntouched": true,
+    "rawPrivateFilesPublic": false,
+    "encryptedPrivateTransportReused": true,
+    "promotionRequired": true
+  }
+}
