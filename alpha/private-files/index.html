@@ -5,83 +5,25 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="referrer" content="no-referrer">
 <meta name="theme-color" content="#050705">
-<title>GvaultStable · Alpha Private Files</title>
+<title>GvaultStable · Alpha Bug Module</title>
 <style>
 html,body{margin:0;min-height:100%;background:#050705;color:#dce8df;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}.boot{min-height:100vh;display:grid;place-items:center;padding:18px;text-align:center}.boot b{display:block;font-size:12px;letter-spacing:.08em}.boot span{display:block;margin-top:7px;color:#86a18f;font-size:8px;line-height:1.45}.boot.err{color:#ff9a9a}
 </style>
 </head>
 <body>
-<div class="boot" id="boot"><div><b>GVAULTSTABLE · ALPHA</b><span>Chargement de la version nettoyée…</span></div></div>
+<div class="boot" id="boot"><div><b>GVAULTSTABLE · ALPHA</b><span>Consolidation du module de rapport de bug…</span></div></div>
 <script>
 (async()=>{'use strict';
-const SOURCE='https://raw.githubusercontent.com/mourchoua-commits/GvaultStable/3d096b9085db44d641a4e6cc8c6db175456e25d7/alpha/private-files-v2/index.html';
+const BASE='https://raw.githubusercontent.com/mourchoua-commits/GvaultStable/a20aa4593c09fa29a383cf3cfb2835e851456cf7/alpha/private-files/index.html';
+const NEEDLE='document.open();document.write(html);document.close();';
 const boot=document.getElementById('boot');
 const fail=m=>{boot.classList.add('err');boot.innerHTML='<div><b>ALPHA · CHARGEMENT REFUSÉ</b><span>'+String(m||'erreur').replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]))+'</span></div>'};
 try{
- let html=await fetch(SOURCE,{cache:'no-store'}).then(r=>{if(!r.ok)throw new Error('source historique HTTP '+r.status);return r.text()});
- const reviewCss=/\/\* GVAULT_SAS_REVIEW_TOOL_V1 \*\/[\s\S]*?(?=<\/style>)/;
- if(!reviewCss.test(html))throw new Error('marqueur CSS de revue introuvable');
- html=html.replace(reviewCss,'');
- html=html.replace(/<style data-gvault-public-mobile-skin="GVAULT_PUBLIC_MOBILE_SKIN_V1">[\s\S]*?<\/style>/,
-`<style data-gvault-public-mobile-skin="GVAULT_PUBLIC_MOBILE_SKIN_V1">
-@media(max-width:620px){
- .updateFab{width:44px;height:44px;min-width:44px;min-height:44px;right:max(8px,env(safe-area-inset-right));bottom:max(8px,env(safe-area-inset-bottom))}
- .updatePanel{bottom:max(60px,calc(env(safe-area-inset-bottom) + 60px));width:min(94vw,410px);max-height:76vh}
- .closeUpdate{width:44px;height:44px;min-width:44px;min-height:44px}
- .updateCheck,.versionAction,.catalogAction,.catalogBadge{min-height:44px}
- .updateTitle{font-size:11px;line-height:1.25}
-}
-</style>`);
- const reviewUi=/<button class="reviewFab"[\s\S]*?<script data-gvault-review-integration="GVAULT_REVIEW_INTEGRATION_V2">[\s\S]*?<\/script>\s*/;
- if(!reviewUi.test(html))throw new Error('bloc interface de revue introuvable');
- html=html.replace(reviewUi,'');
- html=html.replace(/<script data-gvault-review-tool="GVAULT_SAS_REVIEW_TOOL_V1">[\s\S]*?<\/script>\s*/g,'');
- html=html.replace(/<script data-gvault-review-integration="GVAULT_REVIEW_INTEGRATION_V2">[\s\S]*?<\/script>\s*/g,'');
- const downloadButton='<button class="catalogAction" type="button" data-catalog-action="download">TÉLÉCHARGER</button>';
- if(!html.includes(downloadButton))throw new Error('bouton téléchargement catalogue introuvable');
- html=html.replace(downloadButton,'<button class="catalogAction" type="button" data-catalog-action="open">OUVRIR</button>'+downloadButton);
- const handler=/privateCatalogList\.addEventListener\('click',async e=>\{[\s\S]*?\}\);\s*btn\.onclick=unlock;/;
- if(!handler.test(html))throw new Error('routeur catalogue V2 introuvable');
- const injected=`
-const __gvaultPrivateOfficialPayloads=new Map();
-window.addEventListener('gvault:request-official-preview',e=>{
- const d=e.detail||{},key=String(d.sourceSha256||''),bytes=__gvaultPrivateOfficialPayloads.get(key);
- if(!bytes)return;
- e.stopImmediatePropagation();
- try{d.resolve?.({bytes})}catch(err){d.reject?.(err)}
-},true);
-function __gvaultPrivateEsc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
-async function __gvaultPrivateChooseOfficial(item){
- const plain=await decryptPrivateCatalogItem(item),ext=String(item.extension||'').toLowerCase();
- const isHtml=['html','htm'].includes(ext),isText=['txt','md','json','jsonl','js','mjs','css','py','yml','yaml','xml','svg','csv','log','ini','toml'].includes(ext)||['document','code','documentation','workflow','protocole','donnees'].includes(String(item.kind||''));
- let bytes=plain,transport='GVAULT_PRIVATE_FILE_MEMORY_V1';
- if(isHtml){
-  const source=new TextDecoder('utf-8').decode(plain);
-  if(['lockScreenTrigger','vaultPassword','unlockBtn','projectsBtn'].every(x=>source.includes(x)))transport='PUBLIC_CIPHERTEXT_SAS_MEMORY_ONLY';
- }else if(isText){
-  let text;try{text=new TextDecoder('utf-8',{fatal:true}).decode(plain)}catch{text='[contenu non UTF-8]'}
-  const doc='<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>'+__gvaultPrivateEsc(item.path)+'</title><style>html,body{margin:0;min-height:100%;background:#070908;color:#e7eee9;font:13px/1.5 ui-monospace,monospace}header{position:sticky;top:0;padding:10px 12px;background:#0d120f;border-bottom:1px solid #2d3a32;font-weight:900;overflow-wrap:anywhere}pre{margin:0;padding:14px;white-space:pre-wrap;overflow-wrap:anywhere}</style></head><body><header>'+__gvaultPrivateEsc(item.path)+'</header><pre>'+__gvaultPrivateEsc(text)+'</pre></body></html>';
-  bytes=new TextEncoder().encode(doc).buffer;
- }else{
-  const doc='<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>'+__gvaultPrivateEsc(item.path)+'</title><style>html,body{margin:0;min-height:100%;display:grid;place-items:center;background:#070908;color:#e7eee9;font:13px/1.5 ui-monospace,monospace}.box{max-width:560px;margin:20px;padding:18px;border:1px solid #2d3a32;border-radius:12px;background:#0d120f}.muted{opacity:.72}</style></head><body><div class="box"><b>'+__gvaultPrivateEsc(item.path)+'</b><p class="muted">Fichier binaire. Utilise TÉLÉCHARGER pour récupérer le contenu brut.</p></div></body></html>';
-  bytes=new TextEncoder().encode(doc).buffer;
- }
- const sourceSha256=await sha256(bytes),previewItem={releaseId:(item.state||'PRIVÉ')+' · '+item.name,sourceSha256,sourceSize:bytes.byteLength,preview:{transport,path:item.path,catalogItemId:item.id}};
- __gvaultPrivateOfficialPayloads.set(sourceSha256,bytes);
- try{await window.GVaultOfficialPreview.open(previewItem)}finally{setTimeout(()=>__gvaultPrivateOfficialPayloads.delete(sourceSha256),120000)}
-}
-privateCatalogList.addEventListener('click',async e=>{
- const b=e.target.closest('[data-catalog-action]');if(!b)return;const item=catalogItemByButton(b);if(!item)return;
- const card=b.closest('.catalogCard'),buttons=card?[...card.querySelectorAll('button')]:[b];buttons.forEach(x=>x.disabled=true);
- try{const action=b.dataset.catalogAction;if(action==='download')await downloadPrivateCatalogItem(item);else if(action==='open')await launchPrivateCatalogItem(item);else await __gvaultPrivateChooseOfficial(item)}
- catch(err){console.error(err);catalogSummary.textContent='ACTION REFUSÉE · '+(err?.message||err)}finally{buttons.forEach(x=>x.disabled=false)}
-});
-btn.onclick=unlock;`;
- html=html.replace(handler,injected);
- const forbidden=['GVAULT_SAS_REVIEW_TOOL_V1','GVAULT_REVIEW_INTEGRATION_V2','gvault_sas_review_report_v1','vaultReviewFab','GVaultReviewBridge'];
- const left=forbidden.filter(x=>html.includes(x));if(left.length)throw new Error('mécanismes de rapport résiduels: '+left.join(', '));
- if(!html.includes('__gvaultPrivateChooseOfficial')||!html.includes('data-catalog-action="open"'))throw new Error('patch catalogue incomplet');
- document.open();document.write(html);document.close();
+ let src=await fetch(BASE,{cache:'no-store'}).then(r=>{if(!r.ok)throw new Error('base Alpha HTTP '+r.status);return r.text()});
+ if(src.split(NEEDLE).length-1!==1)throw new Error('point d’injection Alpha ambigu');
+ const inject="const __gvaultBugTag='<script data-gvault-bug-report-module=\"GVAULT_BUG_REPORT_MODULE_V1\" src=\"bug-report-module.js?v=1\"><\\/script>';const __gvaultBugAt=html.toLowerCase().lastIndexOf('</body>');if(__gvaultBugAt<0)throw new Error('fermeture body Alpha introuvable');html=html.slice(0,__gvaultBugAt)+__gvaultBugTag+'\\n'+html.slice(__gvaultBugAt);document.open();document.write(html);document.close();";
+ src=src.replace(NEEDLE,inject);
+ document.open();document.write(src);document.close();
 }catch(e){console.error(e);fail(e?.message||e)}
 })();
 </script>
