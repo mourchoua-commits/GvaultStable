@@ -1,0 +1,27 @@
+{
+  "schema": "GVAULT_STABLE_ALPHA_PRIVATE_FILES_V1",
+  "status": "ALPHA",
+  "replaces": ["alpha/private-files-v2", "alpha/private-files-v3"],
+  "entry": "alpha/private-files/index.html",
+  "sourceBaseline": {
+    "commit": "3d096b9085db44d641a4e6cc8c6db175456e25d7",
+    "tree": "abd7317b9254c4100201695b3aac4b12269d4b10",
+    "path": "alpha/private-files-v2"
+  },
+  "changes": {
+    "bugReportMechanismsRemoved": true,
+    "reviewToolRemoved": true,
+    "signalementRemoved": true,
+    "localReportStorageRemoved": true,
+    "reportCopyClearRemoved": true,
+    "reviewPointerCaptureRemoved": true,
+    "privateChooseUsesOfficialPreview": true,
+    "privateOpenPreserved": true,
+    "privateDownloadPreserved": true
+  },
+  "security": {
+    "privateFilesRemainEncrypted": true,
+    "sasRequired": true,
+    "rollbackReference": "reference/pre-report-removal-20260827"
+  }
+}
