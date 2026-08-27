@@ -1,0 +1,25 @@
+{
+  "schema": "game-vault.checkup-repair.v1",
+  "base": "GLOBAL CENSUS GU1",
+  "version": "GU1.1",
+  "source_sha256_before": "316a789441413e708d2fb02bb2aadd184e82d36e7c09258343eac5bdef6ef56d",
+  "source_sha256_after": "57665decafa76efdb1d2905b0ef9d45e56fd9fbf1528147a49ae7ecd284c957f",
+  "fixes": [
+    "metadata-only projects excluded from build validation",
+    "runtime GU1 builds reconciled into VFS after mount; embedded VFS cannot overwrite current builds",
+    "metadata-only stale current.b64 removed",
+    "forgeBtn and assistantConfigBtn bound in initCoreLaunchers",
+    "Agent Dojo registry-dependent expectations made dynamic"
+  ],
+  "rollback": {
+    "source": "GAME_VAULT_v67_VFS_ALPHA4_9_GLOBAL_CENSUS_GU1_SOURCE.html",
+    "lock": "GAME_VAULT_v67_VFS_ALPHA4_9_QA_HARDENED_PHONE_LOCK.html"
+  },
+  "static_qa": {
+    "pass": 28,
+    "total": 28,
+    "all_pass": true
+  },
+  "phone_lock_sha256": "89f1df03b5c390aa6d641b3706d5a012e739c94695f63352f9d44a4cc0643646",
+  "runtime_validation": "INCONCLUSIVE_VFS_PACKAGE_ABSENT_IN_HARNESS"
+}
