@@ -1,0 +1,30 @@
+ Apprentissages locaux : ${agentRuleLibrary().length}
+ Questions inconnues mémorisées : ${unknown.length}
+ Demandes libres À APPRENDRE : ${agentLearningBacklog().length}
++Sources connaissance privées sanitisées : ${AGENT_KNOWLEDGE_SOURCES.length}
++Preuves consultées (local) : ${agentEvidenceHistory().length}
++Traces locales : ${agentTraceHistory().length}
++Défauts Agent mémorisés : ${agentFaultHistory().length}
+ 
+ ${results.map((r,i)=>`## ${i+1}. ${r.ok?'OK':'ÉCHEC'} — ${r.name}
+ Question : ${r.q}
+@@ -9818,7 +9951,7 @@
+  }
+  if(model==='analyst'){
+    const resolved=searchProjectsFromQuery(query||'');
+-   const target=ctx?.project||resolved[0]||null;
++   const target=resolved[0]||ctx?.project||null;
+    if(!target)return base;
+    const cp=getCheckpoint(target.id),extra=[];
+    if(!/version\s*:/i.test(base))extra.push(`Version : ${target.version}`);
+@@ -9845,7 +9978,9 @@
+  }
+  if(!answer)answer=applyAgentModel(agentAnswer(q,ctx),q,ctx);
+  agentChatState.push({role:'bot',text:answer});
+- if(agentSettings().captureBacklog!==false && manual&&meta.source!=='capability'&&!agentCapabilityId(q))rememberAgentBacklog(q,answer,ctx);
++ const capability=agentLastTurnMeta.capability||agentCapabilityId(q);
++ if(manual){recordAgentEvidenceUse(q,agentLastTurnMeta.evidenceIds||[]);recordAgentTrace({query:q,answer,ctx,capability,evidenceIds:agentLastTurnMeta.evidenceIds||[],confidence:agentLastTurnMeta.confidence||'unknown',actionState:agentLastTurnMeta.actionState||'proposed'});}
++ if(agentSettings().captureBacklog!==false && manual&&meta.source!=='capability'&&!capability)rememberAgentBacklog(q,answer,ctx);
+  if(manual&&input)input.value='';
+  saveAgentChat();renderAgentChat();updateAgentBacklogCount();$('#agentOrbPing')?.classList.remove('show');
+ }
