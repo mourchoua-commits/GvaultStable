@@ -1,0 +1,107 @@
+--- GAME_VAULT_v67_VFS_ALPHA4_9_GLOBAL_CENSUS_GU1_SOURCE.html
++++ GAME_VAULT_v67_VFS_ALPHA4_9_GLOBAL_CENSUS_GU1_1_CHECKUP_REPAIR_SOURCE.html
+@@ -5,5 +5,5 @@
+ <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+ <meta name="theme-color" content="#090b10">
+-<title>GAME VAULT v67 · VFS α4.9 · GLOBAL CENSUS GU1</title>
++<title>GAME VAULT v67 · VFS α4.9 · GLOBAL CENSUS GU1.1 · CHECKUP REPAIR</title>
+ <style>
+ :root{
+@@ -4028,5 +4028,6 @@
+ </script>
+ <script>
+-const VAULT_RUNTIME_VERSION='v67 · VFS α4.9 · GLOBAL CENSUS GU1';
++const VAULT_RUNTIME_VERSION='v67 · VFS α4.9 · GLOBAL CENSUS GU1.1 · CHECKUP REPAIR';
++const GLOBAL_CENSUS_GU11_REPAIR=Object.freeze({schema:1,base:'GLOBAL CENSUS GU1',fixes:['metadata-only-build-contract','vfs-current-build-reconciliation','core-launchers','dojo-dynamic-registry-expectations'],rollback:'GLOBAL CENSUS GU1'});
+ window.VAULT_RUNTIME_VERSION=VAULT_RUNTIME_VERSION;
+ const GAME_BUILDS={};
+@@ -7053,5 +7054,7 @@
+  {name:'Lunr.js',license:'MIT',use:'fallback plein texte local futur',state:'RADAR · non embarqué'}
+ ];
+-function projectExpectsEmbeddedBuild(p){return !p||p.playable!==false}
++function projectExpectsEmbeddedBuild(p){return !!p&&p.playable!==false}
++function projectsExpectingEmbeddedBuild(){return projects.filter(projectExpectsEmbeddedBuild)}
++function projectsWithoutBuildByDesign(){return projects.filter(p=>!projectExpectsEmbeddedBuild(p))}
+ function runCensusIntegrity(){
+  const ids=new Set(projects.map(p=>p.id)),buildIds=new Set(Object.keys(GAME_BUILDS)),saveIds=new Set(Object.keys(SAVE_ADAPTERS||{}));
+@@ -8295,8 +8298,24 @@
+ let MIRROR_AUDIT_V32_B64='';
+ async function hydrateLegacyFromVaultFS(){
++  // GU1.1: les builds déclarées dans le runtime courant sont canoniques.
++  // Le VFS apporte les anciennes builds/archives seulement quand le runtime n'en fournit pas.
++  const runtimeCanonical={...GAME_BUILDS};
+   await VaultFS.mountEmbedded();
+   for(const entry of VaultFS.list('/games')){if(entry.type!=='dir')continue;const id=entry.name;
+-    const build=VaultFS.read(`/games/${id}/current.b64`);if(build!==null)GAME_BUILDS[id]=build;
++    const p=projects.find(x=>x.id===id);
++    const build=VaultFS.read(`/games/${id}/current.b64`);
++    if(build!==null&&projectExpectsEmbeddedBuild(p)&&!runtimeCanonical[id])GAME_BUILDS[id]=build;
+     const versions=VaultFS.read(`/games/${id}/versions.json`);if(versions!==null){try{GAME_VERSION_ARCHIVE[id]=JSON.parse(versions)}catch(e){console.warn('VFS archive',id,e)}}
++  }
++  // Réconcilier le VFS avec le Census courant sans fabriquer de build pour les projets documentaires.
++  for(const p of projects){
++    const path=`/games/${p.id}/current.b64`;
++    if(projectExpectsEmbeddedBuild(p)){
++      const build=runtimeCanonical[p.id]||GAME_BUILDS[p.id];
++      if(typeof build==='string'&&build){GAME_BUILDS[p.id]=build;if(VaultFS.read(path)!==build)VaultFS.write(path,build)}
++    }else{
++      delete GAME_BUILDS[p.id];
++      if(VaultFS.read(path)!==null)VaultFS.remove(path);
++    }
+   }
+   for(const entry of VaultFS.list('/assets/covers')){if(entry.type!=='file')continue;const id=entry.name.replace(/\.dataurl$/,'');const cover=VaultFS.read(entry.path);if(cover!==null)PROJECT_COVER_IMAGES[id]=cover}
+@@ -9663,11 +9682,11 @@
+ 
+ const AGENT_DOJO_CASES=[
+- {name:'Compter projets',q:'combien de projets ?',need:['11 projets']},
+- {name:'Compter actifs',q:'combien de projets actifs ?',need:['4 projet']},
+- {name:'Compter prototypes',q:'combien de prototypes ?',need:['3 prototype']},
++ {name:'Compter projets',q:'combien de projets ?',need:()=>[String(projects.length),'projet']},
++ {name:'Compter actifs',q:'combien de projets actifs ?',need:()=>[String(projects.filter(p=>p.status==='active').length),'actif']},
++ {name:'Compter prototypes',q:'combien de prototypes ?',need:()=>[String(projects.filter(p=>p.status==='proto').length),'prototype']},
+  {name:'Lister actifs',q:'liste les projets actifs',need:['PIXEL AGENT ARENA','TRYPOZOMIC TD']},
+  {name:'Lister prototypes',q:'quels sont les prototypes ?',need:['OCULUS GEOMETRICA','OCTOSPIRE ENGINE']},
+- {name:'Projet récent',q:'quel est le projet le plus récent ?',need:['STR RPG — ZERO','ALPHA 0.40']},
+- {name:'Projet ancien',q:'quel est le projet le plus ancien ?',need:['OCTOSPIRE ENGINE']},
++ {name:'Projet récent',q:'quel est le projet le plus récent ?',need:()=>{const p=projects.slice().sort((a,b)=>modifiedMs(b)-modifiedMs(a))[0];return[p.name,p.version]}},
++ {name:'Projet ancien',q:'quel est le projet le plus ancien ?',need:()=>{const p=projects.slice().sort((a,b)=>modifiedMs(a)-modifiedMs(b))[0];return[p.name,p.version]}},
+  {name:'Alias PAA version',q:'version de PAA',need:['ALPHA 2.51']},
+  {name:'Alias TD fichier',q:'quel fichier pour TD ?',need:['trypozomic_td_v29_fusion_slots_picker.html']},
+@@ -9706,6 +9725,7 @@
+   let answer='',error=null;
+   try{answer=agentAnswer(t.q,dojoContext(t),{execute:false})}catch(e){error=e;answer='ERREUR : '+e.message}
+-  const ok=!error&&t.need.every(x=>agentNorm(answer).includes(agentNorm(x)));
+-  return {...t,answer,ok,error:error?String(error.stack||error):null};
++  const need=typeof t.need==='function'?t.need():t.need;
++  const ok=!error&&need.every(x=>agentNorm(answer).includes(agentNorm(x)));
++  return {...t,need,answer,ok,error:error?String(error.stack||error):null};
+  });
+  // v74 — régressions techniques issues du crash mobile du 23/08.
+@@ -10136,7 +10156,8 @@
+   add(projects.length&& !dupP.length?'ok':'error','Registre projets',`${projects.length} projets · doublons : ${dupP.length}`);
+   const census=runCensusIntegrity();add(census.ok?'ok':'warn','Project Census',census.ok?'jeux · labs · méthodes · créatif · candidats cohérents':censusText().split('\n').slice(-5).join(' · '));
+-  const missingBuild=projects.filter(p=>!GAME_BUILDS[p.id]);
+-  add(missingBuild.length?'error':'ok','Builds embarquées',missingBuild.length?missingBuild.map(p=>p.id).join(', '):`${projects.length}/${projects.length} présentes`);
+-  for(const p of projects){
++  const buildRequired=projectsExpectingEmbeddedBuild(),metadataOnly=projectsWithoutBuildByDesign();
++  const missingBuild=buildRequired.filter(p=>!GAME_BUILDS[p.id]);
++  add(missingBuild.length?'error':'ok','Builds embarquées',missingBuild.length?missingBuild.map(p=>p.id).join(', '):`${buildRequired.length}/${buildRequired.length} attendues présentes · ${metadataOnly.length} projet(s) sans build par conception`);
++  for(const p of buildRequired){
+    try{
+     const raw=atob(GAME_BUILDS[p.id]||'');
+@@ -10155,6 +10176,6 @@
+    const roots=['core','apps','games','assets','data','user','tmp'],rootNames=new Set(VaultFS.list('/').filter(x=>x.type==='dir').map(x=>x.name));
+    const missingRoots=roots.filter(x=>!rootNames.has(x));
+-   const parity=projects.filter(p=>VaultFS.read(`/games/${p.id}/current.b64`)!==GAME_BUILDS[p.id]);
+-   add(missingRoots.length||parity.length?'error':'ok','VFS Kernel',missingRoots.length?`racines manquantes : ${missingRoots.join(', ')}`:parity.length?`builds désynchronisées : ${parity.map(p=>p.id).join(', ')}`:`${VaultFS.stats().files} fichiers · 7 racines · ${projects.length}/${projects.length} builds hydratées`);
++   const parity=buildRequired.filter(p=>VaultFS.read(`/games/${p.id}/current.b64`)!==GAME_BUILDS[p.id]);
++   add(missingRoots.length||parity.length?'error':'ok','VFS Kernel',missingRoots.length?`racines manquantes : ${missingRoots.join(', ')}`:parity.length?`builds désynchronisées : ${parity.map(p=>p.id).join(', ')}`:`${VaultFS.stats().files} fichiers · 7 racines · ${buildRequired.length}/${buildRequired.length} builds hydratées · ${metadataOnly.length} métadonnées sans build`);
+   }
+   const designerModuleOk=!!VaultFS?.manifest?.modules?.['designer.continuity']&&VaultModules?.isLoaded?.('designer.continuity');
+@@ -12026,4 +12047,6 @@
+ }
+ function initCoreLaunchers(){
++ $('#forgeBtn')&&( $('#forgeBtn').onclick=()=>featureGuard('forge','open',openForge) );
++ $('#assistantConfigBtn')&&( $('#assistantConfigBtn').onclick=()=>featureGuard('assistant-config','open',openAssistantConfig) );
+ }
+ function initLayoutStudio(){
