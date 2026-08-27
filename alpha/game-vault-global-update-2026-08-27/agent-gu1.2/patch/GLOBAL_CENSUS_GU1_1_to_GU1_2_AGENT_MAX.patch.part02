@@ -1,0 +1,121 @@
++ const fuzzy=rules.find(r=>{const rq=agentNorm(r.q);return rq.length>=8&&(n.includes(rq)||rq.includes(n))});return fuzzy?{answer:fuzzy.a,match:'fuzzy',rule:fuzzy}:null;
++}
++function agentCustomRuleAnswer(q){return agentCustomRuleMatch(q)?.answer||null}
+ function learnAgentRule(raw){
+  const body=String(raw).replace(/^\s*appren(?:ds|d)?\s*:\s*/i,'');
+  const sep=body.indexOf('=>');if(sep<1)return 'Format : apprends: question => réponse';
+  const q=body.slice(0,sep).trim(),a=body.slice(sep+2).trim();
+  if(!q||!a)return 'Il me faut une question et une réponse.';
+  const rules=agentRuleLibrary().filter(r=>agentNorm(r.q)!==agentNorm(q));
+- rules.push({q,a,learnedAt:new Date().toISOString()});saveAgentRules(rules);
++ rules.push({q,a,learnedAt:new Date().toISOString(),provenance:'user-local',confidence:'confirmed-user-rule'});saveAgentRules(rules);
+  return `APPRIS\nQuestion : ${q}\nRéponse : ${a}`;
+ }
+ function resolveProjectAliases(q){
+@@ -9449,7 +9542,11 @@
+  for(const [id,aliases] of Object.entries(AGENT_PROJECT_ALIASES)){
+   if(aliases.some(a=>n.includes(' '+agentNorm(a)+' ')))out.push(projects.find(p=>p.id===id));
+  }
+- return out.filter(Boolean);
++ for(const p of projects){
++  const dynamic=[p.id,p.name,String(p.name||'').replace(/[^a-z0-9À-ÿ]+/gi,' ')].map(agentNorm).filter(x=>x.length>=3);
++  if(dynamic.some(a=>n.includes(' '+a+' ')))out.push(p);
++ }
++ return [...new Map(out.filter(Boolean).map(p=>[p.id,p])).values()];
+ }
+ function projectSearchHaystack(p){
+  return agentNorm([p.id,p.name,p.subtitle,p.version,p.file,p.summary,p.focus,...(p.branches||[])].join(' '));
+@@ -9520,6 +9617,7 @@
+ function agentAnswer(query,ctxOverride=null,options={}){
+  const q=(query||'').trim(),low=q.toLowerCase(),n=agentNorm(q),ctx=ctxOverride||currentVaultContext();
+  const execute=options.execute!==false;
++ agentLastTurnMeta={capability:agentCapabilityId(q),evidenceIds:[],confidence:'unknown',actionState:execute?'performed':'proposed'};
+  if(!q)return 'Écris-moi une demande.';
+ 
+  if(/^commande\s*:/i.test(q))return agentPadCommandFromChat(q);
+@@ -9532,10 +9630,14 @@
+   const rules=agentRuleLibrary();return rules.length?`APPRENTISSAGES LOCAUX\n${rules.map((r,i)=>`${i+1}. ${r.q} => ${r.a}`).join('\n')}`:'Aucun apprentissage local.';
+  }
+  if(/oublie.*apprentissage|efface.*apprentissage/.test(n)){if(execute)saveAgentRules([]);return 'Apprentissages locaux effacés.'}
+- const learned=agentCustomRuleAnswer(q);if(learned)return learned;
++ const learnedMatch=agentCustomRuleMatch(q);
++ if(learnedMatch?.match==='exact'){agentLastTurnMeta.confidence=learnedMatch.rule?.confidence||'confirmed-user-rule';return learnedMatch.answer}
++ if(/etat agent|état agent|sante agent|santé agent|diagnostic agent|agent health/.test(low)){agentLastTurnMeta.capability='self-health';agentLastTurnMeta.confidence='runtime';return agentSelfHealth()}
++ const knowledge=agentKnowledgeAnswer(q);if(knowledge)return knowledge;
++ if(learnedMatch?.match==='fuzzy'){agentLastTurnMeta.confidence=learnedMatch.rule?.confidence||'local-rule-fuzzy';return learnedMatch.answer}
+ 
+  const resolved=searchProjectsFromQuery(q);
+- let target=ctx.project||resolved[0]||null;
++ let target=resolved[0]||ctx.project||null;
+ 
+  if(/^(salut|bonjour|hey|yo)\b/.test(n))return `Salut. Je suis le mini-agent du Vault. Je peux retrouver un projet, comparer des builds, lire l’état, la suite, les risques, les configs/checkpoints et ouvrir les outils du Vault.`;
+  if(/\b(merci|thx)\b/.test(n))return 'Avec plaisir.';
+@@ -9548,9 +9650,14 @@
+ - indiquer le plus récent / le plus ancien ;
+ - ouvrir Preview, Config, Checkpoint, Changelog, Rapport, Mirror ou Profile Lab ;
+ - changer le thème ;
++- expliquer Che_kCa, FiCsa, rollback/action-ledger, Vigie, Private First et la sécurité du gateway avec provenance ;
++- distinguer confirmé / déduit / hypothèse et proposé / effectué dans ma trace locale ;
++- afficher « état agent » avec circuit, défauts, preuves et mémoire ;
+ - apprendre une règle locale avec : apprends: question => réponse ;
+ - créer une touche du pavé avec : commande: NOM => demande ;
+-- configurer directement mon comportement et mon pavé via CONFIG AGENT.`;
++- configurer directement mon comportement et mon pavé via CONFIG AGENT.
++
++Mes connaissances privées sont un snapshot local sanitisé : je ne lis pas GitHub en direct et je n’exécute rien sans action explicite.`;
+  }
+ 
+  if(/ou je suis|où je suis|contexte|interface actuelle/.test(low)){
+@@ -9598,7 +9705,9 @@
+   return 'Je ne trouve aucun projet correspondant dans le registre.';
+  }
+ 
+- const action=agentActionIntent(q,target,execute);if(action)return action;
++ const actionRequested=/\b(ouvre|ouvrir|affiche|va dans|vas dans|joue|play|lance le jeu|lancer le jeu)\b/.test(n);
++ if(actionRequested&&resolved.length>1)return `Plusieurs projets correspondent :\n${agentProjectList(resolved)}\nJe n’exécute rien tant que la cible n’est pas unique.`;
++ const action=agentActionIntent(q,target,execute);if(action){agentLastTurnMeta.capability='action';agentLastTurnMeta.confidence='runtime';agentLastTurnMeta.actionState=execute?'performed':'proposed';return action}
+ 
+  if(/profil/.test(low)&&!target){
+   const editing=ctx.profile;
+@@ -9615,6 +9724,7 @@
+   return `Je ne sais pas encore répondre précisément à ça avec les données du Vault.\nTu peux me l’apprendre avec : apprends: question => réponse\nOu reformuler avec un projet, une version, une mécanique, « état », « suite », « risques », « config », « checkpoint » ou « compare ».`;
+  }
+ 
++ agentLastTurnMeta.confidence='confirmed-registry';
+  if(/version/.test(n))return `${target.name} — version ${target.version}.`;
+  if(/fichier|build/.test(n))return `${target.name}\nFichier de référence : ${target.file}\nVersion : ${target.version}`;
+  if(/statut/.test(n))return `${target.name} — statut ${target.status}.`;
+@@ -9708,6 +9818,14 @@
+  {name:'Action thème plan',q:'mets le theme terminal',need:['terminal']},
+  {name:'Small talk',q:'salut',need:['mini-agent du Vault']},
+  {name:'Inconnu explicite',q:'quelle est la couleur préférée du développeur ?',need:['Je ne sais pas encore']},
++ {name:'GitHub undo non destructif',q:'comment revenir à une action github ?',need:['REVERT','descendants','reset']},
++ {name:'Vigie preuve réelle',q:'explique Vigie et une donnée inaccessible',need:['vigie-state','unproven','jamais exécuté']},
++ {name:'Che_kCa + FiCsa',q:'Che_kCa sur un bug avec FiCsa',need:['INVERSE','NORMAL','retester']},
++ {name:'Workflow conversation',q:'workflow conversation : quels statuts de confiance et actions ?',need:['confirmed','hypothesis','performed','proposed']},
++ {name:'Private First',q:'comment importer un projet privé avant publication ?',need:['sauvegarde privée','obligatoire','token GitHub privé']},
++ {name:'Preview officielle sécurité',q:'sécurité preview officielle gateway',need:['SHA','allow-same-origin','Blob']},
++ {name:'Branche Source prudence',q:'Branche Source peut il prouver une reconstruction ?',need:['hypothèses','vérité historique','preuve']},
++ {name:'État Agent',q:'état agent',need:['Sources de connaissance','Réseau privé','DÉSACTIVÉ']},
+ ];
+ let agentDojoLast=null,agentDojoRunCount=0,agentDojoLastRunAt=null;
+ 
+@@ -9746,6 +9864,17 @@
+  }catch(e){
+   results.push({name:'Carte projet / faits clés',q:'render cardHTML',need:['data-id'],answer:'ERREUR : '+e.message,ok:false,error:String(e.stack||e)});
+  }
++ try{
++  const td=projects.find(p=>p.id==='td'),paa=projects.find(p=>p.id==='paa');
++  const resolved=searchProjectsFromQuery('ouvre preview de TD');
++  const answer=agentAnswer('ouvre preview de TD',{surface:'config',label:'CONFIGURATION',project:paa,detail:'dojo precedence',profile:null},{execute:false});
++  results.push({name:'Cible explicite > contexte',q:'ouvre preview de TD depuis PAA',need:['TRYPOZOMIC TD'],answer,ok:!!td&&resolved[0]?.id==='td'&&agentNorm(answer).includes(agentNorm(td.name)),error:null});
++ }catch(e){results.push({name:'Cible explicite > contexte',q:'target precedence',need:['td'],answer:'ERREUR : '+e.message,ok:false,error:String(e.stack||e)})}
++ try{
++  const ids=AGENT_KNOWLEDGE_SOURCES.map(x=>x.id),dup=ids.filter((x,i)=>ids.indexOf(x)!==i);
++  const unsafe=JSON.stringify(AGENT_KNOWLEDGE_SOURCES).match(/ghp_|github_pat_|Bearer\s|private[_-]?key|password\s*[:=]/i);
++  results.push({name:'Knowledge provenance / secrets',q:'knowledge invariants',need:['unique','sanitized'],answer:`ids=${ids.length} dup=${dup.length} unsafe=${!!unsafe}`,ok:dup.length===0&&!unsafe&&AGENT_KNOWLEDGE_SOURCES.every(x=>x.path&&x.sha&&x.confidence),error:null});
++ }catch(e){results.push({name:'Knowledge provenance / secrets',q:'knowledge invariants',need:['unique'],answer:'ERREUR : '+e.message,ok:false,error:String(e.stack||e)})}
+  const pass=results.filter(x=>x.ok).length,fail=results.length-pass;
+  const unknown=agentUnknownQueries();
+  const report=`# GAME VAULT — AGENT DOJO
+@@ -9756,6 +9885,10 @@
