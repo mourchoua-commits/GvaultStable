@@ -1,0 +1,65 @@
+name: Button Lab QA · NO SAS
+
+on:
+  workflow_dispatch:
+  push:
+    branches: ["main"]
+    paths:
+      - "alpha/button-lab/index.html"
+      - "alpha/button-lab/qa.mjs"
+      - "alpha/button-lab/manifest.json"
+      - ".github/workflows/button-lab-qa.yml"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: gvault-button-lab-nosas
+  cancel-in-progress: true
+
+jobs:
+  button-by-button:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Verify no-SAS safety contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          node -e "const m=require('./alpha/button-lab/manifest.json');if(m.schema!=='GVAULT_BUTTON_LAB_NOSAS_MANIFEST_V1'||m.sasRequired!==false||m.containsPrivateVaultSource!==false||m.containsPrivateCatalog!==false||m.containsTokens!==false||m.externalWrites!=='NONE')throw new Error('unsafe Button Lab manifest')"
+          grep -q 'GVAULT_BUTTON_LAB_NOSAS_V1' alpha/button-lab/index.html
+          ! grep -q 'GVAULT_PUBLICATION_PASSWORD' alpha/button-lab/index.html
+          ! grep -q 'GVAULT_STABLE_TOKEN' alpha/button-lab/index.html
+          ! grep -q 'GVAULT_PAGES_TOKEN' alpha/button-lab/index.html
+      - name: Install browser harness
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium
+      - name: Start local Button Lab
+        shell: bash
+        run: |
+          python3 -m http.server 4173 --bind 127.0.0.1 >/tmp/button-lab-http.log 2>&1 &
+          for i in $(seq 1 40); do curl -fsS http://127.0.0.1:4173/alpha/button-lab/ >/dev/null && exit 0; sleep .25; done
+          cat /tmp/button-lab-http.log || true
+          exit 1
+      - name: Click controls and verify effects
+        run: node alpha/button-lab/qa.mjs
+      - name: Persist latest QA evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f alpha/button-lab/qa/latest.json
+          node -e "const r=require('./alpha/button-lab/qa/latest.json');if(r.schema!=='GVAULT_BUTTON_LAB_BROWSER_QA_V1'||r.noSas!==true||r.privateData!==false||r.pass!==true)throw new Error('Button Lab QA evidence failed')"
+          git config user.name "GVAULT Button Lab QA"
+          git config user.email "actions@users.noreply.github.com"
+          git add alpha/button-lab/qa/latest.json
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m "qa: persist no-SAS Button Lab evidence" -m "GVAULT-Action-ID: ACT-${GITHUB_RUN_ID}-BUTTON-LAB-EVIDENCE" -m "GVAULT-Public-Effect: QA evidence only" -m "GVAULT-Undo-Anchor: ${GITHUB_SHA}"
+          git pull --rebase origin main
+          git push origin HEAD:main
