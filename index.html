@@ -534,12 +534,19 @@ body.gvaultReviewPicking,body.gvaultReviewPicking *{cursor:crosshair!important}
 </section>
 
 
-<button class="updateFab" id="vaultUpdateFab" type="button" aria-label="Versions et mises à jour" title="Versions et mises à jour">↻</button>
-<section class="updatePanel" id="vaultUpdatePanel" aria-label="Versions GVAULT">
-  <div class="updateHead"><div class="updateTitle">GVAULT · VERSIONS</div><button class="closeUpdate" id="vaultUpdateClose" type="button" aria-label="Fermer">×</button></div>
-  <button class="updateCheck" id="vaultUpdateCheck" type="button">RECHERCHER UNE MISE À JOUR</button>
-  <div class="updateState" id="vaultUpdateState">Registre non consulté.</div>
+<button class="updateFab" id="vaultUpdateFab" type="button" aria-label="Catalogue privé et mises à jour" title="Catalogue privé et mises à jour">↻</button>
+<section class="updatePanel" id="vaultUpdatePanel" aria-label="Catalogue privé GVAULT">
+  <div class="updateHead"><div class="updateTitle">GVAULT · CATALOGUE PRIVÉ</div><button class="closeUpdate" id="vaultUpdateClose" type="button" aria-label="Fermer">×</button></div>
+  <button class="updateCheck" id="vaultUpdateCheck" type="button">ACTUALISER LE CATALOGUE</button>
+  <div class="updateState" id="vaultUpdateState">Registres non consultés.</div>
+  <div class="catalogSectionTitle">VERSIONS</div>
   <div class="versionList" id="vaultVersionList"></div>
+  <div class="catalogDivider"></div>
+  <div class="catalogSectionTitle">CONTENU DU PRIVÉ</div>
+  <input class="catalogSearch" id="vaultCatalogSearch" type="search" autocomplete="off" spellcheck="false" placeholder="Rechercher projet, module, fichier, protocole…" aria-label="Rechercher dans le catalogue privé">
+  <div class="catalogTabs" id="vaultCatalogTabs" role="tablist" aria-label="Catégories du privé"></div>
+  <div class="catalogSummary" id="vaultCatalogSummary">Déverrouille le SAS pour consulter l’index privé chiffré.</div>
+  <div class="privateCatalogList" id="vaultPrivateCatalogList"></div>
 </section>
 <script>
 (()=>{
@@ -1177,11 +1184,12 @@ const THEME_KEY='game_vault_theme_v1';
 
 
 
-const updateFab=$('#vaultUpdateFab'),updatePanel=$('#vaultUpdatePanel'),updateClose=$('#vaultUpdateClose'),updateCheck=$('#vaultUpdateCheck'),updateState=$('#vaultUpdateState'),versionList=$('#vaultVersionList');
+const updateFab=$('#vaultUpdateFab'),updatePanel=$('#vaultUpdatePanel'),updateClose=$('#vaultUpdateClose'),updateCheck=$('#vaultUpdateCheck'),updateState=$('#vaultUpdateState'),versionList=$('#vaultVersionList'),catalogSearch=$('#vaultCatalogSearch'),catalogTabs=$('#vaultCatalogTabs'),catalogSummary=$('#vaultCatalogSummary'),privateCatalogList=$('#vaultPrivateCatalogList');
 const entryStatus=document.querySelector('.safe .status');
 const hex=b=>Array.from(new Uint8Array(b),x=>x.toString(16).padStart(2,'0')).join('');
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 let sessionPassword='';
+let privateCatalog=null,catalogCategory='all',catalogQuery='';
 let activeManifest=null;
 let releaseIndex=null;
 let selectedManifestUrl='./manifest.json';
@@ -1245,9 +1253,59 @@ function renderVersions(){
  }
  if(releaseIndex?.latestIterationId&&activeManifest&&(releaseIndex.latestIterationId!==(activeManifest.iterationId||activeManifest.releaseId)))updateFab.classList.add('hasUpdate');else updateFab.classList.remove('hasUpdate');
 }
+
+const PRIVATE_CATALOG_MANIFEST='./private-catalog/manifest.json';
+const CATALOG_LABELS={all:'TOUT',versions:'VERSIONS',projects_official:'PROJETS OFFICIELS',projects_candidates:'PROJETS CANDIDATS',modules:'MODULES',essai:'ESSAI',essaie:'ESSAIE',protocoles:'PROTOCOLES',documentation:'DOCS',outils:'OUTILS',qa:'QA',references:'RÉFÉRENCES',operations:'OPÉRATIONS',workflows:'WORKFLOWS',deploiement:'DÉPLOIEMENT',racine:'RACINE',autres:'AUTRES'};
+function humanBytes(n){n=Number(n);if(!Number.isFinite(n))return 'taille inconnue';if(n<1024)return n+' o';if(n<1048576)return (n/1024).toFixed(n<10240?1:0)+' Kio';return (n/1048576).toFixed(n<10485760?1:0)+' Mio'}
+function renderCatalogTabs(){
+ if(!privateCatalog){catalogTabs.innerHTML='';return}
+ const cats=['all',...(Array.isArray(privateCatalog.categoryOrder)?privateCatalog.categoryOrder:[])];
+ catalogTabs.innerHTML=cats.map(c=>'<button class="catalogTab '+(c===catalogCategory?'active':'')+'" type="button" data-category="'+esc(c)+'" role="tab" aria-selected="'+(c===catalogCategory?'true':'false')+'">'+esc(CATALOG_LABELS[c]||c.toUpperCase())+(c==='all'?' · '+privateCatalog.totalTrackedFiles:' · '+(privateCatalog.categoryCounts?.[c]||0))+'</button>').join('');
+}
+function renderPrivateCatalog(){
+ if(!privateCatalog){privateCatalogList.innerHTML='';return}
+ const q=catalogQuery.trim().toLowerCase();
+ const source=privateCatalog.source||{};
+ const items=(Array.isArray(privateCatalog.items)?privateCatalog.items:[]).filter(item=>{
+   if(catalogCategory!=='all'&&item.category!==catalogCategory)return false;
+   if(!q)return true;
+   return [item.name,item.path,item.category,item.kind,item.state].some(v=>String(v||'').toLowerCase().includes(q));
+ });
+ renderCatalogTabs();
+ catalogSummary.textContent=items.length+' / '+privateCatalog.totalTrackedFiles+' élément(s) · source privée '+String(source.commit||'').slice(0,12)+' · métadonnées uniquement';
+ privateCatalogList.innerHTML='';
+ if(!items.length){privateCatalogList.innerHTML='<div class="catalogEmpty">Aucun élément pour ce filtre.</div>';return}
+ const frag=document.createDocumentFragment();
+ for(const item of items){
+   const card=document.createElement('article');card.className='catalogCard';
+   card.innerHTML='<div class="catalogCardTop"><div class="catalogName">'+esc(item.name)+'</div><span class="catalogBadge">'+esc(item.state||'PRIVÉ')+'</span></div><div class="catalogPath">'+esc(item.path)+'</div><div class="catalogMeta">'+esc(CATALOG_LABELS[item.category]||item.category)+' · '+esc(item.kind||'fichier')+' · '+esc(humanBytes(item.size))+'</div><details class="catalogDetails"><summary>DÉTAILS</summary><div class="catalogDetailsBody">blob '+esc(String(item.blobSha||''))+'<br>mode '+esc(String(item.mode||''))+'<br>id '+esc(String(item.id||''))+'</div></details>';
+   frag.appendChild(card);
+ }
+ privateCatalogList.appendChild(frag);
+}
+async function loadPrivateCatalog(){
+ if(!sessionPassword){privateCatalog=null;catalogSummary.textContent='Déverrouille le SAS pour consulter l’index privé chiffré.';privateCatalogList.innerHTML='';catalogTabs.innerHTML='';return null}
+ catalogSummary.textContent='Déchiffrement de l’index privé…';
+ const u=new URL(PRIVATE_CATALOG_MANIFEST,location.href);u.searchParams.set('ts',Date.now());
+ const r=await fetch(u,{cache:'no-store'});if(!r.ok)throw new Error('catalogue privé manifest HTTP '+r.status);
+ const m=await r.json();if(m.schema!=='GVAULT_ENCRYPTED_PRIVATE_CATALOG_V1')throw new Error('catalogue privé manifest incompatible');
+ const pu=new URL(m.payload.path,u);pu.search='';const cipher=await (await fetch(pu,{cache:'force-cache'})).arrayBuffer();
+ if(cipher.byteLength!==Number(m.payload?.size))throw new Error('taille catalogue privé invalide');
+ if(await sha256(cipher)!==String(m.payload?.sha256||''))throw new Error('SHA catalogue privé invalide');
+ const km=await crypto.subtle.importKey('raw',new TextEncoder().encode(sessionPassword),'PBKDF2',false,['deriveKey']);
+ const key=await crypto.subtle.deriveKey({name:'PBKDF2',salt:b64(m.crypto?.saltB64),iterations:Number(m.crypto?.iterations),hash:'SHA-256'},km,{name:'AES-GCM',length:256},false,['decrypt']);
+ let plain;try{plain=await crypto.subtle.decrypt({name:'AES-GCM',iv:b64(m.crypto?.ivB64)},key,cipher)}catch{throw new Error('déchiffrement catalogue privé refusé')}
+ if(plain.byteLength!==Number(m.source?.size)||await sha256(plain)!==String(m.source?.sha256||''))throw new Error('intégrité claire du catalogue privé invalide');
+ const value=JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(plain));
+ if(value.schema!=='GVAULT_PRIVATE_CATALOG_V1'||!Array.isArray(value.items))throw new Error('schéma catalogue privé invalide');
+ privateCatalog=value;renderPrivateCatalog();return value;
+}
 async function refreshVersions(){
- if(window.GVaultOfficialRefs?.reload)return window.GVaultOfficialRefs.reload();
- updateState.textContent='Catalogue OFFICIEL en initialisation…';
+ let officialResult;
+ if(window.GVaultOfficialRefs?.reload)officialResult=await window.GVaultOfficialRefs.reload();
+ else updateState.textContent='Catalogue OFFICIEL en initialisation…';
+ try{await loadPrivateCatalog()}catch(e){console.error(e);catalogSummary.textContent='CATALOGUE PRIVÉ INDISPONIBLE · '+(e?.message||e);privateCatalogList.innerHTML=''}
+ return officialResult;
 }
 async function chooseRelease(item,action){
  selectedManifestUrl=item.manifest;selectedIterationId=item.iterationId||item.releaseId;selectionExplicit=true;renderVersions();
@@ -1265,6 +1323,8 @@ async function unlock(){
 updateFab.addEventListener('click',()=>{updatePanel.classList.toggle('open');if(updatePanel.classList.contains('open'))refreshVersions()});
 updateClose.addEventListener('click',()=>updatePanel.classList.remove('open'));
 updateCheck.addEventListener('click',refreshVersions);
+catalogSearch.addEventListener('input',()=>{catalogQuery=catalogSearch.value||'';renderPrivateCatalog()});
+catalogTabs.addEventListener('click',e=>{const b=e.target.closest('[data-category]');if(!b)return;catalogCategory=b.dataset.category||'all';renderPrivateCatalog()});
 btn.onclick=unlock;pass.addEventListener('keydown',e=>{if(e.key==='Enter')unlock()});
 })();
 </script>
@@ -1614,6 +1674,14 @@ window.GVaultOfficialRefs=Object.freeze({schema:'GVAULT_PRIVATE_OFFICIAL_REFS_V2
 #gvaultOfficialPreviewState{position:fixed;left:82px;bottom:max(18px,calc(env(safe-area-inset-bottom) + 6px));z-index:2147483646;max-width:min(72vw,520px);padding:7px 9px;border:1px solid rgba(255,107,107,.5);border-radius:9px;background:rgba(10,10,10,.88);color:#fff;font:800 10px/1.3 ui-monospace,SFMono-Regular,Menlo,monospace;display:none;pointer-events:none}
 #gvaultOfficialPreviewState.show{display:block}
 body.gvaultOfficialPreviewOpen{overflow:hidden!important}
+
+/* GVAULT_PRIVATE_CATALOG_UI_V1 · encrypted metadata-only private repository inventory */
+.catalogDivider{height:1px;margin:11px 0;background:color-mix(in srgb,var(--accent) 18%,var(--line))}
+.catalogSectionTitle{margin:10px 0 6px;color:var(--accent);font:950 7px/1.2 monospace;letter-spacing:.1em}
+.catalogSearch{width:100%;min-height:34px;border:1px solid color-mix(in srgb,var(--accent) 22%,var(--line));border-radius:8px;background:var(--input);color:var(--text);padding:0 9px;font:750 7px/1.2 monospace;outline:none}.catalogSearch:focus{border-color:var(--accent);box-shadow:0 0 0 2px color-mix(in srgb,var(--accent) 9%,transparent)}
+.catalogTabs{display:flex;gap:5px;overflow:auto;padding:7px 0 4px;scrollbar-width:thin}.catalogTab{flex:0 0 auto;min-height:27px;border:1px solid color-mix(in srgb,var(--accent) 18%,var(--line));border-radius:999px;background:var(--panel2);color:var(--muted);padding:0 8px;font:900 6px/1 monospace;white-space:nowrap}.catalogTab.active{border-color:var(--accent);color:var(--accent);background:color-mix(in srgb,var(--accent) 9%,var(--panel2))}
+.catalogSummary{margin:5px 0 8px;color:var(--muted);font:700 6px/1.45 monospace}.privateCatalogList{display:grid;gap:6px}.catalogCard{border:1px solid color-mix(in srgb,var(--accent) 16%,var(--line));border-radius:9px;padding:8px;background:color-mix(in srgb,var(--panel2) 76%,transparent)}.catalogCardTop{display:flex;align-items:flex-start;justify-content:space-between;gap:8px}.catalogName{min-width:0;color:var(--text);font:900 8px/1.25 monospace;overflow-wrap:anywhere}.catalogBadge{flex:0 0 auto;border:1px solid color-mix(in srgb,var(--accent) 30%,var(--line));border-radius:999px;color:var(--accent);padding:3px 6px;font:900 5px/1 monospace}.catalogPath{margin-top:4px;color:var(--muted);font:650 6px/1.35 monospace;overflow-wrap:anywhere}.catalogMeta{margin-top:5px;color:var(--muted);font:700 5.5px/1.35 monospace}.catalogDetails{margin-top:6px;border-top:1px dashed color-mix(in srgb,var(--accent) 14%,var(--line));padding-top:5px}.catalogDetails summary{cursor:pointer;color:var(--accent);font:850 5.5px/1.2 monospace}.catalogDetailsBody{margin-top:5px;color:var(--muted);font:650 5.5px/1.45 monospace;overflow-wrap:anywhere}.catalogEmpty{border:1px dashed var(--line);border-radius:9px;padding:12px;color:var(--muted);font:700 7px/1.4 monospace;text-align:center}
+@media(max-width:620px){.updatePanel{width:min(94vw,410px);max-height:78vh}.catalogTab{min-height:29px}.catalogSearch{min-height:36px}}
 </style>
 <div id="gvaultOfficialPreviewShell" aria-hidden="true">
   <iframe id="gvaultOfficialPreviewFrame" title="Prévisualisation temporaire d’une version GVAULT" sandbox="allow-scripts allow-forms allow-modals allow-downloads allow-pointer-lock"></iframe>
