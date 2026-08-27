@@ -1,0 +1,15 @@
+{
+  "schema": "GVAULT_BUTTON_LAB_NOSAS_MANIFEST_V1",
+  "status": "ALPHA_QA_ONLY",
+  "path": "alpha/button-lab/",
+  "sasRequired": false,
+  "containsPrivateVaultSource": false,
+  "containsPrivateCatalog": false,
+  "containsTokens": false,
+  "dataPolicy": "SYNTHETIC_FIXTURES_ONLY",
+  "destructiveActions": "QA_SANDBOX_ONLY",
+  "externalWrites": "NONE",
+  "privateDependentActions": "BACKEND_ISOLATED",
+  "purpose": "Button-by-button functional control before patches are applied to the canonical Vault runtime.",
+  "rollback": "reference/pre-no-sas-button-lab-20260827"
+}
