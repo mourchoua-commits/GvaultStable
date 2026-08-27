@@ -1,20 +1,20 @@
 {
   "schema": "GVAULT_ENCRYPTED_PRIVATE_CATALOG_V1",
-  "generatedAt": "2026-08-27T14:24:22.825Z",
+  "generatedAt": "2026-08-27T14:27:03.237Z",
   "crypto": {
     "cipher": "AES-256-GCM",
     "kdf": "PBKDF2-HMAC-SHA256",
     "iterations": 900000,
-    "saltB64": "7skDjEdKQJbhwMMBt2944w==",
-    "ivB64": "yVgThem6ubB9ZpKl"
+    "saltB64": "fX690CJL6mWtjCjj3bIaDQ==",
+    "ivB64": "AtwwOxox8ijjSXlK"
   },
   "source": {
-    "sha256": "a0ade408637b20991039480e4bc8b02a4567afb156205aa8eaf3dae845de64c7",
-    "size": 62073
+    "sha256": "bdb7a437113ca246c77a748e91d82f3764be7c1a51ba534b84122e416628331c",
+    "size": 62369
   },
   "payload": {
-    "path": "catalog.97028d327921bc13801b8bc987839015b1095dd769e922541553e1001249e8b6.bin",
-    "sha256": "97028d327921bc13801b8bc987839015b1095dd769e922541553e1001249e8b6",
-    "size": 62089
+    "path": "catalog.d221023e13bb83a9acafe84c22d5b6df8ae8de0fa60b04e17bd8916c69476f0d.bin",
+    "sha256": "d221023e13bb83a9acafe84c22d5b6df8ae8de0fa60b04e17bd8916c69476f0d",
+    "size": 62385
   }
 }
