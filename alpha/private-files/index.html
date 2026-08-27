@@ -5,13 +5,13 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="referrer" content="no-referrer">
 <meta name="theme-color" content="#050705">
-<title>GvaultStable · Alpha Bug Module</title>
+<title>GvaultStable · Alpha Button Surgeon</title>
 <style>
 html,body{margin:0;min-height:100%;background:#050705;color:#dce8df;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}.boot{min-height:100vh;display:grid;place-items:center;padding:18px;text-align:center}.boot b{display:block;font-size:12px;letter-spacing:.08em}.boot span{display:block;margin-top:7px;color:#86a18f;font-size:8px;line-height:1.45}.boot.err{color:#ff9a9a}
 </style>
 </head>
 <body>
-<div class="boot" id="boot"><div><b>GVAULTSTABLE · ALPHA</b><span>Consolidation du module de rapport de bug…</span></div></div>
+<div class="boot" id="boot"><div><b>GVAULTSTABLE · ALPHA</b><span>Module bug unique + contrôle bouton par bouton…</span></div></div>
 <script>
 (async()=>{'use strict';
 const BASE='https://raw.githubusercontent.com/mourchoua-commits/GvaultStable/a20aa4593c09fa29a383cf3cfb2835e851456cf7/alpha/private-files/index.html';
@@ -21,7 +21,7 @@ const fail=m=>{boot.classList.add('err');boot.innerHTML='<div><b>ALPHA · CHARGE
 try{
  let src=await fetch(BASE,{cache:'no-store'}).then(r=>{if(!r.ok)throw new Error('base Alpha HTTP '+r.status);return r.text()});
  if(src.split(NEEDLE).length-1!==1)throw new Error('point d’injection Alpha ambigu');
- const inject="const __gvaultBugTag='<script data-gvault-bug-report-module=\"GVAULT_BUG_REPORT_MODULE_V1\" src=\"bug-report-module.js?v=1\"><\\/script>';const __gvaultBugAt=html.toLowerCase().lastIndexOf('</body>');if(__gvaultBugAt<0)throw new Error('fermeture body Alpha introuvable');html=html.slice(0,__gvaultBugAt)+__gvaultBugTag+'\\n'+html.slice(__gvaultBugAt);document.open();document.write(html);document.close();";
+ const inject="const __gvaultBugTag='<script data-gvault-bug-report-module=\"GVAULT_BUG_REPORT_MODULE_V1\" src=\"bug-report-module.js?v=1\"><\\/script>';const __gvaultSurgeonTag='<script data-gvault-button-surgeon=\"GVAULT_BUTTON_SURGEON_CLIENT_V1\" src=\"button-surgeon-client.js?v=1\"><\\/script>';const __gvaultBugAt=html.toLowerCase().lastIndexOf('</body>');if(__gvaultBugAt<0)throw new Error('fermeture body Alpha introuvable');html=html.slice(0,__gvaultBugAt)+__gvaultBugTag+'\\n'+__gvaultSurgeonTag+'\\n'+html.slice(__gvaultBugAt);document.open();document.write(html);document.close();";
  src=src.replace(NEEDLE,inject);
  document.open();document.write(src);document.close();
 }catch(e){console.error(e);fail(e?.message||e)}
