@@ -1,1 +1,0 @@
-GVAULT Stable V3 direct-write probe
