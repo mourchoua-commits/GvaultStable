@@ -1,0 +1,59 @@
+{
+  "schema": "game-vault.gu1.1.qa.v1",
+  "generated_at_utc": "2026-08-27T15:49:35.594292+00:00",
+  "base": {
+    "source": "GAME_VAULT_v67_VFS_ALPHA4_9_GLOBAL_CENSUS_GU1_SOURCE.html",
+    "sha256": "316a789441413e708d2fb02bb2aadd184e82d36e7c09258343eac5bdef6ef56d",
+    "lock": "GAME_VAULT_v67_VFS_ALPHA4_9_QA_HARDENED_PHONE_LOCK.html",
+    "lock_sha256": "6d2c5c1198a6027cbda9cd355ac97fd74e15073048d7537de6adaa2fdbce9ffe"
+  },
+  "candidate": {
+    "source": "GAME_VAULT_v67_VFS_ALPHA4_9_GLOBAL_CENSUS_GU1_1_CHECKUP_REPAIR_SOURCE.html",
+    "sha256": "57665decafa76efdb1d2905b0ef9d45e56fd9fbf1528147a49ae7ecd284c957f",
+    "bytes": 21996457,
+    "phone_lock": "GAME_VAULT_v67_VFS_ALPHA4_9_GLOBAL_CENSUS_GU1_1_CHECKUP_REPAIR_PHONE_LOCK.html",
+    "phone_lock_sha256": "89f1df03b5c390aa6d641b3706d5a012e739c94695f63352f9d44a4cc0643646",
+    "phone_lock_bytes": 27783353
+  },
+  "static_summary": {"pass":28,"total":28,"all_pass":true},
+  "expected_contract": {"projects_total":29,"builds_expected":23,"metadata_only":6},
+  "checks": [
+    {"name":"metadata_only_vault-agent-mobile","pass":true,"detail":"playable:false"},
+    {"name":"no_fake_build_assignment_vault-agent-mobile","pass":true,"detail":""},
+    {"name":"metadata_only_clown-gif","pass":true,"detail":"playable:false"},
+    {"name":"no_fake_build_assignment_clown-gif","pass":true,"detail":""},
+    {"name":"metadata_only_mosaic-sky","pass":true,"detail":"playable:false"},
+    {"name":"no_fake_build_assignment_mosaic-sky","pass":true,"detail":""},
+    {"name":"metadata_only_ouvre-voies-font","pass":true,"detail":"playable:false"},
+    {"name":"no_fake_build_assignment_ouvre-voies-font","pass":true,"detail":""},
+    {"name":"metadata_only_audio-spectrogram","pass":true,"detail":"playable:false"},
+    {"name":"no_fake_build_assignment_audio-spectrogram","pass":true,"detail":""},
+    {"name":"metadata_only_network-monitoring","pass":true,"detail":"playable:false"},
+    {"name":"no_fake_build_assignment_network-monitoring","pass":true,"detail":""},
+    {"name":"build_contract_helper","pass":true,"detail":""},
+    {"name":"checkup_builds_required_only","pass":true,"detail":""},
+    {"name":"vfs_runtime_canonical_capture","pass":true,"detail":""},
+    {"name":"vfs_reconciles_current_builds","pass":true,"detail":""},
+    {"name":"vfs_removes_metadata_current_b64","pass":true,"detail":""},
+    {"name":"vfs_parity_required_only","pass":true,"detail":""},
+    {"name":"forge_core_launcher","pass":true,"detail":""},
+    {"name":"assistant_core_launcher","pass":true,"detail":""},
+    {"name":"dojo_dynamic_count","pass":true,"detail":""},
+    {"name":"dojo_dynamic_recent","pass":true,"detail":""},
+    {"name":"dojo_need_resolver","pass":true,"detail":""},
+    {"name":"node_check_script_1","pass":true,"detail":""},
+    {"name":"node_check_script_2","pass":true,"detail":""},
+    {"name":"node_check_script_3","pass":true,"detail":""},
+    {"name":"phone_lock_payload_exact_source","pass":true,"detail":"57665decafa76efdb1d2905b0ef9d45e56fd9fbf1528147a49ae7ecd284c957f"},
+    {"name":"phone_lock_gate_wrapper_unchanged","pass":true,"detail":"only current gzip payload differs"}
+  ],
+  "runtime_validation": {
+    "status":"INCONCLUSIVE",
+    "detail":"System Chromium can parse the candidate via page.set_content, but the standalone source bootstrap reports VFS package absent in this harness. This is not equivalent to the user's native-storage execution and no full runtime PASS is claimed.",
+    "observed_title":"GAME VAULT v67 · VFS α4.9 · GLOBAL CENSUS GU1.1 · CHECKUP REPAIR"
+  },
+  "rollback": {
+    "source_sha256":"316a789441413e708d2fb02bb2aadd184e82d36e7c09258343eac5bdef6ef56d",
+    "lock_sha256":"6d2c5c1198a6027cbda9cd355ac97fd74e15073048d7537de6adaa2fdbce9ffe"
+  }
+}
