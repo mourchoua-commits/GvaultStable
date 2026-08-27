@@ -16,6 +16,7 @@ try{
  const contract=await page.evaluate(()=>window.GVaultButtonLab?.schema);if(contract!=='GVAULT_BUTTON_LAB_NOSAS_V1')throw new Error('Button Lab contract missing');
  rec('NO SAS bootstrap',true,contract);
  const auto=await page.evaluate(()=>window.GVaultButtonLab.runAudit());rec('Internal declared-effect audit',auto.broken===0,`${auto.total} controls · ${auto.broken} broken`);if(auto.broken)throw new Error('Internal audit reports broken controls');
+ await page.evaluate(()=>document.querySelector('#auditPanel')?.classList.remove('open'));
 
  await clickExpect(/^☷ SYSTÈME$/,'view');
  await clickExpect(/ACTUALISER/,'state');
