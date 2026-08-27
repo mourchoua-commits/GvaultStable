@@ -1,0 +1,19 @@
+{
+  "format": "GAME_VAULT_AGENT_GU1_2_CONTINUITY_MANIFEST_V1",
+  "created": "2026-08-27T16:30:00+02:00",
+  "base": "GU1.1",
+  "candidate": "GU1.2 AGENT MAX",
+  "files": [
+    {"name":"GAME_VAULT_v67_VFS_ALPHA4_9_GLOBAL_CENSUS_GU1_2_AGENT_MAX_SOURCE.html","bytes":22014204,"sha256":"b62068dd783d6ee51bef671edc5b07d6897d4385540e2a868ead7277b403c0fb"},
+    {"name":"GAME_VAULT_v67_VFS_ALPHA4_9_GLOBAL_CENSUS_GU1_2_AGENT_MAX_PHONE_LOCK.html","bytes":27791597,"sha256":"6af7f0d314a8050492cc1ff69f1d601d0e917c573b0b3d86678ce0d3b02a2cb0"},
+    {"name":"GLOBAL_CENSUS_GU1_1_to_GU1_2_AGENT_MAX.patch","bytes":28296,"sha256":"89b042e75c04f8ca2eb72442da08d58f84767135e305ad81e8c08cc9d8b4648d"},
+    {"name":"AGENT_GU1_2_QA.json","bytes":6933,"sha256":"1066109f2b479e3412ef698fcfa93ac6e1926333c61c422c1376c54a1eb20c76"},
+    {"name":"AGENT_GU1_2_REPORT.json","bytes":14030,"sha256":"b9a2c519384e668551f623d0d2eda88fcf85d7c8a952ec761f043e59b82a299c"},
+    {"name":"README_AGENT_GU1_2.md","bytes":1940,"sha256":"26a7921b1b028c1b0028206d979c622a489febea9dd638761ad030351527b051"},
+    {"name":"ROLLBACK_AGENT_GU1_2.md","bytes":832,"sha256":"3df833ba0816a19479b80007f80d186f04ddbf531f0b9319748c80414a358438"},
+    {"name":"agent_gu12_unit_harness.js","bytes":21591,"sha256":"d97619296b5d796d6041bf58fe262cdcc665fc56ad14129581e41dcbe59468a4"},
+    {"name":"agent_gu12_answer_harness.js","bytes":33054,"sha256":"c89c11df10679d625f20d1c50a35e9cf0829d9408fa0422ad3bbe0816db99e82"},
+    {"name":"agent_gu12_fault_harness.js","bytes":3246,"sha256":"c7a6805455bae67f063c7a97a9c82e8834b0b9834bae9231231b4ec324f0b778"},
+    {"name":"finalize_agent_gu12.py","bytes":8130,"sha256":"4791eed34e717a11a18b0f507de5c7c9c3c6b85a1d7f5125074038a43c81e84c"}
+  ]
+}
