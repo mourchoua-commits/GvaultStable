@@ -1,0 +1,74 @@
++ {id:'private-first',title:'Project Import · Private First V3',path:'modules/private-intake/README.md',sha:'1302f367d091e0e0e8aa7e4cbf1f358b2204c154',status:'CANONICAL_POLICY',confidence:'confirmed',tags:['import prive','import privé','projet prive','projet privé','private first','publication','validation','intake','auto public','wait validation','token'],facts:['La sauvegarde privée est obligatoire avant toute écriture publique.','WAIT_VALIDATION garde la source privée jusqu’à décision Admin.','Un refus de publication ne supprime pas la sauvegarde privée.','Aucun token GitHub privé ne doit être injecté dans le navigateur public, localStorage ou un bundle.']},
++ {id:'gateway-security',title:'Anatomie gateway public stable',path:'references/public-stable/c0a1ffe1.../ANATOMY.md',sha:'7d35cf6415ee0dfa3e7e113b84048ebf7e79a1e5',status:'FUNCTIONAL_REFERENCE',confidence:'confirmed',tags:['gateway','sas','preview officielle','preview','securite','sécurité','sha','chiffrement','opaque origin','allow same origin','blob'],facts:['Taille et SHA sont vérifiés avant de considérer la source valide.','Les previews sont non destructives et utilisent un Blob temporaire.','La preview reste sandboxée sans allow-same-origin.','Une référence fonctionnelle ne réactive pas une ancienne faiblesse de sécurité.']},
++ {id:'structural-audit',title:'Audit structurel GVAULT 2026-08-26',path:'docs/GVAULT_AUDIT_2026-08-26.md',sha:'21e1003656c0ffca387007032a5937a548da2b4c',status:'AUDIT',confidence:'confirmed',tags:['audit gvault','vfs','playable false','mobile','feature guard','shutdown','canonique'],facts:['Les projets de continuité playable:false ne doivent pas être exigés comme builds HTML.','Une build canonique ne doit pas être patchée silencieusement sans revalidation.','La publication privée→publique conserve provenance, crypto et preuve.']},
++ {id:'branch-source-private',title:'BRANCHE SOURCE · reconstruction bidirectionnelle',path:'essaie/BRANCHE_SOURCE_v1.0.0/README.md',sha:'558974f40f681e4aabc8830c43dcb238ed178ad4',status:'FUNCTIONAL_ESSAI',confidence:'confirmed',tags:['branche source','reconstruction','bidirectionnelle','fragment','hypothese','hypothèse','beam search','cycle','provenance'],facts:['Le moteur classe des hypothèses par couverture, continuité, provenance et cycle inverse→direct.','Il conserve les désaccords et alternatives.','Il ne transforme jamais le meilleur candidat en vérité historique sans preuve.']},
++ {id:'gdata-mobile-qa',title:'GData 1.3.2 · QA mobile privée',path:'essai/GData/1.3.2/README.md',sha:'2fce692189e39b18f7b2db7a69df2dad0649bf07',status:'ESSAI_TESTED',confidence:'confirmed',tags:['gdata','mobile','android','layout','qa','topbar','viewport'],facts:['Une régression mobile provenait d’une règle width:100% restée active après retour au flex.','La correction testée garde les actions dans un rail horizontal compact.','Contrôle local annoncé : 86/86 PASS avec cibles 320/360/390/720/1024 CSS px.']}
++];
++const AGENT_EVIDENCE_KEY='game_vault_agent_evidence_use_v1';
++const AGENT_TRACE_KEY='game_vault_agent_trace_v1';
++let agentLastTurnMeta={capability:null,evidenceIds:[],confidence:'unknown',actionState:'proposed'};
++function agentRedactTraceText(s=''){
++ return String(s).replace(/(?:ghp_|github_pat_|sk-)[A-Za-z0-9_\-]{8,}/g,'[SECRET_REDACTED]').replace(/Bearer\s+[A-Za-z0-9._\-]+/gi,'Bearer [REDACTED]').slice(0,2200);
++}
++function agentEvidenceHistory(){try{const v=JSON.parse(storageGet(AGENT_EVIDENCE_KEY)||'[]');return Array.isArray(v)?v:[]}catch(e){return []}}
++function agentTraceHistory(){try{const v=JSON.parse(storageGet(AGENT_TRACE_KEY)||'[]');return Array.isArray(v)?v:[]}catch(e){return []}}
++function recordAgentEvidenceUse(query,ids=[]){
++ const clean=[...new Set(ids)].filter(id=>AGENT_KNOWLEDGE_SOURCES.some(x=>x.id===id));if(!clean.length)return;
++ const list=agentEvidenceHistory();list.push({at:new Date().toISOString(),query:agentRedactTraceText(query).slice(0,500),sources:clean});storageSet(AGENT_EVIDENCE_KEY,JSON.stringify(list.slice(-80)));
++}
++function recordAgentTrace({query,answer,ctx,capability,evidenceIds=[],confidence='unknown',actionState='proposed'}){
++ const list=agentTraceHistory();list.push({schema:'GVAULT_AGENT_TRACE_V1',at:new Date().toISOString(),query:agentRedactTraceText(query).slice(0,800),answer:agentRedactTraceText(answer),surface:ctx?.surface||'vault',projectId:ctx?.project?.id||null,capability:capability||null,evidenceIds:[...new Set(evidenceIds)],confidence,actionState});storageSet(AGENT_TRACE_KEY,JSON.stringify(list.slice(-160)));
++}
++function agentKnowledgeSearch(q,limit=3){
++ const n=agentNorm(q),words=agentWords(q).filter(w=>w.length>2&&!AGENT_STOP_WORDS.has(w));
++ const scored=AGENT_KNOWLEDGE_SOURCES.map(src=>{
++  const title=agentNorm(src.title),path=agentNorm(src.path),tags=(src.tags||[]).map(agentNorm),facts=agentNorm((src.facts||[]).join(' '));let score=0;
++  for(const t of tags){if(t&&n.includes(t))score+=Math.max(5,Math.min(14,t.length));}
++  for(const w of words){if(title.includes(w))score+=4;if(path.includes(w))score+=3;if(tags.some(t=>t.includes(w)))score+=3;if(facts.includes(w))score+=1;}
++  if(agentNorm(src.id)===n)score+=20;
++  return {src,score};
++ }).filter(x=>x.score>=5).sort((a,b)=>b.score-a.score||a.src.id.localeCompare(b.src.id));
++ return scored.slice(0,limit);
++}
++function agentKnowledgeIntent(q){
++ const n=agentNorm(q);
++ return /github|rollback|undo|revert|action.?ledger|vigie|che.?kca|fic.?sa|workflow conversation|trace conversation|private first|import prive|projet prive|publication.*prive|preview officielle|gateway|sas|branche source|provenance|preuve|unproven|gdata.*mobile|audit gvault/.test(n);
++}
++function agentKnowledgeAnswer(q){
++ if(!agentKnowledgeIntent(q))return null;
++ const hits=agentKnowledgeSearch(q,3);if(!hits.length)return null;
++ const top=hits[0],sources=hits.map(x=>x.src);
++ agentLastTurnMeta.evidenceIds=sources.map(x=>x.id);agentLastTurnMeta.confidence=top.src.confidence||'confirmed';agentLastTurnMeta.capability='private-knowledge';
++ const facts=sources.flatMap(s=>(s.facts||[]).slice(0,s===top.src?4:2)).filter((x,i,a)=>a.indexOf(x)===i).slice(0,7);
++ const provenance=sources.map(s=>`- ${s.id} · ${s.status} · ${s.path} · ${s.sha.slice(0,12)}…`).join('\n');
++ return `CONNAISSANCE GVAULT · ${top.src.title}\nConfiance : ${String(top.src.confidence||'confirmed').toUpperCase()}\n\n${facts.map(x=>'• '+x).join('\n')}\n\nPROVENANCE\n${provenance}\n\nNote : snapshot local sanitisé du dépôt privé au ${AGENT_KNOWLEDGE_SNAPSHOT_AT}; ce runtime ne lit pas GitHub en direct.`;
++}
++function agentSelfHealth(){
++ const recentFaults=agentFaultHistory().filter(x=>Date.now()-(Number(x.atMs)||0)<=AGENT_FAULT_WINDOW_MS);
++ return `ÉTAT AGENT\nCircuit : ${agentCircuitOpen?'COUPÉ':'ACTIF'}\nMode : ${agentModelLabel()}\nProjets : ${projects.length}\nSources de connaissance : ${AGENT_KNOWLEDGE_SOURCES.length}\nPreuves consultées localement : ${agentEvidenceHistory().length}\nTraces : ${agentTraceHistory().length}\nRègles apprises : ${agentRuleLibrary().length}\nBacklog : ${agentLearningBacklog().length}\nNotifications non lues : ${agentUnreadNotifications().length}\nDéfauts récents : ${recentFaults.length}/${AGENT_FAULT_BUDGET}\nRéseau privé : DÉSACTIVÉ PAR DÉFAUT · snapshot local uniquement`;
++}
+ 
+ function agentNorm(s=''){
+  return String(s).normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase()
+@@ -9390,7 +9480,9 @@
+   ['play',/\bjoue\b|play|lance le jeu/],
+   ['theme',/\btheme\b/],
+   ['learn',/^appren(?:ds|d)?\s*:|mes apprentissages|ce que tu as appris/],
+-  ['pad-custom',/^commande\s*:|mes commandes|pave modulable|pavé modulable/]
++  ['pad-custom',/^commande\s*:|mes commandes|pave modulable|pavé modulable/],
++  ['self-health',/etat agent|sante agent|santé agent|diagnostic agent|agent health/],
++  ['private-knowledge',/github|rollback|undo|revert|action.?ledger|vigie|che.?kca|fic.?sa|workflow conversation|trace conversation|private first|import prive|preview officielle|gateway|branche source|provenance|unproven/]
+  ];
+  return tests.find(([,re])=>re.test(n))?.[0]||null;
+ }
+@@ -9430,18 +9522,19 @@
+  const list=agentUnknownQueries();if(list.some(x=>agentNorm(x.q)===n))return;
+  list.push({q:String(q).slice(0,500),at:new Date().toISOString()});storageSet(AGENT_UNKNOWN_KEY,JSON.stringify(list.slice(-50)));
+ }
+-function agentCustomRuleAnswer(q){
++function agentCustomRuleMatch(q){
+  const n=agentNorm(q),rules=agentRuleLibrary();
+- const exact=rules.find(r=>agentNorm(r.q)===n);if(exact)return exact.a;
+- const fuzzy=rules.find(r=>{const rq=agentNorm(r.q);return rq.length>=8&&(n.includes(rq)||rq.includes(n))});return fuzzy?.a||null;
+-}
++ const exact=rules.find(r=>agentNorm(r.q)===n);if(exact)return {answer:exact.a,match:'exact',rule:exact};
