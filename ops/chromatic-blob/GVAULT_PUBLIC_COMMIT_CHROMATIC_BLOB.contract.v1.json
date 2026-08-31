@@ -1,0 +1,44 @@
+{
+  "schema": "GVAULT_PUBLIC_COMMIT_CHROMATIC_BLOB_CONTRACT_V1",
+  "version": "1.0.0",
+  "status": "ACTIVE_PUBLIC_METADATA_PROJECTION",
+  "purpose": "Hold the public-safe projection of the bidirectional Git/CVL commit blob so a private chromatic twin can observe and preserve the same projection without exposing raw conversation text.",
+  "source": "GVAULT_COMMIT_CHROMATIC_PAIR_V1",
+  "role": "PUBLIC_BIDIRECTIONAL_COMMIT_BLOB",
+  "allowedFields": [
+    "ledgerId",
+    "pairId",
+    "entry.contentSha256",
+    "entry.utf8Bytes",
+    "entry.observedAt",
+    "exit.commitSha",
+    "exit.chainSha256",
+    "exit.contentSha256",
+    "exit.utf8Bytes",
+    "exit.exactReadbackVerified",
+    "exit.observedAt",
+    "comparison",
+    "projectionSha256"
+  ],
+  "forbiddenFields": [
+    "rawText",
+    "verifiedText",
+    "messageText",
+    "privateReasoning",
+    "hiddenReasoning"
+  ],
+  "authority": "DERIVED_PUBLIC_PROJECTION_ONLY",
+  "canonicalAuthority": "PRIVATE_GIT_CVL",
+  "privateMirror": {
+    "repositoryVisibility": "PRIVATE",
+    "role": "PRIVATE_PUBLIC_BLOB_THIRD_TWIN",
+    "gthinkAvailability": "READ_ALWAYS"
+  },
+  "rules": [
+    "NO_RAW_TEXT_PUBLICATION",
+    "ENTRY_AND_EXIT_REMAIN_DISTINCT",
+    "PUBLIC_BLOB_NEVER_REPLACES_GIT_CVL",
+    "PRIVATE_TWIN_MAY_KEEP_EXACT_PUBLIC_PROJECTION",
+    "CHROMATIC_BLOB_IS_ARCHITECTURE_METADATA_NOT_COLOR_ALIAS"
+  ]
+}
