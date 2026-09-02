@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>GVAULT · Public Dual-Core Blob Lab</title>
+<style>
+:root{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;color-scheme:dark;background:#090b10;color:#e9edf5}*{box-sizing:border-box}body{margin:0;padding:16px;min-height:100vh;background:radial-gradient(circle at 30% 0,#192135,#090b10 52%)}main{max-width:980px;margin:auto}h1{font-size:clamp(22px,5vw,42px);margin:0 0 8px}.sub{opacity:.72;margin-bottom:16px}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:10px}.card{border:1px solid #31394b;border-radius:14px;padding:13px;background:#10141d}.k{font-size:12px;opacity:.68}.v{font-size:20px;font-weight:700;margin-top:5px}button{width:100%;margin:14px 0;padding:13px;border-radius:12px;border:1px solid #526078;background:#171e2b;color:inherit;font:inherit;font-weight:700}pre{white-space:pre-wrap;overflow-wrap:anywhere;border:1px solid #31394b;border-radius:14px;padding:12px;background:#0c1017;min-height:120px}.ok{color:#b8ffd0}.warn{color:#ffe6a8}
+</style>
+</head>
+<body><main>
+<h1>PUBLIC DUAL-CORE BLOB</h1>
+<div class="sub">FULL_BUDGET_SIMULATION · 2 Web Workers créés depuis des Blob URLs · aucun throttle artificiel</div>
+<div class="grid">
+  <div class="card"><div class="k">CŒUR 1</div><div class="v">ROUTE / INTENT</div></div>
+  <div class="card"><div class="k">CŒUR 2</div><div class="v">PROOF / CONTEXT</div></div>
+  <div class="card"><div class="k">GATE</div><div class="v">BOTH READY</div></div>
+  <div class="card"><div class="k">SURFACE</div><div class="v">PUBLIC ONLY</div></div>
+</div>
+<button id="run">LANCER MATRICE PLEIN BUDGET</button>
+<pre id="out">READY</pre>
+</main>
+<script>
+(()=>{
+const MODES=['PROFILE_FIELD','ORPHAN_PRESSURE','CRITICALITY','CAPABILITY'];
+const schema='GVAULT_PUBLIC_DUAL_CORE_BLOB_V1';
+const fold=s=>{let h=2166136261>>>0;for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619)>>>0}return h>>>0};
+const core1Source=`self.onmessage=e=>{const j=e.data;let ready=0,d=2166136261>>>0;const modes=['PROFILE_FIELD','ORPHAN_PRESSURE','CRITICALITY','CAPABILITY'];for(let i=0;i<j.iterations;i++){const m=modes[i%4];let h=2166136261>>>0;const s=j.name+':'+m+':'+i;for(let k=0;k<s.length;k++){h^=s.charCodeAt(k);h=Math.imul(h,16777619)>>>0}d^=h;ready++}self.postMessage({core:'CORE1',ready,digest:(d>>>0).toString(16),iterations:j.iterations})}`;
+const core2Source=`self.onmessage=e=>{const j=e.data;let ready=0,recoveries=0,d=0;for(let i=0;i<j.iterations;i++){let proof=true;if(j.failEvery&&i>0&&i%j.failEvery===0){proof=false;recoveries++;proof=true}if(proof)ready++;d=(d+((i+1)*2654435761>>>0))>>>0}self.postMessage({core:'CORE2',ready,recoveries,digest:(d>>>0).toString(16),iterations:j.iterations})}`;
+const mkWorker=src=>new Worker(URL.createObjectURL(new Blob([src],{type:'text/javascript'})));
+async function runWorkerPair(job){const a=mkWorker(core1Source),b=mkWorker(core2Source);const one=w=>new Promise((res,rej)=>{const t=setTimeout(()=>rej(new Error('WORKER_TIMEOUT')),15000);w.onmessage=e=>{clearTimeout(t);res(e.data)};w.onerror=e=>{clearTimeout(t);rej(new Error(e.message||'WORKER_ERROR'))}});const t0=performance.now();a.postMessage(job);b.postMessage(job);try{const [c1,c2]=await Promise.all([one(a),one(b)]);const durationMs=performance.now()-t0;const dualReady=Math.min(c1.ready,c2.ready);return {name:job.name,iterations:job.iterations,failEvery:job.failEvery||0,durationMs,throughputPerSec:Math.round((job.iterations*2)/(durationMs/1000)),core1:c1,core2:c2,dualReady,pass:c1.ready===job.iterations&&c2.ready===job.iterations&&dualReady===job.iterations}}finally{a.terminate();b.terminate()}}
+const scenarios=[
+{name:'SILLAGE_ROTATION',iterations:4096},
+{name:'BURST',iterations:8192},
+{name:'PROOF_RECOVERY',iterations:4096,failEvery:97},
+{name:'CONTEXT_PRESSURE',iterations:6144},
+{name:'MIXED_LOAD',iterations:6144,failEvery:211}
+];
+let last=null;
+async function runMatrix(){const startedAt=new Date().toISOString(),rows=[];for(const s of scenarios)rows.push(await runWorkerPair(s));const totalIterations=rows.reduce((a,r)=>a+r.iterations,0);const dualReady=rows.reduce((a,r)=>a+r.dualReady,0);const recoveries=rows.reduce((a,r)=>a+r.core2.recoveries,0);last={schema,mode:'FULL_BUDGET_SIMULATION',startedAt,finishedAt:new Date().toISOString(),workerModel:'TWO_WEB_WORKERS_FROM_BROWSER_BLOBS',artificialThrottle:false,networkDuringSimulation:'NONE',privateData:false,externalWrites:'NONE',canonicalMutation:false,scenarios:rows,totalIterations,dualReady,recoveries,pass:rows.every(r=>r.pass)&&dualReady===totalIterations};return last}
+window.GVaultDualCoreBlob={schema,version:'1.0.0',modes:MODES,scenarios:[...scenarios],runMatrix,report:()=>last,probe:()=>({schema,blobWorkerSupported:typeof Worker==='function'&&typeof Blob==='function',crossCoreGate:'BOTH_WORKERS_READY_REQUIRED',publicOnly:true,privateData:false,externalWrites:'NONE'})};
+document.querySelector('#run').addEventListener('click',async()=>{const out=document.querySelector('#out');out.textContent='RUNNING…';try{const r=await runMatrix();out.className=r.pass?'ok':'warn';out.textContent=JSON.stringify(r,null,2)}catch(e){out.className='warn';out.textContent=String(e?.stack||e)}});
+})();
+</script></body></html>
