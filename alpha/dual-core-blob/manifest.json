@@ -1,0 +1,29 @@
+{
+  "schema": "GVAULT_PUBLIC_DUAL_CORE_BLOB_MANIFEST_V1",
+  "version": "1.0.0",
+  "surface": "PUBLIC",
+  "mode": "FULL_BUDGET_SIMULATION",
+  "playwright": true,
+  "workerModel": "TWO_WEB_WORKERS_FROM_BROWSER_BLOBS",
+  "cores": {
+    "core1": "PUBLIC_DERIVED_ROUTE_INTENT_SIMULATOR",
+    "core2": "PUBLIC_DERIVED_PROOF_CONTEXT_SIMULATOR"
+  },
+  "crossCoreGate": "BOTH_WORKERS_READY_REQUIRED",
+  "containsPrivateVaultSource": false,
+  "containsPrivateCatalog": false,
+  "containsTokens": false,
+  "privateData": false,
+  "externalWrites": "NONE",
+  "networkDuringSimulation": "NONE",
+  "canonicalAuthority": false,
+  "canonicalMutation": false,
+  "artificialThrottle": false,
+  "scenarios": [
+    "SILLAGE_ROTATION",
+    "BURST",
+    "PROOF_RECOVERY",
+    "CONTEXT_PRESSURE",
+    "MIXED_LOAD"
+  ]
+}
