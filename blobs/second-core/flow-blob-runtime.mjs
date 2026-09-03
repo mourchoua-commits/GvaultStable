@@ -47,6 +47,18 @@ function assert(condition, code) {
 function sameArray(a, b) {
   return Array.isArray(a) && a.length === b.length && a.every((v, i) => v === b[i]);
 }
+function boundedMaxActive(pulse) {
+  const p = pulse.performance || {};
+  const requested = p.maxActive === 'AUTO' ? p.autoHardCap : p.maxActive;
+  return Math.max(1, Math.min(requested, p.absoluteHardCap));
+}
+function meshFanout(pulse) {
+  const maxActive = boundedMaxActive(pulse);
+  const requested = pulse.performance?.meshFanout;
+  return Number.isInteger(requested)
+    ? Math.max(1, Math.min(requested, maxActive))
+    : Math.max(1, Math.min(8, maxActive));
+}
 
 function validatePulse(pulse) {
   assert(pulse?.schema === 'GVAULT_DUAL_CORE_FLOW_PULSE_V1', 'PULSE_SCHEMA_INVALID');
@@ -55,6 +67,7 @@ function validatePulse(pulse) {
   assert(sameArray(pulse?.cores, ['GThink', 'second-core']), 'DUAL_CORE_BINDING_REQUIRED');
   assert(sameArray(pulse?.forwardFlow, EXPECTED_FORWARD), 'FORWARD_FLOW_MISMATCH');
   assert(sameArray(pulse?.returnFlow, EXPECTED_RETURN), 'RETURN_FLOW_MISMATCH');
+
   const c = pulse?.constraints || {};
   assert(c.singleResponder === true, 'SINGLE_RESPONDER_REQUIRED');
   assert(c.secondResponder === false, 'SECOND_RESPONDER_FORBIDDEN');
@@ -66,41 +79,78 @@ function validatePulse(pulse) {
   assert(c.sideEffects === 'AUTHORIZED_ROOT_ONLY', 'SIDE_EFFECT_AUTHORITY_INVALID');
   assert(c.privateCriticalPath === false, 'PRIVATE_CRITICAL_PATH_FORBIDDEN');
   assert(c.privateFallback === false, 'PRIVATE_FALLBACK_FORBIDDEN');
+
   const p = pulse?.performance || {};
   assert(p.profile === 'FULL_PERF', 'FULL_PERF_PROFILE_REQUIRED');
-  assert(p.maxActive === 'AUTO' || Number.isInteger(p.maxActive), 'MAX_ACTIVE_INVALID');
+  assert(p.maxActive === 'AUTO' || (Number.isInteger(p.maxActive) && p.maxActive > 0), 'MAX_ACTIVE_INVALID');
   assert(Number.isInteger(p.autoHardCap) && p.autoHardCap > 0, 'AUTO_HARD_CAP_INVALID');
   assert(Number.isInteger(p.absoluteHardCap) && p.absoluteHardCap >= p.autoHardCap, 'ABSOLUTE_HARD_CAP_INVALID');
+  if (p.meshFanout !== undefined) {
+    assert(Number.isInteger(p.meshFanout) && p.meshFanout > 0, 'MESH_FANOUT_INVALID');
+  }
 }
 
 function buildUnits(pulse) {
-  const steps = [
-    ...pulse.forwardFlow.map(stage => ({ direction: 'forward', stage })),
-    ...pulse.returnFlow.map(stage => ({ direction: 'return', stage }))
-  ];
-  let previous = null;
-  return steps.map((step, i) => {
-    const id = `${String(i + 1).padStart(2, '0')}:${step.direction}:${step.stage}`;
-    const unit = Object.freeze({
+  const fanout = meshFanout(pulse);
+  const units = [];
+  const add = (id, direction, stage, dependencies, shard = null) => {
+    units.push(Object.freeze({
       id,
-      direction: step.direction,
-      stage: step.stage,
-      dependencies: previous ? [previous] : [],
-      affinity: step.stage === 'GThink' ? 'GTHINK' : step.stage.includes('mesh') ? 'MESH' : 'FLOW'
-    });
-    previous = id;
-    return unit;
-  });
+      direction,
+      stage,
+      dependencies: [...dependencies],
+      shard,
+      affinity: stage === 'GThink' ? 'GTHINK' : stage.includes('mesh') ? 'MESH' : 'FLOW'
+    }));
+    return id;
+  };
+
+  const f1 = add('01:forward:user-blob', 'forward', 'user-blob', []);
+  const f2 = add('02:forward:pre-listener', 'forward', 'pre-listener', [f1]);
+  const f3 = add('03:forward:mini-buffer/minis', 'forward', 'mini-buffer/minis', [f2]);
+  const forwardMesh = Array.from({ length: fanout }, (_, i) =>
+    add(`04.${String(i + 1).padStart(2, '0')}:forward:page-mesh`, 'forward', 'page-mesh', [f3], i + 1)
+  );
+  const f5 = add('05:forward:GThink', 'forward', 'GThink', forwardMesh);
+  const f6 = add('06:forward:direct-response', 'forward', 'direct-response', [f5]);
+
+  const r1 = add('07:return:GThink', 'return', 'GThink', [f6]);
+  const returnMesh = Array.from({ length: fanout }, (_, i) =>
+    add(`08.${String(i + 1).padStart(2, '0')}:return:page-mesh`, 'return', 'page-mesh', [r1], i + 1)
+  );
+  const r3 = add('09:return:minis', 'return', 'minis', returnMesh);
+  const r4 = add('10:return:pre-listener', 'return', 'pre-listener', [r3]);
+  add('11:return:response-blob', 'return', 'response-blob', [r4]);
+
+  return units;
+}
+
+function buildWaves(units, maxActive) {
+  const pending = new Map(units.map(unit => [unit.id, unit]));
+  const done = new Set();
+  const waves = [];
+  while (pending.size) {
+    const ready = [...pending.values()]
+      .filter(unit => unit.dependencies.every(dep => done.has(dep)))
+      .slice(0, maxActive);
+    assert(ready.length > 0, 'BLOB_DEPENDENCY_CYCLE_OR_CAP_DEADLOCK');
+    waves.push(ready.map(unit => unit.id));
+    for (const unit of ready) {
+      pending.delete(unit.id);
+      done.add(unit.id);
+    }
+  }
+  return waves;
 }
 
 function materializeBlobPool(pulse, units) {
   const poolId = `TASK_BLOB_POOL::DUAL_CORE_FLOW_RUNTIME::${pulse.ledgerId || 'NO_LEDGER'}::${pulse.ordinal ?? 'NO_ORDINAL'}::${pulse.target || 'UNSPECIFIED'}`;
-  const requested = pulse.performance.maxActive === 'AUTO' ? pulse.performance.autoHardCap : pulse.performance.maxActive;
-  const maxActive = Math.max(1, Math.min(requested, pulse.performance.absoluteHardCap));
+  const maxActive = boundedMaxActive(pulse);
+  const waves = buildWaves(units, maxActive);
   const blobs = [];
   for (const unit of units) {
     const common = {
-      schema: 'GVAULT_TASK_BLOB_V1',
+      schema: 'GVAULT_TASK_BLOB_V2',
       role: 'TASK_BLOB',
       scope: 'TASK',
       pool_id: poolId,
@@ -131,16 +181,18 @@ function materializeBlobPool(pulse, units) {
       standby: true
     }));
   }
+
   return Object.freeze({
-    schema: 'GVAULT_TASK_BLOB_POOL_V1',
+    schema: 'GVAULT_TASK_BLOB_POOL_V2',
     pool_id: poolId,
     status: 'READY',
     plan: Object.freeze({
-      schema: 'GVAULT_TASK_BLOB_PLAN_V1',
+      schema: 'GVAULT_TASK_BLOB_PLAN_V2',
       task_id: `DUAL_CORE_FLOW_RUNTIME::${pulse.ledgerId || 'NO_LEDGER'}::${pulse.ordinal ?? 'NO_ORDINAL'}`,
-      mode: 'SEQUENTIAL_DEPENDENCY_CHAIN',
-      waves: units.map(unit => [unit.id]),
-      parallel_peak: 1,
+      mode: 'BOUNDED_PARALLEL_DEPENDENCY_WAVES',
+      waves,
+      parallel_peak: Math.max(...waves.map(w => w.length)),
+      mesh_fanout: meshFanout(pulse),
       max_active: maxActive,
       max_active_mode: pulse.performance.maxActive === 'AUTO' ? 'AUTO_ELASTIC' : 'FIXED',
       base_hard_cap: pulse.performance.autoHardCap,
@@ -160,11 +212,12 @@ function executePrimaryBlob(blob, unit, pulse, completed) {
   assert(blob.blob_kind === 'PRIMARY', `NON_PRIMARY_EXECUTION_FORBIDDEN:${blob.blob_id}`);
   assert(blob.standby !== true, `STANDBY_EXECUTION_FORBIDDEN:${blob.blob_id}`);
   return Object.freeze({
-    schema: 'GVAULT_RUNTIME_BLOB_STAGE_RESULT_V1',
+    schema: 'GVAULT_RUNTIME_BLOB_STAGE_RESULT_V2',
     blobId: blob.blob_id,
     unitId: unit.id,
     stage: unit.stage,
     direction: unit.direction,
+    shard: unit.shard,
     core: unit.stage === 'GThink' ? 'GThink' : 'second-core',
     authority: blob.authority,
     sideEffectsPerformed: false,
@@ -188,12 +241,16 @@ export function executeFlowPulseAsBlobs(pulse, { sourceBytes = null, sourcePath 
   const results = {};
 
   for (const wave of pool.plan.waves) {
+    const waveResults = [];
     for (const unitId of wave) {
       const unit = unitById.get(unitId);
       const blob = primaryByUnit.get(unitId);
       assert(unit && blob, `PRIMARY_BLOB_MISSING:${unitId}`);
       const result = executePrimaryBlob(blob, unit, pulse, completed);
       assert(!(unitId in results), `DUPLICATE_RESULT:${unitId}`);
+      waveResults.push([unitId, result]);
+    }
+    for (const [unitId, result] of waveResults) {
       results[unitId] = result;
       executed.push(result);
       completed.add(unitId);
@@ -201,11 +258,12 @@ export function executeFlowPulseAsBlobs(pulse, { sourceBytes = null, sourcePath 
   }
 
   assert(executed.length === units.length, 'RUNTIME_STAGE_COUNT_MISMATCH');
+  assert(pool.plan.parallel_peak <= pool.plan.max_active, 'PARALLEL_PEAK_EXCEEDS_MAX_ACTIVE');
   assert(executed.every(result => result.state === 'RUNTIME_STAGE_PASS'), 'RUNTIME_STAGE_FAILURE');
   assert(executed.every(result => result.sideEffectsPerformed === false), 'UNAUTHORIZED_SIDE_EFFECT_DETECTED');
 
   const merged = Object.freeze({
-    schema: 'GVAULT_TASK_BLOB_MERGE_V1',
+    schema: 'GVAULT_TASK_BLOB_MERGE_V2',
     pool_id: pool.pool_id,
     units: units.map(unit => ({ unit_id: unit.id, result: results[unit.id] })),
     duplicate_delivery: false,
@@ -213,7 +271,7 @@ export function executeFlowPulseAsBlobs(pulse, { sourceBytes = null, sourcePath 
   });
   const sourceSha256 = sourceBytes ? sha256(sourceBytes) : sha256(Buffer.from(stable(pulse)));
   const proofCore = {
-    schema: 'GVAULT_DUAL_CORE_FLOW_RUNTIME_PROOF_V1',
+    schema: 'GVAULT_DUAL_CORE_FLOW_RUNTIME_PROOF_V2',
     runtime: process.env.GVAULT_RUNTIME_HOST || 'NODE_DIRECT',
     runtimeExecuted: true,
     runtimeMode: 'BLOB_POOL',
@@ -236,6 +294,7 @@ export function executeFlowPulseAsBlobs(pulse, { sourceBytes = null, sourcePath 
       mode: pool.plan.mode,
       maxActive: pool.plan.max_active,
       parallelPeak: pool.plan.parallel_peak,
+      meshFanout: pool.plan.mesh_fanout,
       primaryBlobCount: pool.blobs.filter(blob => blob.blob_kind === 'PRIMARY').length,
       standbyDuplicateCount: pool.blobs.filter(blob => blob.standby === true).length,
       mergePolicy: pool.merge_policy,
