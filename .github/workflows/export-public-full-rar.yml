@@ -1,0 +1,90 @@
+name: Export public Gvault full Git RAR
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/export-public-full-rar.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  STABLE_SHA: bf2020532b00aa83641c8ee9d69a2d0bf0d8f911
+  PAGES_SHA: 648154b27baa7637c1ee2ac66afd3cfee4dc99f9
+  RAR_VERSION: '723'
+
+jobs:
+  export:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Prepare RAR
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd "$RUNNER_TEMP"
+          curl -fsSLo rar.tar.gz "https://www.rarlab.com/rar/rarlinux-x64-${RAR_VERSION}.tar.gz"
+          tar -xzf rar.tar.gz
+
+      - name: Capture public repositories
+        shell: bash
+        run: |
+          set -euo pipefail
+          ROOT="$RUNNER_TEMP/export"
+          mkdir -p "$ROOT"
+          capture() {
+            repo="$1"
+            pin="$2"
+            name="$3"
+            out="$ROOT/$name"
+            mkdir -p "$out/metadata"
+            git clone --mirror "https://github.com/$repo.git" "$out/repository.git"
+            git -C "$out/repository.git" cat-file -e "${pin}^{commit}"
+            git -C "$out/repository.git" update-ref refs/heads/main "$pin"
+            git -C "$out/repository.git" gc --prune=now || true
+            git clone "$out/repository.git" "$out/source-main"
+            git -C "$out/source-main" checkout -B main "$pin"
+            git -C "$out/source-main" remote set-url origin "https://github.com/$repo.git"
+            git -C "$out/source-main" submodule update --init --recursive || true
+            git -C "$out/source-main" lfs fetch --all origin || true
+            git -C "$out/source-main" lfs checkout || true
+            printf '%s\n' "$repo" > "$out/metadata/REPOSITORY.txt"
+            printf '%s\n' "$pin" > "$out/metadata/MAIN_SHA.txt"
+            git -C "$out/repository.git" show-ref > "$out/metadata/GIT_SHOW_REF.txt"
+            git -C "$out/repository.git" for-each-ref --sort=refname --format='%(refname)%09%(objectname)%09%(objecttype)%09%(subject)' > "$out/metadata/GIT_REFS.tsv"
+            git -C "$out/repository.git" log --all --decorate=full --date=iso-strict --pretty=format:'commit %H%nparents %P%nauthor %an <%ae>%nauthor-date %aI%ncommitter %cn <%ce>%ncommit-date %cI%nrefs %D%nsubject %s%nbody %b%n---' > "$out/metadata/GIT_HISTORY_FULL.txt"
+            git -C "$out/repository.git" fsck --full > "$out/metadata/GIT_FSCK.txt" 2>&1 || true
+            git -C "$out/source-main" submodule status --recursive > "$out/metadata/SUBMODULES.txt" 2>&1 || true
+            git -C "$out/source-main" lfs ls-files --all > "$out/metadata/LFS_FILES.txt" 2>&1 || true
+            git ls-remote "https://github.com/$repo.git" > "$out/metadata/REMOTE_REFS_AT_EXPORT.txt"
+            printf '%s\n' 'Full Git hard backup: source-main + repository.git mirror + metadata.' "Pinned main: $pin" > "$out/README-RESTORE.txt"
+          }
+          capture mourchoua-commits/GvaultStable "$STABLE_SHA" public-GvaultStable
+          capture mourchoua-commits/Gvault-Pages "$PAGES_SHA" public-Gvault-Pages
+
+      - name: Build and test RAR
+        shell: bash
+        run: |
+          set -euo pipefail
+          RAR="$RUNNER_TEMP/rar/rar"
+          ROOT="$RUNNER_TEMP/export"
+          OUT="$RUNNER_TEMP/out"
+          mkdir -p "$OUT"
+          "$RAR" a -r -m5 -ma5 "$OUT/Gvault-public-stable-full-git.rar" "$ROOT/public-GvaultStable/"
+          "$RAR" a -r -m5 -ma5 "$OUT/Gvault-public-pages-full-git.rar" "$ROOT/public-Gvault-Pages/"
+          "$RAR" a -r -m5 -ma5 "$OUT/Gvault-public-all-full-git.rar" "$ROOT/public-GvaultStable/" "$ROOT/public-Gvault-Pages/"
+          "$RAR" t "$OUT/Gvault-public-stable-full-git.rar"
+          "$RAR" t "$OUT/Gvault-public-pages-full-git.rar"
+          "$RAR" t "$OUT/Gvault-public-all-full-git.rar"
+          (cd "$OUT" && sha256sum *.rar > SHA256SUMS-PUBLIC.txt)
+          printf '%s\n' "GvaultStable main: $STABLE_SHA" "Gvault-Pages main: $PAGES_SHA" > "$OUT/SOURCE_HEADS_PUBLIC.txt"
+
+      - name: Upload
+        uses: actions/upload-artifact@v4
+        with:
+          name: Gvault-public-full-hard-backups
+          path: ${{ runner.temp }}/out/*
+          if-no-files-found: error
+          retention-days: 30
