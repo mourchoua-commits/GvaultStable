@@ -10,7 +10,9 @@ try{
   page.on('pageerror',e=>consoleErrors.push('pageerror: '+String(e.message||e)));
   page.on('console',m=>{if(m.type()==='error')consoleErrors.push('console: '+m.text())});
   page.on('request',r=>{if(armed)lateRequests.push(r.url())});
-  await page.goto(URL,{waitUntil:'networkidle'});armed=true;
+  await page.goto(URL,{waitUntil:'domcontentloaded',timeout:30000});
+  await page.waitForFunction(()=>window.GVaultContinuousDualCore?.probe()?.schema==='GVAULT_PUBLIC_DUAL_CORE_CONTINUOUS_V1',null,{timeout:10000});
+  await page.waitForTimeout(100);armed=true;
   const probe=await page.evaluate(()=>window.GVaultContinuousDualCore?.probe());
   if(probe?.schema!=='GVAULT_PUBLIC_DUAL_CORE_CONTINUOUS_V1'||probe.mode!=='RUN_UNTIL_STOPPED'||probe.autoStart!==true)throw new Error('continuous contract missing');
   if(probe.artificialThrottle!==false||probe.boundedHistory!==64||probe.networkAfterLoad!=='NONE'||probe.privateData!==false||probe.externalWrites!=='NONE'||probe.canonicalMutation!==false)throw new Error('continuous safety contract failed');
