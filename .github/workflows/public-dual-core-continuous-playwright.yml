@@ -1,0 +1,53 @@
+name: Public Dual-Core Continuous Playwright
+
+on:
+  pull_request:
+    paths:
+      - "alpha/dual-core-blob/continuous.html"
+      - "alpha/dual-core-blob/continuous-manifest.json"
+      - "alpha/dual-core-blob/continuous-qa.mjs"
+      - "alpha/dual-core-blob/egress-membrane.mjs"
+      - ".github/workflows/public-dual-core-continuous-playwright.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  soak-proof:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Verify continuous contract
+        run: |
+          node -e "const m=require('./alpha/dual-core-blob/continuous-manifest.json');if(m.schema!=='GVAULT_PUBLIC_DUAL_CORE_CONTINUOUS_MANIFEST_V1'||m.mode!=='RUN_UNTIL_STOPPED'||m.autoStart!==true||m.artificialThrottle!==false||m.networkAfterLoad!=='NONE'||m.externalWrites!=='NONE'||m.canonicalMutation!==false||m.privateData!==false||m.families?.length!==12)throw new Error('continuous contract mismatch')"
+      - name: Install Playwright Chromium
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium
+      - name: Start public continuous lab
+        run: |
+          python3 -m http.server 4173 --bind 127.0.0.1 >/tmp/continuous-dual-core-http.log 2>&1 &
+          for i in $(seq 1 40); do curl -fsS http://127.0.0.1:4173/alpha/dual-core-blob/continuous.html >/dev/null && exit 0; sleep .25; done
+          cat /tmp/continuous-dual-core-http.log || true
+          exit 1
+      - name: Verify sustained run-until-stopped behavior
+        run: node alpha/dual-core-blob/continuous-qa.mjs
+      - name: Print proof
+        if: always()
+        run: |
+          test -f alpha/dual-core-blob/qa/continuous-latest.json && cat alpha/dual-core-blob/qa/continuous-latest.json || true
+      - name: Upload continuous evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: public-dual-core-continuous-playwright
+          path: |
+            alpha/dual-core-blob/qa/continuous-latest.json
+            alpha/dual-core-blob/qa/continuous.png
+          if-no-files-found: error
+          retention-days: 30
