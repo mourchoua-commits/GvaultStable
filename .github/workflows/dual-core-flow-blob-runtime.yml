@@ -1,0 +1,73 @@
+name: Dual Core Flow Blob Runtime
+
+on:
+  push:
+    paths:
+      - 'blobs/second-core/flow-pulses/**'
+      - 'blobs/second-core/flow-blob-runtime.mjs'
+      - '.github/workflows/dual-core-flow-blob-runtime.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  execute-runtime-blob:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Select newest committed executable pulse
+        shell: bash
+        run: |
+          set -euo pipefail
+          PULSE="$(git log -1 --format= --name-only --diff-filter=AM -- 'blobs/second-core/flow-pulses/*.json' | sed '/^$/d' | head -n 1)"
+          test -n "$PULSE"
+          test -f "$PULSE"
+          BASE="$(basename "$PULSE" .json)"
+          OUT="blobs/second-core/runtime-results/${BASE}.runtime.json"
+          echo "PULSE=$PULSE" >> "$GITHUB_ENV"
+          echo "OUT=$OUT" >> "$GITHUB_ENV"
+      - name: Execute flow as bounded task blobs
+        env:
+          GVAULT_RUNTIME_HOST: GITHUB_ACTIONS_PUBLIC_BLOB_RUNTIME
+        run: node blobs/second-core/flow-blob-runtime.mjs "$PULSE" "$OUT"
+      - name: Verify runtime proof
+        run: |
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          const proof = JSON.parse(fs.readFileSync(process.env.OUT, 'utf8'));
+          if (proof.status !== 'RUNTIME_BLOB_PASS') throw new Error('RUNTIME_BLOB_NOT_PASS');
+          if (proof.runtimeExecuted !== true) throw new Error('RUNTIME_NOT_EXECUTED');
+          if (proof.runtimeMode !== 'BLOB_POOL') throw new Error('RUNTIME_NOT_BLOB_POOL');
+          if (proof.guardsPreserved !== true) throw new Error('GUARDS_NOT_PRESERVED');
+          if (proof.sideEffectsPerformed !== false) throw new Error('SIDE_EFFECT_POLICY_VIOLATED');
+          if (proof.privateFallbackUsed !== false) throw new Error('PRIVATE_FALLBACK_USED');
+          if (proof.target !== 'PUBLIC') throw new Error('PUBLIC_TARGET_REQUIRED');
+          console.log(`VERIFIED ${proof.proofSha256}`);
+          NODE
+      - name: Upload immutable runtime proof
+        uses: actions/upload-artifact@v4
+        with:
+          name: dual-core-flow-blob-runtime-${{ github.run_id }}
+          path: ${{ env.OUT }}
+          if-no-files-found: error
+          retention-days: 30
+      - name: Persist runtime proof
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add "$OUT"
+          if git diff --cached --quiet; then
+            echo 'proof already persisted'
+            exit 0
+          fi
+          git commit -m "runtime(blob-public): record dual-core flow execution proof"
+          git push
