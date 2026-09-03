@@ -1,0 +1,36 @@
+name: Export RAR tool
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/export-rar-tool.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  export:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Fetch RAR Linux x64
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd "$RUNNER_TEMP"
+          curl -fsSLo rar.tar.gz https://www.rarlab.com/rar/rarlinux-x64-723.tar.gz
+          tar -xzf rar.tar.gz
+          "$RUNNER_TEMP/rar/rar" -? >/dev/null || true
+          cp "$RUNNER_TEMP/rar/rar" "$GITHUB_WORKSPACE/rar-linux-x64-723"
+          cp "$RUNNER_TEMP/rar/unrar" "$GITHUB_WORKSPACE/unrar-linux-x64-723"
+          sha256sum "$GITHUB_WORKSPACE/rar-linux-x64-723" "$GITHUB_WORKSPACE/unrar-linux-x64-723" > "$GITHUB_WORKSPACE/RAR-TOOL-SHA256.txt"
+      - name: Upload tool
+        uses: actions/upload-artifact@v4
+        with:
+          name: rar-linux-x64-723-tool
+          path: |
+            rar-linux-x64-723
+            unrar-linux-x64-723
+            RAR-TOOL-SHA256.txt
+          retention-days: 1
