@@ -36,7 +36,7 @@ jobs:
             git -C "$mirror" show-ref > "$ROOT/${name}-refs.txt"
             git -C "$mirror" log --all --date=iso-strict --pretty=format:'%H%x09%P%x09%aI%x09%cI%x09%s' > "$ROOT/${name}-history.tsv"
             printf '%s\n' "$sha" > "$ROOT/${name}-main-sha.txt"
-            git bundle verify "$ROOT/${name}-complete.bundle"
+            git -C "$mirror" bundle verify "$ROOT/${name}-complete.bundle"
           }
 
           capture 'mourchoua-commits/GvaultStable' 'GvaultStable' '9572af79e1a357f6560b6383d462a06a5f113d73'
