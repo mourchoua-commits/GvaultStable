@@ -1,0 +1,26 @@
+{
+  "schema": "GVAULT.MOTOR.PRODUCTION_BATCH.v1",
+  "batchId": "FIRST-LIVE-BATCH-001",
+  "mode": "CONCRETE_OUTPUT_PROOF",
+  "branch": "task/0902-0629-mastodonte-moteur",
+  "populationPolicy": "runtime-derived; this file is a snapshot, not a quota",
+  "electricalExcluded": true,
+  "artifacts": [
+    {"artifactId":"prod-30bc69d2252f","ordinal":1,"biome":"FEU","kind":"mini-game","title":"Labyrinthe de panaches","goal":"Guider un panache chaud à travers des arches mobiles sans toucher les zones froides.","state":"PRODUCED","sandbox":true,"canonical":false},
+    {"artifactId":"prod-ea7d90fc03e9","ordinal":2,"biome":"FEU","kind":"experiment","title":"Flamme miroir","goal":"Comparer deux formes de front de flamme et garder celle qui reste la plus stable sous perturbations.","state":"PRODUCED","sandbox":true,"canonical":false},
+    {"artifactId":"prod-51bf77b49036","ordinal":3,"biome":"FEU","kind":"prototype","title":"Sculpture thermique","goal":"Modeler une colonne de chaleur en formes successives et archiver la plus surprenante.","state":"PRODUCED","sandbox":true,"canonical":false},
+    {"artifactId":"prod-8bc0bafc59c0","ordinal":4,"biome":"AIR","kind":"mini-game","title":"Course de vortex","goal":"Faire traverser une série d'anneaux à un vortex sans perdre sa cohérence.","state":"PRODUCED","sandbox":true,"canonical":false},
+    {"artifactId":"prod-626c6c22c3ef","ordinal":5,"biome":"AIR","kind":"experiment","title":"Jardin des sillages","goal":"Placer plusieurs obstacles et observer quels sillages se synchronisent ou se séparent.","state":"PRODUCED","sandbox":true,"canonical":false},
+    {"artifactId":"prod-a30bc18f45f6","ordinal":6,"biome":"AIR","kind":"prototype","title":"Nuage porteur","goal":"Chercher une géométrie de flux capable de maintenir une forme légère en suspension.","state":"PRODUCED","sandbox":true,"canonical":false},
+    {"artifactId":"prod-218593006f8d","ordinal":7,"biome":"TERRE","kind":"mini-game","title":"Avalanche de grains","goal":"Construire une pente puis modifier localement les grains pour retarder ou déclencher l'avalanche.","state":"PRODUCED","sandbox":true,"canonical":false},
+    {"artifactId":"prod-70739da3b0d9","ordinal":8,"biome":"TERRE","kind":"experiment","title":"Rivage granulaire","goal":"Tester comment des motifs de grains changent l'érosion et la déposition.","state":"PRODUCED","sandbox":true,"canonical":false},
+    {"artifactId":"prod-13f250b6631e","ordinal":9,"biome":"TERRE","kind":"prototype","title":"Cathédrale de fractures","goal":"Créer un réseau de fissures contrôlé et comparer les motifs obtenus.","state":"PRODUCED","sandbox":true,"canonical":false},
+    {"artifactId":"prod-e81f0d98a0aa","ordinal":10,"biome":"EAU","kind":"mini-game","title":"Danse des gouttes","goal":"Faire fusionner des gouttes dans un ordre imposé sans générer trop de satellites.","state":"PRODUCED","sandbox":true,"canonical":false},
+    {"artifactId":"prod-94c42e074edf","ordinal":11,"biome":"EAU","kind":"experiment","title":"Pont capillaire impossible","goal":"Chercher la forme limite d'un pont liquide avant rupture.","state":"PRODUCED","sandbox":true,"canonical":false},
+    {"artifactId":"prod-e5b387471e13","ordinal":12,"biome":"EAU","kind":"prototype","title":"Vague calligraphe","goal":"Transformer une suite d'ondes en tracé géométrique reproductible.","state":"PRODUCED","sandbox":true,"canonical":false},
+    {"artifactId":"prod-03b850b92ebf","ordinal":13,"biome":"FEU×AIR","kind":"crossover","title":"Cerf-volant thermique","goal":"Utiliser un panache et un courant d'air pour maintenir une forme virtuelle dans une zone cible.","state":"PRODUCED","sandbox":true,"canonical":false},
+    {"artifactId":"prod-f110f9ea111b","ordinal":14,"biome":"AIR×TERRE","kind":"crossover","title":"Dunes musicales","goal":"Faire évoluer une dune sous plusieurs régimes de vent et comparer ses motifs.","state":"PRODUCED","sandbox":true,"canonical":false},
+    {"artifactId":"prod-c1686ea7d02e","ordinal":15,"biome":"TERRE×EAU","kind":"crossover","title":"Rivière architecte","goal":"Laisser l'eau creuser un terrain puis sélectionner les réseaux de chenaux les plus intéressants.","state":"PRODUCED","sandbox":true,"canonical":false},
+    {"artifactId":"prod-e03a43aa6d5d","ordinal":16,"biome":"FEU×EAU","kind":"crossover","title":"Brouillard sculpteur","goal":"Faire interagir chaleur et eau dans un monde isolé pour créer des motifs de condensation sans fusion permanente.","state":"PRODUCED","sandbox":true,"canonical":false}
+  ]
+}
