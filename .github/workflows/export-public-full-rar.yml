@@ -64,7 +64,7 @@ jobs:
           capture mourchoua-commits/GvaultStable "$STABLE_SHA" public-GvaultStable
           capture mourchoua-commits/Gvault-Pages "$PAGES_SHA" public-Gvault-Pages
 
-      - name: Build and test RAR
+      - name: Build and test individual RARs
         shell: bash
         run: |
           set -euo pipefail
@@ -74,17 +74,30 @@ jobs:
           mkdir -p "$OUT"
           "$RAR" a -r -m5 -ma5 "$OUT/Gvault-public-stable-full-git.rar" "$ROOT/public-GvaultStable/"
           "$RAR" a -r -m5 -ma5 "$OUT/Gvault-public-pages-full-git.rar" "$ROOT/public-Gvault-Pages/"
-          "$RAR" a -r -m5 -ma5 "$OUT/Gvault-public-all-full-git.rar" "$ROOT/public-GvaultStable/" "$ROOT/public-Gvault-Pages/"
           "$RAR" t "$OUT/Gvault-public-stable-full-git.rar"
           "$RAR" t "$OUT/Gvault-public-pages-full-git.rar"
-          "$RAR" t "$OUT/Gvault-public-all-full-git.rar"
-          (cd "$OUT" && sha256sum *.rar > SHA256SUMS-PUBLIC.txt)
+          sha256sum "$OUT/Gvault-public-stable-full-git.rar" > "$OUT/Gvault-public-stable-full-git.rar.sha256"
+          sha256sum "$OUT/Gvault-public-pages-full-git.rar" > "$OUT/Gvault-public-pages-full-git.rar.sha256"
           printf '%s\n' "GvaultStable main: $STABLE_SHA" "Gvault-Pages main: $PAGES_SHA" > "$OUT/SOURCE_HEADS_PUBLIC.txt"
 
-      - name: Upload
+      - name: Upload stable archive
         uses: actions/upload-artifact@v4
         with:
-          name: Gvault-public-full-hard-backups
-          path: ${{ runner.temp }}/out/*
+          name: Gvault-public-stable-full-git
+          path: |
+            ${{ runner.temp }}/out/Gvault-public-stable-full-git.rar
+            ${{ runner.temp }}/out/Gvault-public-stable-full-git.rar.sha256
+            ${{ runner.temp }}/out/SOURCE_HEADS_PUBLIC.txt
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Upload pages archive
+        uses: actions/upload-artifact@v4
+        with:
+          name: Gvault-public-pages-full-git
+          path: |
+            ${{ runner.temp }}/out/Gvault-public-pages-full-git.rar
+            ${{ runner.temp }}/out/Gvault-public-pages-full-git.rar.sha256
+            ${{ runner.temp }}/out/SOURCE_HEADS_PUBLIC.txt
           if-no-files-found: error
           retention-days: 30
