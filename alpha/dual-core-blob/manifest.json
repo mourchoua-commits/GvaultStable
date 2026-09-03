@@ -1,6 +1,6 @@
 {
   "schema": "GVAULT_PUBLIC_DUAL_CORE_BLOB_MANIFEST_V1",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "surface": "PUBLIC",
   "mode": "FULL_BUDGET_SIMULATION",
   "playwright": true,
@@ -10,6 +10,16 @@
     "core2": "PUBLIC_DERIVED_PROOF_CONTEXT_SIMULATOR"
   },
   "crossCoreGate": "BOTH_WORKERS_READY_REQUIRED",
+  "egressMembrane": {
+    "policy": "SOFT_DENY_ALL_INTERNAL_CONTENT",
+    "outwardRawPayload": false,
+    "outwardDerivedPayload": false,
+    "outwardHash": false,
+    "outwardSize": false,
+    "outwardReasonDetail": false,
+    "throwsOnReject": false,
+    "neutralResponse": "SOFT_EGRESS_REJECT"
+  },
   "containsPrivateVaultSource": false,
   "containsPrivateCatalog": false,
   "containsTokens": false,
