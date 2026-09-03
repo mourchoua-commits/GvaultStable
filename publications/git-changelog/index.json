@@ -1,0 +1,500 @@
+{
+  "schema": "gvault.git-changelog.unified.v2",
+  "visibility": "public",
+  "repository": "mourchoua-commits/GvaultStable",
+  "generatedFrom": {
+    "headSha": "ce1eb01054f8bbc57d466afe5078f0ffec4104d4",
+    "headCommittedAt": "2026-09-04T00:23:43+02:00"
+  },
+  "authorities": {
+    "commits": "git_history",
+    "changelog": "tracked_repository_files",
+    "projection": "derived_rebuildable_index"
+  },
+  "gthink": {
+    "enabled": true,
+    "route": "intention_function_then_router_then_location_then_index",
+    "mode": "commit_changelog_unification"
+  },
+  "blob": {
+    "intake": "BLOB_GIT_CHANGELOG_CONTINUOUS_INTAKE",
+    "eventPort": "blob://interior/git-changelog-in",
+    "dedupe": [
+      "commitSha",
+      "sourceId:contentSha256"
+    ]
+  },
+  "discovery": {
+    "recursive": true,
+    "trackedFileCount": 295,
+    "changelogSourceCount": 2,
+    "commitCount": 86,
+    "patterns": [
+      "changelog",
+      "change-log",
+      "history",
+      "release-notes",
+      "releases",
+      "changes",
+      "news",
+      "journal",
+      "commit-log",
+      "provenance"
+    ]
+  },
+  "commits": [
+    {
+      "commitSha": "bb8e8ce119cb04d1f596d897329817b0aa33271a",
+      "committedAt": "2026-08-27T14:00:32Z",
+      "parentCount": 0
+    },
+    {
+      "commitSha": "fee98032f8e2c683c2aae383f029a1c321b6a85e",
+      "committedAt": "2026-08-27T14:24:26Z",
+      "parentCount": 1
+    },
+    {
+      "commitSha": "0359bb079ba6061bba2d07ee08551e3e44341b18",
+      "committedAt": "2026-08-27T14:27:05Z",
+      "parentCount": 1
+    },
+    {
+      "commitSha": "de95a12fe513c45f4a23245d1d6ac47336b69761",
+      "committedAt": "2026-08-27T14:29:47Z",
+      "parentCount": 1
+    },
+    {
+      "commitSha": "2d2ceda5dcf10cea19ad6e8f300e27042a167841",
+      "committedAt": "2026-08-27T14:31:55Z",
+      "parentCount": 1
+    },
+    {
+      "commitSha": "ca0b34cdf1c7f5adf664bc8c0b7760250dffb79c",
+      "committedAt": "2026-08-27T14:33:09Z",
+      "parentCount": 1
+    },
+    {
+      "commitSha": "af0483b2444506e093379f22ebd9ae6c33a57379",
+      "committedAt": "2026-08-27T14:48:41Z",
+      "parentCount": 1
+    },
+    {
+      "commitSha": "d4b2b575f1028e6e36465a827d72bc9373545358",
+      "committedAt": "2026-08-27T17:34:09+02:00",
+      "parentCount": 1
+    },
+    {
+      "commitSha": "461e061c9702171d767be907053927722e3bc992",
+      "committedAt": "2026-08-27T17:36:28+02:00",
+      "parentCount": 1
+    },
+    {
+      "commitSha": "f3f13c52a77b3892da743edd4e2ffd62d86a5a7e",
+      "committedAt": "2026-08-27T17:36:40+02:00",
+      "parentCount": 1
+    },
+    {
+      "commitSha": "2b418aa0f8d96c3e445a8297024bdac5f17d7c93",
+      "committedAt": "2026-08-27T17:36:52+02:00",
+      "parentCount": 1
+    },
+    {
+      "commitSha": "9a49bb0e33629f56288fc91a148b3b2934a4caac",
+      "committedAt": "2026-08-27T17:38:02+02:00",
+      "parentCount": 1
+    },
+    {
+      "commitSha": "5d0230b13debe9e4fedde74eb543199deee381e0",
+      "committedAt": "2026-08-27T17:51:22+02:00",
+      "parentCount": 1
+    },
+    {
+      "commitSha": "4611d56e877809a6b3ac8f254722aae61fd4dc81",
+      "committedAt": "2026-08-27T17:51:33+02:00",
+      "parentCount": 1
+    },
+    {
+      "commitSha": "b918649ca5698d65bc296c1b434234bcdea16e01",
+      "committedAt": "2026-08-27T17:51:45+02:00",
+      "parentCount": 1
+    },
+    {
+      "commitSha": "4815ab5c26a5a84348aa5fbd9101d637fd90da07",
+      "committedAt": "2026-08-27T17:52:10+02:00",
+      "parentCount": 1
+    },
+    {
+      "commitSha": "3211d09e595de953c929ae140675d08e9e58e2b6",
+      "committedAt": "2026-08-27T17:52:41+02:00",
+      "parentCount": 1
+    },
+    {
+      "commitSha": "3f88af3eb449559ef274a7ad5f2e608a9ee5d0f4",
+      "committedAt": "2026-08-27T18:28:10+02:00",
+      "parentCount": 1
+    },
+    {
+      "commitSha": "cc6479ec034246906daaabe43ccce9c9230c9010",
+      "committedAt": "2026-08-27T18:28:19+02:00",
+      "parentCount": 1
+    },
+    {
+      "commitSha": "021b7964c8a0a284246450c039bef493ea6b849e",
+      "committedAt": "2026-08-27T18:28:32+02:00",
+      "parentCount": 1
+    },
+    {
+      "commitSha": "3d096b9085db44d641a4e6cc8c6db175456e25d7",
+      "committedAt": "2026-08-27T18:29:05+02:00",
+      "parentCount": 1
+    },
+    {
+      "commitSha": "77e222f744d285de8aa933f91fae3a2c61968775",
+      "committedAt": "2026-08-27T18:30:11+02:00",
+      "parentCount": 1
+    },
+    {
+      "commitSha": "f4f7f88aac8f32966b88bdbf7b35cfc0f19f2f61",
+      "committedAt": "2026-08-27T18:30:48+02:00",
+      "parentCount": 1
+    },
+    {
+      "commitSha": "5a1577bf3743dc13a6b38081cabeb325346675a9",
+      "committedAt": "2026-08-27T18:31:31+02:00",
+      "parentCount": 1
+    },
+    {
+      "commitSha": "17ca87cd25930ce5f9c274c300e454de93854bb6",
+      "committedAt": "2026-08-27T18:31:55+02:00",
+      "parentCount": 1
+    },
+    {
+      "commitSha": "b53b3d023c61e2dcf2803a22320257201def8f4c",
+      "committedAt": "2026-08-27T18:32:27+02:00",
+      "parentCount": 1
+    },
+    {
+      "commitSha": "a20aa4593c09fa29a383cf3cfb2835e851456cf7",
+      "committedAt": "2026-08-27T18:33:44+02:00",
+      "parentCount": 1
+    },
+    {
+      "commitSha": "20f142158ae9617e77b4a753831ed9eaa5e4ed8a",
+      "committedAt": "2026-08-27T19:03:48+02:00",
+      "parentCount": 1
+    },
+    {
+      "commitSha": "7c1dfa1628e075fbae40fe558fbee52525dee1a0",
+      "committedAt": "2026-08-27T19:04:13+02:00",
+      "parentCount": 1
+    },
+    {
+      "commitSha": "81e49a6af5c97013e7417e3cf49044c0abab85cc",
+      "committedAt": "2026-08-27T19:27:45+02:00",
+      "parentCount": 1
+    },
+    {
+      "commitSha": "739ade1785226b50f4e355115dbadd5ad915b985",
+      "committedAt": "2026-08-27T19:28:05+02:00",
+      "parentCount": 1
+    },
+    {
+      "commitSha": "f8554af4c078642c844cca5792f9f06c6592b8db",
+      "committedAt": "2026-08-27T19:37:31+02:00",
+      "parentCount": 1
+    },
+    {
+      "commitSha": "615121943c14d3f98ef15e898f4aa91fa08755ab",
+      "committedAt": "2026-08-27T19:38:05+02:00",
+      "parentCount": 1
+    },
+    {
+      "commitSha": "be9bef796015c1ccc74216c40e654a4f72392325",
+      "committedAt": "2026-08-27T19:38:48+02:00",
+      "parentCount": 1
+    },
+    {
+      "commitSha": "f9de0f2ac0f92363c753490ae0babebd1242a6bb",
+      "committedAt": "2026-08-27T19:39:10+02:00",
+      "parentCount": 1
+    },
+    {
+      "commitSha": "22b8f255795542af31c773c7bd6a69634215ed8c",
+      "committedAt": "2026-08-27T19:41:19+02:00",
+      "parentCount": 1
+    },
+    {
+      "commitSha": "bb36cd4d328ca8c4ee94aae6fd1a2e5c63bac4e1",
+      "committedAt": "2026-08-27T17:42:42Z",
+      "parentCount": 1
+    },
+    {
+      "commitSha": "81f13a980a2f9492a99bf27432a8af465070abbb",
+      "committedAt": "2026-08-29T20:56:09+02:00",
+      "parentCount": 1
+    },
+    {
+      "commitSha": "970cb11cac0012665b6ad7ba039e26849466f58a",
+      "committedAt": "2026-08-29T23:41:55+02:00",
+      "parentCount": 1
+    },
+    {
+      "commitSha": "1e02c721a5bdc3567c80d1d672898040ffc39479",
+      "committedAt": "2026-08-29T23:44:36+02:00",
+      "parentCount": 1
+    },
+    {
+      "commitSha": "91fa94e89b64eda24e5e19e5a65a4f45a5568ab8",
+      "committedAt": "2026-08-31T10:47:04+02:00",
+      "parentCount": 1
+    },
+    {
+      "commitSha": "d7590fca39e5e4e8fd67f8904f31ab8d053d3e5c",
+      "committedAt": "2026-08-31T10:52:45+02:00",
+      "parentCount": 1
+    },
+    {
+      "commitSha": "49bd9e4239c7909092d6c199f9400e2332a69d5a",
+      "committedAt": "2026-09-01T00:38:38Z",
+      "parentCount": 1
+    },
+    {
+      "commitSha": "a6ce99b3caae67061c58983833b4b8ea64ecb1ab",
+      "committedAt": "2026-09-01T06:34:54Z",
+      "parentCount": 1
+    },
+    {
+      "commitSha": "75a1cbf5fa63dbdaf8c450b01f4c82f91ff943a0",
+      "committedAt": "2026-09-01T12:33:58Z",
+      "parentCount": 1
+    },
+    {
+      "commitSha": "aa07e23eecc77eae0594a85985f963be9e4f6a64",
+      "committedAt": "2026-09-01T18:31:22Z",
+      "parentCount": 1
+    },
+    {
+      "commitSha": "8e9d03f7c94970e13ef262ed7baec8059c4e178f",
+      "committedAt": "2026-09-02T00:36:20Z",
+      "parentCount": 1
+    },
+    {
+      "commitSha": "1a34f71dcb65036d387c8161a06c4517e42a2355",
+      "committedAt": "2026-09-02T06:37:27Z",
+      "parentCount": 1
+    },
+    {
+      "commitSha": "993625c2e4ba30fd437051842147128d4626c559",
+      "committedAt": "2026-09-02T12:34:38Z",
+      "parentCount": 1
+    },
+    {
+      "commitSha": "8452a7c4dfcd3e288e6c3521facd17bc626d84ac",
+      "committedAt": "2026-09-02T18:31:40Z",
+      "parentCount": 1
+    },
+    {
+      "commitSha": "7cdbea268c5dacf75a693dca6b2450831ef750f0",
+      "committedAt": "2026-09-03T01:58:41+02:00",
+      "parentCount": 1
+    },
+    {
+      "commitSha": "056c05df386f4b1425f8ec4ba05d3a37ae824367",
+      "committedAt": "2026-09-03T01:59:03+02:00",
+      "parentCount": 1
+    },
+    {
+      "commitSha": "8bd9cc890af0fbb2a9ec6a8faa5ab512862ec468",
+      "committedAt": "2026-09-03T01:59:18+02:00",
+      "parentCount": 1
+    },
+    {
+      "commitSha": "a79a9a26bedd3034b6b393d2d2d345fdd965500e",
+      "committedAt": "2026-09-03T01:59:29+02:00",
+      "parentCount": 1
+    },
+    {
+      "commitSha": "44655059ecdf42343f53cc954cb96efa5ce4c06f",
+      "committedAt": "2026-09-03T02:08:50+02:00",
+      "parentCount": 1
+    },
+    {
+      "commitSha": "91507047e72ab87f4c2416295144362aed475ee3",
+      "committedAt": "2026-09-03T02:09:33+02:00",
+      "parentCount": 1
+    },
+    {
+      "commitSha": "a9eb6e388d572be54e5d81eeda1f5e2af10be182",
+      "committedAt": "2026-09-03T02:09:43+02:00",
+      "parentCount": 1
+    },
+    {
+      "commitSha": "5455d662d8379f9f3af3458aeca35583178b2e81",
+      "committedAt": "2026-09-03T02:10:03+02:00",
+      "parentCount": 1
+    },
+    {
+      "commitSha": "f353cb6a9af3f515d0fd99057a424e5d851c1809",
+      "committedAt": "2026-09-03T02:10:12+02:00",
+      "parentCount": 1
+    },
+    {
+      "commitSha": "6e2e90e6cdeced12aba4d33a7b4fdea9328c11df",
+      "committedAt": "2026-09-03T02:13:47+02:00",
+      "parentCount": 1
+    },
+    {
+      "commitSha": "b85aa8a7a691bd0f22182475568dfd4d647e66fa",
+      "committedAt": "2026-09-03T02:14:34+02:00",
+      "parentCount": 1
+    },
+    {
+      "commitSha": "2fe3955851ebcea889be65394a00429bcf1b8075",
+      "committedAt": "2026-09-03T02:14:53+02:00",
+      "parentCount": 1
+    },
+    {
+      "commitSha": "ea3c10828fd65a24c6ba17f0cd31a00a364ecafe",
+      "committedAt": "2026-09-03T02:15:02+02:00",
+      "parentCount": 1
+    },
+    {
+      "commitSha": "f79779f147ae83141df105e7368ca86d8da81687",
+      "committedAt": "2026-09-03T02:16:41+02:00",
+      "parentCount": 1
+    },
+    {
+      "commitSha": "98f854adf89823de2c9641901a46031b073fa201",
+      "committedAt": "2026-09-03T02:18:22+02:00",
+      "parentCount": 1
+    },
+    {
+      "commitSha": "c12e5547c1f94817271a16c09ad96ae154a1523a",
+      "committedAt": "2026-09-03T02:20:13+02:00",
+      "parentCount": 1
+    },
+    {
+      "commitSha": "bf2020532b00aa83641c8ee9d69a2d0bf0d8f911",
+      "committedAt": "2026-09-03T00:38:07Z",
+      "parentCount": 1
+    },
+    {
+      "commitSha": "e65370f77024cd34663d1c0e8cce09afbafee2aa",
+      "committedAt": "2026-09-03T04:42:26+02:00",
+      "parentCount": 1
+    },
+    {
+      "commitSha": "f5833127e3a611691bd68c0f4fb90f6948e821e1",
+      "committedAt": "2026-09-03T04:47:42+02:00",
+      "parentCount": 1
+    },
+    {
+      "commitSha": "34b42aa9633b0c0c73c1c035b436989f2ba88e90",
+      "committedAt": "2026-09-03T04:50:49+02:00",
+      "parentCount": 1
+    },
+    {
+      "commitSha": "d0fc82f28f90c723ac66efa9d15b8e32460b3d9a",
+      "committedAt": "2026-09-03T06:12:14+02:00",
+      "parentCount": 1
+    },
+    {
+      "commitSha": "e558b68c8b397f0dee98eaa7fbcd1cf95abb85b4",
+      "committedAt": "2026-09-03T06:12:30+02:00",
+      "parentCount": 1
+    },
+    {
+      "commitSha": "bf49e3964fce8bac7a9cbaf00d5350c693b37c9a",
+      "committedAt": "2026-09-03T06:13:06+02:00",
+      "parentCount": 1
+    },
+    {
+      "commitSha": "1efa9415574bbe58397e8920bd405f4b762db617",
+      "committedAt": "2026-09-03T06:13:20+02:00",
+      "parentCount": 1
+    },
+    {
+      "commitSha": "9d4ded5d396708b0c0b4bf79f018ddeafe988be0",
+      "committedAt": "2026-09-03T06:13:33+02:00",
+      "parentCount": 1
+    },
+    {
+      "commitSha": "a9ff767a25fb9cbd7f6d65e58b7d2e1c776738ca",
+      "committedAt": "2026-09-03T06:27:58+02:00",
+      "parentCount": 1
+    },
+    {
+      "commitSha": "e2ddceef0901dd3d4aaae4567391cdcb85094b7d",
+      "committedAt": "2026-09-03T06:28:08+02:00",
+      "parentCount": 1
+    },
+    {
+      "commitSha": "9b5d28eed4a66bfa094f7e01afff9c8ea945eb82",
+      "committedAt": "2026-09-03T06:28:21+02:00",
+      "parentCount": 1
+    },
+    {
+      "commitSha": "21094a1a9cd22da7afcb5990c4c3c66fa1fb8dfc",
+      "committedAt": "2026-09-03T04:28:35Z",
+      "parentCount": 1
+    },
+    {
+      "commitSha": "3857048ba52053ac54b5f721e3b0995d7b02e4f1",
+      "committedAt": "2026-09-03T06:32:56+02:00",
+      "parentCount": 1
+    },
+    {
+      "commitSha": "8c9afe0ca9d81acd477185cf1be929c32f5b3395",
+      "committedAt": "2026-09-03T06:33:07+02:00",
+      "parentCount": 1
+    },
+    {
+      "commitSha": "9572af79e1a357f6560b6383d462a06a5f113d73",
+      "committedAt": "2026-09-03T04:33:23Z",
+      "parentCount": 1
+    },
+    {
+      "commitSha": "0b55a5d4ae237221b3864a2ea27389e5ad5d2d9d",
+      "committedAt": "2026-09-03T16:33:49+02:00",
+      "parentCount": 1
+    },
+    {
+      "commitSha": "1949c8786eefe6fdbc05c30eb8f6322acc01c070",
+      "committedAt": "2026-09-03T16:34:41+02:00",
+      "parentCount": 1
+    },
+    {
+      "commitSha": "f9a96653b15d78db6cff9b6366d1e7d6407f4a63",
+      "committedAt": "2026-09-04T00:23:14+02:00",
+      "parentCount": 1
+    },
+    {
+      "commitSha": "ce1eb01054f8bbc57d466afe5078f0ffec4104d4",
+      "committedAt": "2026-09-04T00:23:43+02:00",
+      "parentCount": 1
+    }
+  ],
+  "changelogSources": [
+    {
+      "sourceId": "f732a2448c7de9bca900f364f2a9537c58fcb4520cb3d51fb6bb559a7cf31102",
+      "kind": "changelog",
+      "basename": "gvault-unified-git-changelog.yml",
+      "byteLength": 1465,
+      "contentSha256": "626bc27662277e3a09e7a7724b6612bac199760e0deb87d5d31cfc3208e7371c",
+      "touchingCommitCount": 1,
+      "touchingCommitsSha256": "0d34460536e15826b5c304aa32e95842686f6e543108e6e89610afa3379ce1d4"
+    },
+    {
+      "sourceId": "a84791e24735bee0fa5ddd837eef48fb5b95ca20e4a441d9306f068b03cb2d1c",
+      "kind": "changelog",
+      "basename": "gvault-unify-git-changelog.mjs",
+      "byteLength": 6026,
+      "contentSha256": "8fe539e346a579c86d63e60ca9463963e0a12d5c45df30406ba7e0b799f13489",
+      "touchingCommitCount": 1,
+      "touchingCommitsSha256": "528189e359efbbd0d591a93a0fb3706f781370f10a743e264ef68c62bc53a13d"
+    }
+  ],
+  "proof": {
+    "aggregateSha256": "75e415477897e21971c60440b6f3ea0b8578f97cdb89562b94b236cabea2315e"
+  }
+}
