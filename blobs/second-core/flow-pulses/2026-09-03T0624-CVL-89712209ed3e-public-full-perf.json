@@ -1,0 +1,32 @@
+{
+  "schema": "GVAULT_DUAL_CORE_FLOW_PULSE_V1",
+  "ledgerId": "CVL-89712209ed3e",
+  "ordinal": 2,
+  "target": "PUBLIC",
+  "status": "EXECUTE_RUNTIME_BLOB",
+  "mode": "FULL_POWER_WITH_MAX_EXISTING_GUARDS",
+  "cores": ["GThink", "second-core"],
+  "performance": {
+    "profile": "FULL_PERF",
+    "maxActive": "AUTO",
+    "autoHardCap": 32,
+    "absoluteHardCap": 64,
+    "allowHostEscalation": true,
+    "dynamicGrowth": true,
+    "duplicateCopiesPerUnit": 1
+  },
+  "forwardFlow": ["user-blob", "pre-listener", "mini-buffer/minis", "page-mesh", "GThink", "direct-response"],
+  "returnFlow": ["GThink", "page-mesh", "minis", "pre-listener", "response-blob"],
+  "constraints": {
+    "singleResponder": true,
+    "secondResponder": false,
+    "preserveMethodRouterAuthority": true,
+    "preserveExistingSafety": true,
+    "respectHostLimits": true,
+    "failClosed": true,
+    "duplicateExecution": "STANDBY_ONLY",
+    "sideEffects": "AUTHORIZED_ROOT_ONLY",
+    "privateCriticalPath": false,
+    "privateFallback": false
+  }
+}
