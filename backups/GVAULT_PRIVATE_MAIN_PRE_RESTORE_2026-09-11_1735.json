@@ -1,0 +1,13 @@
+{
+  "schema": "GVAULT_PUBLIC_RESTORE_POINTER_V1",
+  "created_local": "2026-09-11T17:35:00+02:00",
+  "source_repository": "mourchoua-commits/Gvault",
+  "source_branch": "main",
+  "source_commit": "4bb75898b586228253458327abcd07701646f1e9",
+  "source_tree": "369cb39280398072077249d76afea819e5869172",
+  "private_recovery_branch": "backup/pre-restore-20260911-1735",
+  "restore_target_commit": "7eefe50aab2272d65071029781ba9a461e2a4149",
+  "restore_target_meaning": "exit state of the earlier SILLAGE membrane + BIG_BOY pause exchange",
+  "public_backup_branch": "backup/private-main-pre-restore-20260911-1735",
+  "integrity_note": "The exact source state remains pinned by the private recovery branch. This public record preserves the immutable commit/tree identifiers and restoration map."
+}
