@@ -1,0 +1,86 @@
+{
+  "schema": "gvault.audio.core.manifest.v1",
+  "id": "gvault.audio.core.01",
+  "title": "GVAULT AUDIO CORE · TIC ↔ TAC 2078",
+  "version": "1.0.0-experimental",
+  "created_on": "2026-11-06",
+  "origin_repo": "mourchoua-commits/GvaultStable",
+  "entry": "index.html",
+  "policy": "Offline-first. Additive module, no rewrite of existing GVAULT.",
+  "modules": [
+    {
+      "id": "audio.station",
+      "path": "index.html",
+      "status": "implemented",
+      "capabilities": [
+        "two_decks",
+        "crossfade",
+        "filter",
+        "echo",
+        "compressor",
+        "spectrum",
+        "record_webm_or_ogg",
+        "local_radio",
+        "16_step_generator",
+        "vowel_synthesis",
+        "microphone_opt_in",
+        "json_export"
+      ]
+    },
+    {
+      "id": "audio.studio2078",
+      "path": "studio2078.html",
+      "status": "preserved_plus_message_adapter",
+      "capabilities": [
+        "eight_tracks",
+        "midi",
+        "wav",
+        "stem_exports",
+        "arrangement",
+        "import_audio"
+      ]
+    },
+    {
+      "id": "audio.voice",
+      "path": "voice-lab.html",
+      "status": "preserved"
+    },
+    {
+      "id": "audio.v1",
+      "path": "fabrique-v1.html",
+      "status": "preserved"
+    },
+    {
+      "id": "audio.ace_step",
+      "path": "ace-step-local.html",
+      "status": "optional_client_only",
+      "requires": "user-managed ACE-Step local server"
+    }
+  ],
+  "ports": {
+    "postMessage": "gvault.audio.v1",
+    "broadcastChannel": "gvault-audio-v1",
+    "studioInbound": [
+      "set-idea",
+      "play",
+      "stop",
+      "export-wav"
+    ],
+    "projectJSON": "gvault.audio.heart.v1"
+  },
+  "statuses": {
+    "neural_song_generation": "not_bundled",
+    "neural_stem_separation": "not_bundled",
+    "public_internet_radio": "not_implemented",
+    "local_audio_station": "implemented",
+    "android_physical_test": "pending"
+  },
+  "privacy": {
+    "networkByDefault": false,
+    "micRequiresClickAndPermission": true,
+    "localFilesNotUploaded": true,
+    "credentialsEmbedded": false
+  },
+  "sources": "docs/RESEARCH.md",
+  "tests": "docs/TESTS.md"
+}
