@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="fr"><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/><title>Leviers du réel | Atelier de voix</title>
+<style>
+:root { color-scheme:dark; --bg:#0b101a; --fg:#e9eeff; --dim:#b2bdd2; --a:#f2b8d5; --b:#71c5c8; }
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at 20% 0,#233043 0,transparent 44%),var(--bg);color:var(--fg);font-family:system-ui,-apple-system,sans-serif}main{max-width:740px;margin:auto;padding:28px 18px 50px}p{line-height:1.55;color:var(--dim)}.eyebrow{font-size:12px;letter-spacing:2px;color:var(--b);font-weight:bold}h1{font-size:clamp(32px,8vw,56px);letter-spacing:-.04em;line-height:1.05;margin:12px 0 18px}h2{font-size:21px;letter-spacing:-.02em}.panel{background:rgba(16,25,42,.86);border:1px solid #354154;border-radius:20px;padding:22px;margin:22px 0;box-shadow:0 18px 55px #050c1950}.control{margin:24px 0 6px}.between{display:flex;justify-content:space-between;gap:10px;font-size:13px;color:var(--dim);margin-top:6px}.big{font-size:18px;color:var(--fg);font-weight:600}.hint{font-size:13px}.button{border:0;background:#f6d4e5;color:#212334;border-radius:999px;padding:14px 22px;font-size:16px;font-weight:700;min-width:150px;cursor:pointer}.button:focus-visible,input:focus-visible{outline:3px solid #b6e8ee}.secondary{background:#253c4e;color:var(--fg)}.buttonrow{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}input[type=range]{display:block;width:100%;accent-color:var(--a);margin:18px 0 8px;cursor:pointer}.meter{width:100%;height:4px;border-radius:4px;background:#26384c;margin-top:14px;overflow:hidden}.meter>div{height:100%;width:0;background:linear-gradient(90deg,var(--b),var(--a));transition:width .1s}code{color:#bedce8}.chip{display:inline-block;font-size:12px;color:#cfe9e9;padding:5px 10px;background:#153138;border-radius:30px}.small{font-size:12px}a{color:#b6ece9}.error{color:#ffd7ba}</style></head>
+<body><main>
+<div class="eyebrow">NOH4INE · ATELIER VOCAL LOCAL · SANS COMPTE</div>
+<h1>La voix prend du jeu.</h1>
+<p>Deux interprétations générées à partir du même texte et du même morceau. La seconde répond aux variations d’énergie mesurées dans la musique. Bouge le levier pendant la lecture pour entendre ce qui change.</p>
+<div class="panel">
+  <div class="chip">00:00 / 02:05 · deux prises synchronisées</div>
+  <h2>Levier 01 · Expression</h2>
+  <div class="big" id="descript">Voix au milieu des deux états</div>
+  <div class="control"><label for="blend">De la régularité vers la mutation</label><input id="blend" type="range" min="0" max="100" value="50" step="1"><div class="between"><span>0 % · Régulière</span><span id="blendval">50 %</span><span>100 % · En mouvement</span></div></div>
+  <div class="meter"><div id="progress"></div></div>
+  <div class="buttonrow"><button class="button" id="play">▶ Écouter</button><button class="button secondary" id="back">↺ Repartir</button></div>
+  <p class="small" id="status" aria-live="polite">Les sons se lisent sur ton appareil, sans serveur externe.</p>
+</div>
+<div class="panel">
+  <h2>Levier 02 · Matière sonore</h2>
+  <p class="small">Ces réglages modifient vraiment le signal pendant la lecture.</p>
+  <div class="control"><label for="color">Grain / clarté</label><input id="color" type="range" min="0" max="100" value="55"><div class="between"><span>Feutré</span><span id="colorval">55 %</span><span>Brillant</span></div></div>
+  <div class="control"><label for="echo">Écho</label><input id="echo" type="range" min="0" max="65" value="12"><div class="between"><span>Sec</span><span id="echoval">12 %</span><span>Résonant</span></div></div>
+</div>
+<p class="small">Les deux pistes sont des rendus enregistrés : ce levier mélange leurs interprétations en direct. C’est une expérience de contrôle audio, pas une intelligence vocale consciente ou improvisant librement en temps réel. Aucun crédit fal requis.</p>
+<audio id="trackA" preload="auto" src="reguliere.mp3" playsinline></audio><audio id="trackB" preload="auto" src="mouvement.mp3" playsinline></audio>
+</main><script>
+const a=document.querySelector('#trackA'), b=document.querySelector('#trackB');
+const blend=document.querySelector('#blend'), color=document.querySelector('#color'), echo=document.querySelector('#echo');
+const play=document.querySelector('#play'), progress=document.querySelector('#progress');
+const label=document.querySelector('#descript'), status=document.querySelector('#status');
+let ctx,srcA,srcB,gA,gB,low,delay,feedback,wet,master;
+function setup(){
+ if(ctx)return;
+ ctx=new (window.AudioContext||window.webkitAudioContext)();
+ srcA=ctx.createMediaElementSource(a);srcB=ctx.createMediaElementSource(b);
+ gA=ctx.createGain();gB=ctx.createGain();low=ctx.createBiquadFilter();low.type='lowpass';
+ delay=ctx.createDelay(1);feedback=ctx.createGain();wet=ctx.createGain();master=ctx.createGain();master.gain.value=.85;
+ srcA.connect(gA);srcB.connect(gB);gA.connect(low);gB.connect(low);
+ low.connect(master);low.connect(delay);delay.connect(wet);wet.connect(master);
+ delay.connect(feedback);feedback.connect(delay);master.connect(ctx.destination);
+ delay.delayTime.value=.24;feedback.gain.value=.22;
+ adjust();
+}
+function adjust(){
+ const x=Number(blend.value)/100;document.querySelector('#blendval').textContent=blend.value+' %';
+ label.textContent=x<.22?'Régularité':x<.45?'La voix cherche':x<.7?'Deux mouvements se croisent':x<.9?'La voix répond au morceau':'Mutation expressive';
+ document.querySelector('#colorval').textContent=color.value+' %';document.querySelector('#echoval').textContent=echo.value+' %';
+ if(!ctx)return;
+ gA.gain.setTargetAtTime(Math.cos(x*Math.PI/2),ctx.currentTime,.035);
+ gB.gain.setTargetAtTime(Math.sin(x*Math.PI/2),ctx.currentTime,.035);
+ low.frequency.setTargetAtTime(550+Math.pow(Number(color.value)/100,1.5)*15000,ctx.currentTime,.05);
+ wet.gain.setTargetAtTime(Number(echo.value)/100*.5,ctx.currentTime,.05);
+}
+for(const input of [blend,color,echo])input.addEventListener('input',adjust);
+async function start(){
+ try{
+   setup();await ctx.resume();
+   if(Math.abs(a.currentTime-b.currentTime)>.15)b.currentTime=a.currentTime;
+   await Promise.all([a.play(),b.play()]);
+   play.textContent='❚❚ Pause';status.textContent='Levier actif. Modifie les réglages pendant la lecture.';
+ }catch(e){status.textContent='Impossible de lire les fichiers : extrais bien tous les fichiers du ZIP avant d’ouvrir cette page.';status.classList.add('error');}
+}
+function pause(){a.pause();b.pause();play.textContent='▶ Écouter';}
+play.addEventListener('click',()=>a.paused?start():pause());
+document.querySelector('#back').addEventListener('click',()=>{a.currentTime=0;b.currentTime=0;if(!a.paused){a.play();b.play()}});
+a.addEventListener('ended',()=>{pause();a.currentTime=0;b.currentTime=0;});
+a.addEventListener('timeupdate',()=>{progress.style.width=(a.duration?a.currentTime/a.duration*100:0)+'%';if(Math.abs(a.currentTime-b.currentTime)>.28&&!b.paused)b.currentTime=a.currentTime;});
+</script></body></html>
