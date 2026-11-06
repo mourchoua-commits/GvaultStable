@@ -23,6 +23,7 @@
   <div class="control"><label for="echo">Écho</label><input id="echo" type="range" min="0" max="65" value="12"><div class="between"><span>Sec</span><span id="echoval">12 %</span><span>Résonant</span></div></div>
 </div>
 <p class="small">Les deux pistes sont des rendus enregistrés : ce levier mélange leurs interprétations en direct. C’est une expérience de contrôle audio, pas une intelligence vocale consciente ou improvisant librement en temps réel. Aucun crédit fal requis.</p>
+<div class="panel" id="localImport"><h2>Mes deux prises (facultatif)</h2><p class="small">Sur la version GitHub publique, les enregistrements personnels ne sont pas publiés. Charge deux fichiers audio depuis ton appareil. Dans l’archive privée complète, les exemples peuvent déjà être présents.</p><label class="small" for="localA">Prise régulière</label><input id="localA" type="file" accept="audio/*" style="display:block;margin:8px 0 18px;max-width:100%"><label class="small" for="localB">Prise en mouvement</label><input id="localB" type="file" accept="audio/*" style="display:block;margin:8px 0;max-width:100%"></div>
 <audio id="trackA" preload="auto" src="reguliere.mp3" playsinline></audio><audio id="trackB" preload="auto" src="mouvement.mp3" playsinline></audio>
 </main><script>
 const a=document.querySelector('#trackA'), b=document.querySelector('#trackB');
@@ -66,4 +67,5 @@ play.addEventListener('click',()=>a.paused?start():pause());
 document.querySelector('#back').addEventListener('click',()=>{a.currentTime=0;b.currentTime=0;if(!a.paused){a.play();b.play()}});
 a.addEventListener('ended',()=>{pause();a.currentTime=0;b.currentTime=0;});
 a.addEventListener('timeupdate',()=>{progress.style.width=(a.duration?a.currentTime/a.duration*100:0)+'%';if(Math.abs(a.currentTime-b.currentTime)>.28&&!b.paused)b.currentTime=a.currentTime;});
+for(const [input,track] of [[document.querySelector('#localA'),a],[document.querySelector('#localB'),b]]) {let blobURL=null;input.addEventListener('change',event=>{const file=event.target.files?.[0];if(!file)return;pause();if(blobURL)URL.revokeObjectURL(blobURL);blobURL=URL.createObjectURL(file);track.src=blobURL;track.load();status.textContent='Prise locale chargée : '+file.name;status.classList.remove('error')})}
 </script></body></html>
