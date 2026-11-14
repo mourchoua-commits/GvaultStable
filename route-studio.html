@@ -313,7 +313,7 @@
       <span id="mixHex">Touche 2 couleurs en même temps pour le mélange…</span>
       <button id="mixUse">🪣 Utiliser le mélange</button>
     </div>
-    <div style="margin-top:12px;font-size:12px;color:var(--muted)">💡 La grille vit : chaque nouvelle couleur ajoute sa rangée — claire ✨, normale, foncée 🌙, <b>négatif</b> 🔄, <b>rotation +69°</b> 🌀 (cumulative : chaque appui tourne de 69° de plus !) et <b>réinversée</b> ♾️ ! Et les anciennes couleurs s'influencent entre elles (alterné avec leur négatif) → les teintes et les notes dérivent à chaque ajout ! Un clic sélectionne la couleur partout dans 🎨 Couleurs.</div>
+    <div style="margin-top:12px;font-size:12px;color:var(--muted)">💡 La grille vit : chaque nouvelle couleur ajoute sa rangée — claire ✨, normale, foncée 🌙, <b>négatif</b> 🔄, <b>rotation +69°</b> 🌀 (cumulative, et elle <b>revient au clair</b> à la fin de la boucle 360° !) et <b>réinversée</b> ♾️ ! Les couleurs s'influencent à <b>valeur équivalente</b> ⚖️ (celle que tu presses est influencée en retour, alterné avec le négatif) → teintes et notes dérivent sans jamais se salir ! Un clic sélectionne la couleur partout dans 🎨 Couleurs.</div>
     <div style="margin-top:10px;font-size:12px;color:var(--muted)">🎨 Sélecteur personnalisé</div>
     <div class="cg" id="padPrecGrid" style="margin-top:8px"></div>
     <label style="display:flex;gap:5px;align-items:center;margin-top:10px;font-size:12px;color:var(--muted)"><input id="padInv" type="checkbox"> 🔄 inversée</label>
@@ -1550,11 +1550,13 @@
     if (padColors[0] === col) return;
     padFlip = !padFlip;
     const inf = padFlip ? col : invertHex(col);
-    padColors = padColors.map(c => {
-      const a = hexToRgb(c), b = hexToRgb(inf);
-      return rgbToHex(a[0] * 0.85 + b[0] * 0.15, a[1] * 0.85 + b[1] * 0.15, a[2] * 0.85 + b[2] * 0.15);
-    });
-    padColors = padColors.filter(c => c !== col);
+    const blend = (a, b, t) => {
+      const x = hexToRgb(a), y = hexToRgb(b);
+      return rgbToHex(x[0] * (1 - t) + y[0] * t, x[1] * (1 - t) + y[1] * t, x[2] * (1 - t) + y[2] * t);
+    };
+    const others = padColors.filter(c => c !== col);
+    if (others.length) col = blend(col, mixHex(others), 0.15);
+    padColors = others.map(c => blend(c, inf, 0.15));
     padColors.unshift(col);
     if (padColors.length > 12) padColors.length = 12;
     buildPadGrid();
@@ -1612,11 +1614,14 @@
         pad.title = col + (tag ? " · " + tag : "");
         pad.addEventListener("pointerdown", e => {
           if (spin) {
-            const nk = (padSpin.get(base) || 0) + 1;
-            padSpin.set(base, nk);
-            const c = hslToHex((bh + 69 * nk) % 360, bs, bl);
+            let nk = (padSpin.get(base) || 0) + 1;
+            if (nk * 69 >= 360) {
+              nk = 0;
+              padSpin.set(base, 0);
+            } else padSpin.set(base, nk);
+            const c = nk === 0 ? base : hslToHex((bh + 69 * nk) % 360, bs, bl);
             pad.style.background = c;
-            pad.title = c + " · rotation +69° ×" + nk;
+            pad.title = c + (nk ? " · rotation +69° ×" + nk : " · retour au clair — boucle finie !");
             padPress(c, 0, pad, e);
           } else padPress(col, oct, pad, e);
         });
