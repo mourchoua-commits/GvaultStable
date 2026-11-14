@@ -227,7 +227,7 @@
 <div id="vibGrid" class="fwindow">
   <div class="fwinHead"><span>📳 Vibrations — touche les pads</span><button class="fwclose" data-close="vibGrid">✖</button></div>
   <div class="fwinBody">
-    <div class="winRow">Piste : <select id="vibTrackSel"></select></div>
+    <div class="winRow">Piste : <select id="vibTrackSel"></select> 🎹 <select id="vibInstSel" title="Instrument de la piste · choisis-en un autre pour ➕ Nouvelle piste"></select></div>
     <div id="vibPads"></div>
     <div id="vibNote" style="margin-top:8px;font-size:12px;color:var(--muted)"></div>
   </div>
@@ -249,7 +249,7 @@
 <div id="micWin" class="fwindow">
   <div class="fwinHead"><span>🎤 Micro auto-tune — chante, c'est accordé !</span><button class="fwclose" data-close="micWin">✖</button></div>
   <div class="fwinBody">
-    <div class="winRow">Piste : <select id="micTrackSel"></select>
+    <div class="winRow">Piste : <select id="micTrackSel"></select> 🎹 <select id="micInstSel" title="Instrument de la piste · choisis-en un autre pour ➕ Nouvelle piste"></select>
       <label style="display:flex;gap:5px;align-items:center"><input id="micCap" type="checkbox"> 📝 capturer</label>
     </div>
     <button id="btnMic">🎤 Activer le micro</button>
@@ -294,7 +294,7 @@
 <div id="magicPad" class="fwindow">
   <div class="fwinHead"><span>🌈 Palette magique — touche les couleurs 🎵</span><button class="fwclose" data-close="magicPad">✖</button></div>
   <div class="fwinBody">
-    <div class="winRow">Piste : <select id="padTrackSel"></select>
+    <div class="winRow">Piste : <select id="padTrackSel"></select> 🎹 <select id="padInstSel" title="Instrument de la piste · choisis-en un autre pour ➕ Nouvelle piste"></select>
       <label style="display:flex;gap:5px;align-items:center"><input id="padCap" type="checkbox" checked> 📝 capturer dans la piste</label>
     </div>
     <div class="winRow">🎨 Pinceau : <span id="padBrush" style="width:16px;height:16px;border-radius:50%;border:2px solid rgba(255,255,255,0.4);background:#888;display:inline-block;flex:none"></span>
@@ -1688,7 +1688,7 @@
     status(worldLoop ? "🔁 Boucle du monde ON — ça tourne pendant que tu crées !" : "⏹ Boucle du monde OFF");
   });
   $("btnMagic").addEventListener("click", () => {
-    fillTrackSel("padTrackSel");
+    syncWinSels();
     const open = $("magicPad").classList.toggle("open");
     if (open) status("🌈 Touche les couleurs (clair = aigu, foncé = grave), mélange-les, choisis ton pinceau !");
   });
@@ -1963,13 +1963,47 @@
   });
   $("instCells").addEventListener("pointermove", e => { if (instDragging) instHit(e); });
   window.addEventListener("pointerup", () => { instDragging = false; instLastRow = null; });
+  function instLabelOf(t) {
+    if (t.instrument === "sample") return "🎛️ Sample" + (t.sampleName ? " · " + t.sampleName.slice(0, 12) : "");
+    const ins = INSTRUMENTS.find(i => i.id === t.instrument);
+    return ins ? ins.label : t.instrument;
+  }
+  let newInstPick = "synth";
+  function fillInstSels() {
+    for (const id of ["vibInstSel", "micInstSel", "padInstSel"]) {
+      const s = $(id);
+      if (!s) continue;
+      s.innerHTML = "";
+      for (const [cat, glabel] of [["mel", "🎹 Instruments"], ["sfx", "💥 Bruits & FX"]]) {
+        const og = document.createElement("optgroup");
+        og.label = glabel;
+        for (const ins of INSTRUMENTS) {
+          if (ins.cat !== cat) continue;
+          const o = document.createElement("option");
+          o.value = ins.id;
+          o.textContent = ins.label;
+          if (ins.id === newInstPick) o.selected = true;
+          og.appendChild(o);
+        }
+        s.appendChild(og);
+      }
+    }
+  }
+  function syncWinSels() {
+    if (tracks[selTrack]) newInstPick = tracks[selTrack].instrument;
+    fillTrackSel("instTrackSel");
+    fillTrackSel("padTrackSel");
+    fillTrackSel("vibTrackSel");
+    fillTrackSel("micTrackSel");
+    fillInstSels();
+  }
   function fillTrackSel(id) {
     const s = $(id);
     s.innerHTML = "";
     tracks.forEach((t, i) => {
       const o = document.createElement("option");
       o.value = i;
-      o.textContent = t.name;
+      o.textContent = t.name + " · " + instLabelOf(t);
       if (i === selTrack) o.selected = true;
       s.appendChild(o);
     });
@@ -1981,12 +2015,19 @@
   function trackSelChange(id) {
     const v = $(id).value;
     if (v === "new") {
-      addTrack("synth");
-      status("➕ Nouvelle piste créée — la fenêtre joue et capture dessus !");
+      addTrack(newInstPick);
+      const ins = INSTRUMENTS.find(i => i.id === newInstPick);
+      status("➕ Nouvelle piste créée avec " + (ins ? ins.label : newInstPick) + " — la fenêtre joue et capture dessus !");
     } else selectTrack(Number(v));
-    fillTrackSel("instTrackSel");
-    fillTrackSel("padTrackSel");
-    fillTrackSel("vibTrackSel");
+    syncWinSels();
+  }
+  for (const id of ["vibInstSel", "micInstSel", "padInstSel"]) {
+    $(id).addEventListener("change", e => {
+      newInstPick = e.target.value;
+      fillInstSels();
+      const ins = INSTRUMENTS.find(i => i.id === newInstPick);
+      status("🎹 " + (ins ? ins.label : newInstPick) + " prêt pour ➕ Nouvelle piste !");
+    });
   }
   $("instTrackSel").addEventListener("change", () => trackSelChange("instTrackSel"));
   $("padTrackSel").addEventListener("change", () => trackSelChange("padTrackSel"));
@@ -2012,7 +2053,7 @@
   $("btnInst").addEventListener("click", () => {
     buildInstSel();
     buildInstGrid();
-    fillTrackSel("instTrackSel");
+    syncWinSels();
     const open = $("instGrid").classList.toggle("open");
     if (open) status("🎹 Clique ou glisse : ça joue instantanément et se note dans la piste choisie !");
   });
@@ -2043,7 +2084,7 @@
     }
   });
   $("btnVib").addEventListener("click", () => {
-    fillTrackSel("vibTrackSel");
+    syncWinSels();
     const ok = typeof navigator.vibrate === "function";
     $("vibNote").textContent = ok
       ? "💡 Chaque ligne = un motif (Long, Double, Triple, Roulement), plus à droite = plus rapide. Teste sur mobile !"
@@ -2054,7 +2095,7 @@
 
   let micStream = null, micAN = null, micTimer = null, micLastMidi = null;
   $("btnMicOpen").addEventListener("click", () => {
-    fillTrackSel("micTrackSel");
+    syncWinSels();
     const open = $("micWin").classList.toggle("open");
     if (open) status("🎤 Active le micro, chante — chaque note est accordée à ta gamme !");
   });
@@ -2183,6 +2224,7 @@
     $("notePanel").classList.add("hidden");
     renderTrackList();
     renderRoll();
+    syncWinSels();
     if ($("instGrid").classList.contains("open")) buildInstGrid();
     const t = tracks[i];
     $("fxVol").value = Math.round(t.fx.vol * 100);
