@@ -33,7 +33,7 @@
   .track{border:1px solid var(--line);border-radius:14px;padding:10px 12px;background:var(--panel);cursor:pointer;transition:border-color .1s,box-shadow .1s,background .1s}
   .track:hover{border-color:rgba(255,255,255,0.35)}
   .track.sel{border-color:var(--gold);box-shadow:0 0 14px rgba(255,215,106,0.35);background:rgba(255,215,106,0.06)}
-  .track .row1{display:flex;align-items:center;gap:8px}
+  .track .row1{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
   .track .dot{width:14px;height:14px;border-radius:50%;flex:none}
   .track .name{flex:1;font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-height:24px;display:flex;align-items:center}
   .track select{max-width:110px;background:#241a44;color:var(--text);border:1px solid var(--line);border-radius:8px;padding:3px 4px;font-size:12px}
@@ -67,7 +67,7 @@
   #colHex{width:80px;background:rgba(0,0,0,0.3);border:1px solid var(--line);border-radius:8px;color:var(--gold);padding:4px 6px;font-size:12px}
   .fwindow{position:fixed;right:16px;bottom:64px;width:380px;max-width:calc(100vw - 32px);min-width:260px;min-height:150px;
     background:var(--panel);border:1px solid var(--gold);border-radius:14px;z-index:60;display:none;
-    box-shadow:0 12px 40px rgba(0,0,0,0.6);overflow:hidden}
+    box-shadow:0 12px 40px rgba(0,0,0,0.6);overflow:hidden;padding-bottom:28px}
   .fwgrip{position:absolute;right:2px;bottom:2px;width:26px;height:26px;display:flex;align-items:center;justify-content:center;
     color:var(--gold);cursor:nwse-resize;font-size:16px;touch-action:none;z-index:5;background:rgba(0,0,0,0.3);border-radius:8px}
   .fwmove{background:rgba(0,0,0,0.3);border:1px solid var(--line);border-radius:8px;color:var(--gold);cursor:move;font-size:13px;padding:2px 9px;touch-action:none}
@@ -81,10 +81,12 @@
   #colorWin .chex{margin-top:8px;width:100%;background:rgba(0,0,0,0.3);border:1px solid var(--line);border-radius:8px;color:var(--gold);padding:6px;font-size:13px}
   .fwindow.open{display:flex;flex-direction:column}
   .fwinHead{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 12px;border-bottom:1px solid var(--line);font-size:13px;color:var(--gold)}
+  .fwinHead span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .fwclose,.fwmove{flex:none}
   .fwclose{background:none;border:none;color:var(--muted);cursor:pointer;font-size:14px}
   .fwinBody{flex:1;overflow:auto;padding:10px}
   #miniGame .fwinBody{padding:0}
-  #miniGame iframe{width:100%;height:calc(100% - 33px);border:0;display:block;min-height:180px}
+  #miniGame iframe{width:100%;height:100%;border:0;display:block;min-height:180px}
   #padGrid{display:grid;grid-template-columns:repeat(6,1fr);gap:8px}
   #padGrid .pad{aspect-ratio:1;border-radius:50%;border:2px solid rgba(255,255,255,0.25);cursor:pointer;padding:0;min-width:0}
   #padGrid .pad.pressed{outline:3px solid #fff;box-shadow:0 0 10px rgba(255,255,255,0.7)}
@@ -236,8 +238,13 @@
     </div>
     <div class="winRow">🎨 Pinceau : <span id="padBrush" style="width:16px;height:16px;border-radius:50%;border:2px solid rgba(255,255,255,0.4);background:#888;display:inline-block;flex:none"></span>
       <span id="padMiniGrid" style="display:flex;gap:3px;flex-wrap:wrap"></span>
-      <button id="padMoreCol" style="font-size:11px;padding:3px 8px">+ précis</button>
+      <button id="padMoreCol" style="font-size:11px;padding:3px 8px">fenêtre 🎨</button>
     </div>
+    <details style="margin-top:2px">
+      <summary style="cursor:pointer;font-size:12px;color:var(--muted)">🎨 Sélecteur précis (rectangle)</summary>
+      <div id="padPrecGrid" style="margin-top:8px;display:grid;grid-template-columns:repeat(12,20px);gap:3px;justify-content:center"></div>
+      <input id="padPrecHex" placeholder="#code hexa précis (ex : #ff7e7e)" style="margin-top:6px;width:100%;background:rgba(0,0,0,0.3);border:1px solid var(--line);border-radius:8px;color:var(--gold);padding:5px;font-size:12px">
+    </details>
     <div id="padGrid"></div>
     <div id="mixRow">
       <span id="mixSwatch"></span>
@@ -1409,6 +1416,31 @@
     padMini.appendChild(b);
   }
   $("padMoreCol").addEventListener("click", () => openColorWin("brush", false));
+  const padPrec = $("padPrecGrid");
+  for (let l = 7; l >= 1; l--) for (let h = 0; h < 12; h++) {
+    const hex = hslToHex(h * 30, 85, 10 + l * 11);
+    const b = document.createElement("button");
+    b.style.cssText = "width:18px;height:18px;border-radius:4px;border:1px solid rgba(255,255,255,0.2);cursor:pointer;padding:0";
+    b.style.background = hex;
+    b.title = hex;
+    b.addEventListener("click", () => setBrush(hex));
+    padPrec.appendChild(b);
+  }
+  for (let i = 0; i <= 6; i++) {
+    const hex = rgbToHex(i * 42.5, i * 42.5, i * 42.5);
+    const b = document.createElement("button");
+    b.style.cssText = "width:18px;height:18px;border-radius:4px;border:1px solid rgba(255,255,255,0.2);cursor:pointer;padding:0";
+    b.style.background = hex;
+    b.title = hex;
+    b.addEventListener("click", () => setBrush(hex));
+    padPrec.appendChild(b);
+  }
+  $("padPrecHex").addEventListener("change", e => {
+    let v = e.target.value.trim();
+    if (v && !v.startsWith("#")) v = "#" + v;
+    if (/^#[0-9a-fA-F]{6}$/.test(v)) setBrush(v.toLowerCase());
+    else status("❌ Hexa invalide — format : #ff7e7e");
+  });
 
   const dp = $("drawPad"), dctx = dp.getContext("2d");
   const CELL = 8;
