@@ -72,6 +72,13 @@
   .fwmove{background:rgba(0,0,0,0.3);border:1px solid var(--line);border-radius:8px;color:var(--gold);cursor:move;font-size:13px;padding:2px 9px;touch-action:none}
   #btnRec.rec{border-color:#ff5e5e;color:#ff8a8a;animation:recpulse 1s infinite}
   @keyframes recpulse{50%{opacity:0.55}}
+  .winRow{display:flex;gap:10px;align-items:center;font-size:12px;color:var(--muted);margin-bottom:8px;flex-wrap:wrap}
+  .winRow select{background:rgba(0,0,0,0.3);border:1px solid var(--line);border-radius:8px;color:var(--gold);padding:4px 6px;font-size:12px;max-width:150px}
+  .cgrid{position:fixed;left:50%;top:18%;transform:translateX(-50%);display:none;grid-template-columns:repeat(12,22px);gap:3px;
+    padding:10px;background:var(--panel);border:1px solid var(--gold);border-radius:12px;z-index:70;box-shadow:0 12px 40px rgba(0,0,0,0.6)}
+  .cgrid.open{display:grid}
+  .cgrid .csw{width:20px;height:20px;border-radius:5px;border:1px solid rgba(255,255,255,0.2);cursor:pointer;padding:0}
+  .cgrid .chex{grid-column:1 / -1;background:rgba(0,0,0,0.3);border:1px solid var(--line);border-radius:8px;color:var(--gold);padding:4px 6px;font-size:12px}
   .fwindow.open{display:flex;flex-direction:column}
   .fwinHead{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 12px;border-bottom:1px solid var(--line);font-size:13px;color:var(--gold)}
   .fwclose{background:none;border:none;color:var(--muted);cursor:pointer;font-size:14px}
@@ -157,6 +164,8 @@
       <span id="palette" style="display:flex;gap:6px;align-items:center"></span>
       <input id="colPick" type="color" value="#ffffff" title="Sélecteur de couleur">
       <input id="colHex" type="text" placeholder="#ff7e7e" title="Code hexadécimal">
+      <button class="tool" id="btnGridCol">🎨 Grille</button>
+      <button class="tool" id="btnInvCol">🔄 Inversée</button>
     </div>
     <div id="notePanel" class="hidden">
       <span class="npName" id="npName">Note</span>
@@ -165,6 +174,7 @@
       <button id="npDown">🔽 Grave</button>
       <button id="npUp">🔼 Aigu</button>
       <button id="npDel" style="border-color:#ff7e7e;color:#ff9e9e">🗑️ Suppr</button>
+      <button id="npGridCol">🎨 Précis</button>
     </div>
   </section>
 </main>
@@ -185,6 +195,9 @@
 <div id="instGrid" class="fwindow">
   <div class="fwinHead"><span>🎹 Grille instant — clique, ça joue tout de suite (pas besoin de GO)</span><button class="fwclose" data-close="instGrid">✖</button></div>
   <div class="fwinBody">
+    <div class="winRow">Piste : <select id="instTrackSel"></select>
+      <label style="display:flex;gap:5px;align-items:center"><input id="instCap" type="checkbox" checked> 📝 capturer dans la piste</label>
+    </div>
     <div id="instCells"></div>
     <div style="margin-top:8px;font-size:12px;color:var(--muted)">💡 Glisse sur les cases pour arpéger — chaque ligne = une note, chaque hauteur a SA couleur</div>
   </div>
@@ -203,6 +216,9 @@
 <div id="magicPad" class="fwindow">
   <div class="fwinHead"><span>🌈 Palette magique — touche les couleurs 🎵</span><button class="fwclose" data-close="magicPad">✖</button></div>
   <div class="fwinBody">
+    <div class="winRow">Piste : <select id="padTrackSel"></select>
+      <label style="display:flex;gap:5px;align-items:center"><input id="padCap" type="checkbox" checked> 📝 capturer dans la piste</label>
+    </div>
     <div id="padGrid"></div>
     <div id="mixRow">
       <span id="mixSwatch"></span>
@@ -1048,6 +1064,49 @@
       status(TOOL_HINTS[tool]);
     });
   });
+
+  function invertHex(hx) {
+    const [r, g, b] = hexToRgb(hx);
+    return rgbToHex(255 - r, 255 - g, 255 - b);
+  }
+  function buildColorGrid(btnId, onPick) {
+    const pop = document.createElement("div");
+    pop.className = "cgrid";
+    (document.body || document.createElement("div")).appendChild(pop);
+    const add = hex => {
+      const b = document.createElement("button");
+      b.className = "csw";
+      b.style.background = hex;
+      b.title = hex;
+      b.addEventListener("click", () => { pop.classList.remove("open"); onPick(hex); });
+      pop.appendChild(b);
+    };
+    for (let l = 7; l >= 1; l--) for (let h = 0; h < 12; h++) add(hslToHex(h * 30, 85, 10 + l * 11));
+    for (let i = 0; i <= 10; i++) add(rgbToHex(i * 25.5, i * 25.5, i * 25.5));
+    const inp = document.createElement("input");
+    inp.className = "chex";
+    inp.placeholder = "#code hexa précis";
+    inp.addEventListener("change", () => {
+      let v = inp.value.trim();
+      if (v && !v.startsWith("#")) v = "#" + v;
+      if (/^#[0-9a-fA-F]{6}$/.test(v)) { pop.classList.remove("open"); onPick(v.toLowerCase()); }
+      else status("❌ Hexa invalide — format : #ff7e7e");
+    });
+    pop.appendChild(inp);
+    $(btnId).addEventListener("click", e => {
+      e.stopPropagation();
+      pop.classList.toggle("open");
+    });
+  }
+  buildColorGrid("btnGridCol", hex => { setBrush(hex); applyBrushToSel(); save(); });
+  buildColorGrid("npGridCol", hex => { if (selNote) { selNote.col = hex; renderNotes(); save(); } });
+  buildColorGrid("btnInvCol", hex => {
+    const inv = invertHex(hex);
+    setBrush(inv);
+    applyBrushToSel();
+    save();
+    status("🔄 " + hex + " inversée → " + inv);
+  });
   $("btnSmooth").addEventListener("click", () => {
     const t = tracks[selTrack];
     if (t.notes.length < 2) { status("🪥 Il faut au moins 2 notes à aplanir"); return; }
@@ -1256,6 +1315,7 @@
       const now = AC.currentTime;
       if (t.instrument === "sample" && t.sampleBuffer) scheduleSample(AC, g, t, { row: Math.floor(melRows() / 2), vel: 0.8 }, now, 0.5);
       else scheduleNote(AC, g, t.instrument === "drums" ? "pluck" : t.instrument, midi, now, 0.5, 0.8);
+      if ($("padCap").checked) captureNote(midiToRow(t, midi));
       padActive.set(e.pointerId, col);
       pad.classList.add("pressed");
       if (padActive.size >= 2) {
@@ -1283,8 +1343,9 @@
     status("🪣 Mélange appliqué au pinceau : " + lastMix);
   });
   $("btnMagic").addEventListener("click", () => {
+    fillTrackSel("padTrackSel");
     const open = $("magicPad").classList.toggle("open");
-    if (open) status("🌈 Touche une couleur, ou dessine sur la grille en bas — le dessin se joue !");
+    if (open) status("🌈 Touche une couleur ou dessine — ça se note dans la piste choisie !");
   });
 
   const dp = $("drawPad"), dctx = dp.getContext("2d");
@@ -1341,6 +1402,7 @@
       if (key !== lastPlayedKey) {
         lastPlayedKey = key;
         padVoice(AC.currentTime, padMidi(cy, rows), 0.3);
+        if ($("padCap").checked) captureNote(midiToRow(tracks[selTrack], padMidi(cy, rows)));
       }
     }
   }
@@ -1408,6 +1470,7 @@
     if (r !== instLastRow) {
       padVoice(AC.currentTime, instMidi(r), 0.4);
       if (typeof navigator.vibrate === "function") navigator.vibrate(12);
+      if ($("instCap").checked) captureNote(r);
       instLastRow = r;
     }
     cell.classList.add("on");
@@ -1422,10 +1485,55 @@
   });
   $("instCells").addEventListener("pointermove", e => { if (instDragging) instHit(e); });
   window.addEventListener("pointerup", () => { instDragging = false; instLastRow = null; });
+  function fillTrackSel(id) {
+    const s = $(id);
+    s.innerHTML = "";
+    tracks.forEach((t, i) => {
+      const o = document.createElement("option");
+      o.value = i;
+      o.textContent = t.name;
+      if (i === selTrack) o.selected = true;
+      s.appendChild(o);
+    });
+    const o = document.createElement("option");
+    o.value = "new";
+    o.textContent = "➕ Nouvelle piste";
+    s.appendChild(o);
+  }
+  function trackSelChange(id) {
+    const v = $(id).value;
+    if (v === "new") {
+      addTrack("synth");
+      status("➕ Nouvelle piste créée — la fenêtre joue et capture dessus !");
+    } else selectTrack(Number(v));
+    fillTrackSel("instTrackSel");
+    fillTrackSel("padTrackSel");
+  }
+  $("instTrackSel").addEventListener("change", () => trackSelChange("instTrackSel"));
+  $("padTrackSel").addEventListener("change", () => trackSelChange("padTrackSel"));
+  let capStep = 0;
+  function midiToRow(t, midi) {
+    for (let r = 0; r < melRows(); r++) if (rowToMidi(t, r) === midi) return r;
+    let best = 0, bd = 1e9;
+    for (let r = 0; r < melRows(); r++) {
+      const d = Math.abs(rowToMidi(t, r) - midi);
+      if (d < bd) { bd = d; best = r; }
+    }
+    return best;
+  }
+  function captureNote(row) {
+    const t = tracks[selTrack];
+    if (!t) return;
+    if (!collides(t, row, capStep, 1, null)) t.notes.push({ step: capStep, row, len: 1, vel: 0.8, col: brushCol || null });
+    capStep = (capStep + 1) % STEPS;
+    renderNotes();
+    save();
+  }
   $("btnInst").addEventListener("click", () => {
     buildInstGrid();
+    fillTrackSel("instTrackSel");
     const open = $("instGrid").classList.toggle("open");
-    if (open) status("🎹 Clique ou glisse sur les cases : ça joue instantanément, pas besoin de GO !");
+    if (open) status("🎹 Clique ou glisse : ça joue instantanément et se note dans la piste choisie !");
   });
 
   const VIB_ROWS = [
