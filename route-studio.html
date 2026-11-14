@@ -151,8 +151,12 @@
   #btnCallHelp,#btnCallSample{display:none;margin-top:10px;width:100%;padding:10px;border-radius:999px;border:1px solid rgba(255,255,255,0.3);color:#fff;font-weight:bold;font-size:13px;cursor:pointer;position:relative;z-index:2}
   #callWin.reconst #btnCallHelp,#callWin.reconst #btnCallSample{display:block}
   #btnCallHelp{background:linear-gradient(90deg,#2a7a4f,#1d5c3a)}
+  #callPavRow{display:none;align-items:center;justify-content:center;gap:10px;margin-top:10px;position:relative;z-index:2}
+  #callWin.open #callPavRow{display:flex}
+  #callPavFlag{width:46px;height:34px;border-radius:6px;border:1px solid rgba(255,255,255,0.5);background:#1a2233;transition:background 0.2s,box-shadow 0.2s}
+  #callPavName{font-size:13px;color:#fff;font-weight:bold}
   #callColorRow{display:none;align-items:center;justify-content:center;gap:10px;margin-top:10px;position:relative;z-index:2}
-  #callWin.open:not(.reconst) #callColorRow{display:flex}
+  #callWin.open #callColorRow{display:flex}
   #callColor{width:46px;height:46px;border-radius:50%;border:2px solid rgba(255,255,255,0.5);background:#1a2233;transition:background 0.15s,box-shadow 0.15s}
   #callColorName{font-size:13px;color:#fff;font-weight:bold}
   #btnCallLoot{display:none;margin-top:10px;width:100%;padding:10px;border-radius:999px;border:1px solid rgba(255,255,255,0.3);color:#fff;font-weight:bold;font-size:13px;cursor:pointer;position:relative;z-index:2;background:linear-gradient(90deg,#8a6d1d,#5c4a13)}
@@ -342,14 +346,15 @@
     <div id="callCrew">🏴‍☠️ 🦜 ⚓️ 🗺️ 🧭</div>
     <div id="callAvatar">🎤</div>
     <div id="callPlank"></div>
-    <div id="callName">L'équipage a abordé le Micro !</div>
+    <div id="callName">Micro à bord — appel en cours</div>
     <div id="callTimer">⚓ l'équipage rame vers le Micro…</div>
     <div id="callNote">…</div>
-    <div id="callColorRow"><div id="callColor"></div><div id="callColorName">🎨 la couleur du butin…</div></div>
-    <button id="btnCallLoot" title="Récupère le butin MAINTENANT, sans raccrocher — la bordée continue !">🪙 Récupérer le butin — au moment voulu de la couleur !</button>
-    <button id="btnCallEnd">🛏️ Le Micro descend se reposer (il reste à bord !)</button>
-    <button id="btnCallHelp">🏴‍☠️ Hisser NOTRE pavillon — on ne demande pas, on débarque !</button>
-    <button id="btnCallSample">🎁 Sampler l'ambiance du navire</button>
+    <div id="callPavRow"><div id="callPavFlag"></div><div id="callPavName">Pavillon…</div></div>
+    <div id="callColorRow"><div id="callColor"></div><div id="callColorName">🎨 couleur perçue…</div></div>
+    <button id="btnCallLoot" title="Récupère le chant enregistré jusqu'à maintenant, sans terminer l'appel">🪙 Récupérer le butin maintenant</button>
+    <button id="btnCallEnd">Terminer l'appel — le Micro reste à bord</button>
+    <button id="btnCallHelp">⛵ Hisser un pavillon (nouvelle tentative)</button>
+    <button id="btnCallSample">🎁 Prélever l'ambiance en sample</button>
   </div>
 </div>
 <div id="butinWin" class="fwindow">
@@ -2529,8 +2534,9 @@
     $("callWin").classList.remove("reconst");
     $("callWin").classList.add("open");
     stopReconstAmbience();
-    $("callNote").textContent = "🎤 Le Micro est sur la planche — chante, l'équipage écoute !";
-    $("callTimer").textContent = "⚓ l'équipage rame vers le Micro…";
+    showPav();
+    $("callNote").textContent = "🎤 Micro connecté — chante, la note sera accordée à ta gamme.";
+    $("callTimer").textContent = "connexion…";
     callT0 = Date.now();
     clearInterval(callTimerInt);
     callTimerInt = idle ? null : setInterval(() => {
@@ -2545,7 +2551,7 @@
     callTimerInt = null;
     stopReconstAmbience();
   }
-  let reconstTimer = null;
+  let reconstTimer = null, reconstColorInt = null;
   function shipSound(ctx, dest, t) {
     const kind = ["vague", "grincement", "cloche", "mouette"][Math.floor(Math.random() * 4)];
     if (kind === "vague") {
@@ -2587,17 +2593,29 @@
     stopReconstAmbience();
     shipSound(AC, master, AC.currentTime);
     reconstTimer = setInterval(() => shipSound(AC, master, AC.currentTime), 1400);
+    reconstColorInt = setInterval(updateCallColor, 300);
+    updateCallColor();
   }
-  function stopReconstAmbience() { if (reconstTimer) { clearInterval(reconstTimer); reconstTimer = null; } }
+  function stopReconstAmbience() {
+    if (reconstTimer) { clearInterval(reconstTimer); reconstTimer = null; }
+    if (reconstColorInt) { clearInterval(reconstColorInt); reconstColorInt = null; }
+  }
   function openReconst() {
     $("callWin").classList.add("open");
     $("callWin").classList.add("reconst");
     $("callName").textContent = "🛳️ Reconstitution — la vie à bord";
-    $("callNote").textContent = "🌊 Le Micro est au quai : l'équipage hisse le Pavillon « " + ($("pavSel").value || "Crâne rieur") + " » et sample tout ce qu'il voit, même autour — vagues, mouettes, grincements, cloche !";
+    $("callNote").textContent = "Micro au quai — pavillon « " + ($("pavSel").value || "Crâne rieur") + " » hissé : l'ambiance est prélevée en continu (vagues, mouettes, grincements, cloche).";
     $("callTimer").textContent = "en reconstitution";
+    showPav();
     startReconstAmbience();
   }
-  $("btnCallHelp").addEventListener("click", () => openMic());
+  $("btnCallHelp").addEventListener("click", () => {
+    const cur = $("pavSel").value || "Crâne rieur";
+    const i = PAVS.findIndex(p => p[0] === cur);
+    $("pavSel").value = PAVS[(i + 1) % PAVS.length][0];
+    showPav();
+    openMic();
+  });
   $("btnCallSample").addEventListener("click", async () => {
     if (!window.OfflineAudioContext) { status("❌ Ce navigateur ne sait pas cuisiner un sample offline"); return; }
     try {
@@ -2714,6 +2732,17 @@
       status("🎁 Le chant n'a pas pu être décodé — mais les notes capturées restent dans la piste !");
     }
   }
+  const PAVS = [["Crâne rieur", 8], ["Sabre d'abordage", 45], ["Vague noire", 265], ["Enfants Perdus", 150], ["Cœur de Marée", 205], ["Kraken chantant", 325]];
+  function pavHue(name) { const p = PAVS.find(q => q[0] === name); return p ? p[1] : 210; }
+  function showPav() {
+    const flag = $("callPavFlag"), nm = $("callPavName");
+    if (!flag) return;
+    const name = $("pavSel").value || "Crâne rieur";
+    const h = pavHue(name);
+    flag.style.background = "linear-gradient(135deg, hsl(" + h + ",72%,48%), hsl(" + h + ",80%,26%))";
+    flag.style.boxShadow = "0 0 14px hsl(" + h + ",80%,45%)";
+    if (nm) nm.textContent = "Pavillon « " + name + " » — " + hueName(h);
+  }
   let lootFD = null, lootColorName = "";
   function hueName(h) {
     const names = [[15, "Rouge cardinal"], [45, "Or de doubloon"], [75, "Verte marée"], [150, "Émeraude"], [210, "Azur hauturier"], [270, "Indigo nuit"], [330, "Pourpre corsaire"], [361, "Rose flibuste"]];
@@ -2722,9 +2751,14 @@
   }
   function updateCallColor() {
     const el = $("callColor"), nm = $("callColorName");
-    if (!el || !micStream || !micAN) return;
+    if (!el) return;
     let hue = 210, sat = 20, lit = 28;
     try {
+      if (!micStream || !micAN) {
+        if (!reconstTimer) return;
+        hue = (pavHue($("pavSel").value || "Crâne rieur") + (Date.now() / 120) % 40) % 360;
+        sat = 55; lit = 34 + 8 * Math.sin(Date.now() / 600);
+      } else {
       const n = micAN.frequencyBinCount;
       if (!lootFD || lootFD.length !== n) lootFD = new Uint8Array(n);
       micAN.getByteFrequencyData(lootFD);
@@ -2741,6 +2775,7 @@
         const fond = (Date.now() / 80) % 360;
         hue = (hue * 0.7 + fond * 0.3) % 360;
         lit = Math.min(70, lit + 6);
+      }
       }
     } catch (e) {}
     const col = "hsl(" + Math.round(hue) + "," + Math.max(12, Math.min(90, sat)) + "%," + Math.max(15, Math.min(75, lit)) + "%)";
@@ -2836,7 +2871,7 @@
       return;
     }
     const pav = $("pavSel").value || "Crâne rieur";
-    $("micInfo").textContent = "🏴‍☠️ L'équipage hisse le Pavillon « " + pav + " » — on ne demande pas, on débarque !";
+    $("micInfo").textContent = "Pavillon « " + pav + " » hissé — connexion au Micro…";
     try {
       const dev = $("micDevSel").value;
       micStream = await navigator.mediaDevices.getUserMedia(dev ? { audio: { deviceId: { exact: dev } } } : { audio: true });
@@ -2871,7 +2906,7 @@
     const data = new Float32Array(micAN.fftSize);
     $("btnMic").textContent = "⏹ Couper le micro";
     $("micInfo").textContent = "🎤 Écoute… chante une note !";
-    status("🏴‍☠️ Pavillon « " + pav + " » reconnu — l'équipage fait chanter le Micro sur la planche, à toi de chanter !");
+    status("Pavillon « " + pav + " » reconnu — Micro connecté, à toi de chanter !");
     openCall();
     stopButin();
     callButin = null;
