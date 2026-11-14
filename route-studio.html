@@ -77,9 +77,9 @@
   .winRow{display:flex;gap:12px;align-items:center;font-size:12px;color:var(--muted);margin-bottom:12px;flex-wrap:wrap}
   .winRow select{background:rgba(0,0,0,0.3);border:1px solid var(--line);border-radius:8px;color:var(--gold);padding:4px 6px;font-size:12px;max-width:150px}
   #colorWin{width:400px}
-  #colorWin .cg{display:grid;grid-template-columns:repeat(12,24px);gap:3px;justify-content:center}
-  #colorWin .csw{width:22px;height:22px;border-radius:5px;border:1px solid rgba(255,255,255,0.2);cursor:pointer;padding:0}
-  #colorWin .chex{margin-top:8px;width:100%;background:rgba(0,0,0,0.3);border:1px solid var(--line);border-radius:8px;color:var(--gold);padding:6px;font-size:13px}
+  .fwindow .cg{display:grid;grid-template-columns:repeat(12,24px);gap:3px;justify-content:center}
+  .fwindow .csw{width:22px;height:22px;border-radius:5px;border:1px solid rgba(255,255,255,0.2);cursor:pointer;padding:0}
+  .fwindow .chex{margin-top:8px;width:100%;background:rgba(0,0,0,0.3);border:1px solid var(--line);border-radius:8px;color:var(--gold);padding:6px;font-size:13px}
   .fwindow.open{display:flex;flex-direction:column}
   .fwinHead{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:10px 14px;border-bottom:1px solid var(--line);font-size:13px;color:var(--gold)}
   .fwinHead span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -253,12 +253,10 @@
       <span id="padMiniGrid" style="display:flex;gap:3px;flex-wrap:wrap"></span>
       <button id="padMoreCol" style="font-size:11px;padding:3px 8px">fenêtre 🎨</button>
     </div>
-    <details style="margin-top:12px">
-      <summary style="cursor:pointer;font-size:12px;color:var(--muted)">🎨 Sélecteur personnalisé (rectangle)</summary>
-      <div id="padPrecGrid" style="margin-top:10px;display:grid;grid-template-columns:repeat(12,22px);gap:4px;justify-content:center"></div>
-      <label style="display:flex;gap:5px;align-items:center;margin-top:10px;font-size:12px;color:var(--muted)"><input id="padInv" type="checkbox"> 🔄 inversée</label>
-      <input id="padPrecHex" placeholder="#code hexa précis (ex : #ff7e7e)" style="margin-top:8px;width:100%;background:rgba(0,0,0,0.3);border:1px solid var(--line);border-radius:8px;color:var(--gold);padding:6px;font-size:13px">
-    </details>
+    <div style="margin-top:14px;font-size:12px;color:var(--muted)">🎨 Sélecteur personnalisé</div>
+    <div class="cg" id="padPrecGrid" style="margin-top:8px"></div>
+    <label style="display:flex;gap:5px;align-items:center;margin-top:10px;font-size:12px;color:var(--muted)"><input id="padInv" type="checkbox"> 🔄 inversée</label>
+    <input class="chex" id="padPrecHex" placeholder="#code hexa précis (ex : #ff7e7e)">
     <div id="padGrid"></div>
     <div id="mixRow">
       <span id="mixSwatch"></span>
@@ -1451,7 +1449,7 @@
   for (let l = 7; l >= 1; l--) for (let h = 0; h < 12; h++) {
     const hex = hslToHex(h * 30, 85, 10 + l * 11);
     const b = document.createElement("button");
-    b.style.cssText = "width:20px;height:20px;border-radius:5px;border:1px solid rgba(255,255,255,0.2);cursor:pointer;padding:0";
+    b.className = "csw";
     b.style.background = hex;
     b.title = hex;
     b.addEventListener("click", () => padPick(hex));
@@ -1460,7 +1458,7 @@
   for (let i = 0; i <= 10; i++) {
     const hex = rgbToHex(i * 25.5, i * 25.5, i * 25.5);
     const b = document.createElement("button");
-    b.style.cssText = "width:20px;height:20px;border-radius:5px;border:1px solid rgba(255,255,255,0.2);cursor:pointer;padding:0";
+    b.className = "csw";
     b.style.background = hex;
     b.title = hex;
     b.addEventListener("click", () => padPick(hex));
