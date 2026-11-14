@@ -58,6 +58,8 @@
     transition: transform 0.12s ease, background 0.2s ease;
   }
   #btns button:hover { background: rgba(60, 75, 120, 0.55); }
+  #btns button.on { background: rgba(255, 215, 106, 0.45); border-color: rgba(255, 215, 106, 0.8); }
+  #garden { color: #ffd76a; }
   #btns button:active { transform: scale(0.92); }
   #hint {
     left: 50%;
@@ -115,10 +117,11 @@
 </head>
 <body>
 <canvas id="game"></canvas>
-<div id="hud" class="ui"><span id="score">🚸 0 · Record 0</span><span id="hearts">❤️❤️❤️</span></div>
+<div id="hud" class="ui"><span id="score">🚸 0 · Record 0</span><span id="hearts">❤️❤️❤️</span><span id="garden" style="display:none">🥕 0</span></div>
 <div id="btns" class="ui">
   <button id="btnSound" type="button" aria-label="Son">🔊</button>
   <button id="btnFull" type="button" aria-label="Plein écran">⛶</button>
+  <button id="btnGarden" type="button" aria-label="Mode Jardin">🥕</button>
 </div>
 <div id="hint" class="ui">Flèches / ZQSD : traverser · glisse le doigt sur mobile · clique une voiture : klaxon</div>
 <a id="moreGames" href="jeux.html">🎮 Mes jeux</a>
@@ -149,6 +152,8 @@
   const goBestEl = document.getElementById("goBest");
   const btnSound = document.getElementById("btnSound");
   const btnFull = document.getElementById("btnFull");
+  const btnGarden = document.getElementById("btnGarden");
+  const gardenEl = document.getElementById("garden");
 
   let W = 0, H = 0, dpr = 1, horizonY = 0, reflScale = 0.85;
   let scene = null, sctx = null;
@@ -175,6 +180,11 @@
   let score = 0, best = 0, hearts = 3, gameOver = false;
   let flashTimer = 0, pulse = 0, tNow = 0;
   try { best = Number(localStorage.getItem("rm_best") || 0) || 0; } catch (e) { best = 0; }
+  let garden = false, harvest = 0;
+  const items = [];
+  const VEGGIES = ["🥕", "🥬", "🍅", "🌽"];
+  const BUGS = ["🐛", "🦋", "🐝"];
+  try { harvest = Number(localStorage.getItem("rm_harvest") || 0) || 0; } catch (e) { harvest = 0; }
 
   function hexLerp(a, b, t) {
     const pa = parseInt(a.slice(1), 16), pb = parseInt(b.slice(1), 16);
@@ -499,6 +509,14 @@
     if (!gameOver && (player.inv <= 0 || Math.floor(tNow * 10) % 2 === 0)) {
       drawPerson(sctx, colX(player.col), horizonY - ROWS[player.row], player.dir, tNow * 6, "#ffd76a", 1.05, true);
     }
+    if (garden && items.length) {
+      sctx.font = "20px serif";
+      sctx.textAlign = "center";
+      for (const it of items) {
+        sctx.fillText(it.emoji, colX(it.col), horizonY - ROWS[it.row] + 7 + Math.sin(tNow * 3 + it.ph) * 2.5);
+      }
+      sctx.textAlign = "start";
+    }
   }
 
   function drawMirrorRoad(d) {
@@ -586,18 +604,25 @@
     horn: () => { tone(233, 0.3, "square", 0.09); tone(311, 0.3, "square", 0.07); },
     score: () => { tone(660, 0.12, "sine", 0.16); tone(880, 0.16, "sine", 0.16, 0.11); },
     thud: () => { tone(130, 0.35, "sine", 0.3, 0, -75); noiseBurst(0.2, 220, 0.18, 0.7); },
-    over: () => { tone(330, 0.22, "sawtooth", 0.12); tone(247, 0.22, "sawtooth", 0.12, 0.2); tone(165, 0.4, "sawtooth", 0.12, 0.4); }
+    over: () => { tone(330, 0.22, "sawtooth", 0.12); tone(247, 0.22, "sawtooth", 0.12, 0.2); tone(165, 0.4, "sawtooth", 0.12, 0.4); },
+    pick: () => { tone(520, 0.1, "triangle", 0.14); tone(780, 0.12, "triangle", 0.12, 0.08); },
+    bug: () => { tone(300, 0.08, "sawtooth", 0.07); tone(360, 0.08, "sawtooth", 0.07, 0.09); },
+    gem: () => { tone(880, 0.1, "sine", 0.14); tone(1174, 0.14, "sine", 0.14, 0.09); tone(1568, 0.2, "sine", 0.12, 0.19); }
   };
 
   function updateHud() {
     scoreEl.textContent = `🚸 ${score} · Record ${best}`;
     heartsEl.textContent = "❤️".repeat(hearts) + "🖤".repeat(3 - hearts);
+    gardenEl.textContent = "\ud83e\udd55 " + harvest;
+    gardenEl.style.display = garden ? "" : "none";
   }
 
   function resetGame() {
     score = 0;
     hearts = 3;
     gameOver = false;
+    items.length = 0;
+    if (garden) spawnItems();
     player.col = Math.floor(colMax() / 2);
     player.row = 0;
     player.inv = 0;
@@ -628,6 +653,19 @@
     if (dc) player.dir = dc;
     player.col = clamp(player.col + dc, 0, colMax());
     player.row = clamp(player.row + dr, 0, 4);
+    const itIdx = items.findIndex(it => it.col === player.col && it.row === player.row);
+    if (itIdx >= 0) {
+      const it = items[itIdx];
+      items.splice(itIdx, 1);
+      score += it.kind === "veg" ? 5 : it.kind === "bug" ? 3 : 20;
+      harvest++;
+      best = Math.max(best, score);
+      try { localStorage.setItem("rm_best", String(best)); } catch (e) {}
+      try { localStorage.setItem("rm_harvest", String(harvest)); } catch (e) {}
+      (it.kind === "veg" ? sfx.pick : it.kind === "bug" ? sfx.bug : sfx.gem)();
+      pulse = Math.max(pulse, 0.5);
+      spawnItems();
+    }
     if (player.row === 4 && oldRow === 3) {
       score++;
       sfx.score();
@@ -636,6 +674,22 @@
       player.row = 0;
       player.col = clamp(player.col + pick([-2, -1, 0, 1, 2]), 0, colMax());
       updateHud();
+    }
+  }
+
+  function spawnItems() {
+    items.length = 0;
+    const n = 2 + ((Math.random() * 3) | 0);
+    for (let i = 0; i < n; i++) {
+      const r = Math.random();
+      const kind = r < 0.55 ? "veg" : r < 0.85 ? "bug" : "gem";
+      items.push({
+        col: 1 + ((Math.random() * Math.max(1, colMax() - 1)) | 0),
+        row: 1 + ((Math.random() * 3) | 0),
+        kind,
+        emoji: kind === "veg" ? pick(VEGGIES) : kind === "bug" ? pick(BUGS) : "\ud83d\udc8e",
+        ph: rand(0, TAU)
+      });
     }
   }
 
@@ -763,6 +817,13 @@
     muted = !muted;
     btnSound.textContent = muted ? "🔇" : "🔊";
     if (!muted) ensureAudio();
+  });
+  btnGarden.addEventListener("click", e => {
+    e.stopPropagation();
+    garden = !garden;
+    btnGarden.classList.toggle("on", garden);
+    if (garden) { spawnItems(); sfx.score(); } else { items.length = 0; }
+    updateHud();
   });
   btnFull.addEventListener("click", e => {
     e.stopPropagation();

@@ -331,6 +331,7 @@
   <button id="btnMini">🚗 Mini jeu</button>
   <button id="btnNasa">🛰️ NASA</button>
   <button id="btnAvant">🔮 Sachants</button>
+  <button id="btnJardin">🧹 Jardinage</button>
   <button id="btnOrganize">🪄 Organiser</button>
   <a class="hublink" href="jeux.html">🎮 Mes jeux</a>
   <span id="status"></span>
@@ -2197,7 +2198,7 @@
       if (!worldTimer) worldTimer = setInterval(worldTick, 50);
       agentWake("magicSys", "choisis une matière, peins ton écosystème, puis ▶️ pour l'écouter.");
       avantSay("Ton monde va PARTICIPER \u00e0 la couleur per\u00e7ue \u2014 ses mati\u00e8res vont teinter la visionneuse et la sonde !");
-    }
+    } else if (worldTimer) { clearInterval(worldTimer); worldTimer = null; }
   });
   $("btnDraw").addEventListener("click", () => {
     const open = $("drawWin").classList.toggle("open");
@@ -3518,6 +3519,20 @@ function dockCallWin() {
     if (!b) return;
     b.addEventListener("click", () => crossOpen(CROSS[btn][0], CROSS[btn][1]));
   });
+  function gardenReport() {
+    const wins = openWins().length;
+    const loops = [butinLoop && "butin", drawLoop && "dessin", worldLoop && "monde"].filter(Boolean);
+    let wAlive = false;
+    for (let i = 0; i < world.length; i++) { const m = world[i]; if (m && m !== 9) { wAlive = true; break; } }
+    let veg = 0;
+    try { veg = Number(localStorage.getItem("rm_harvest") || 0) || 0; } catch (e) {}
+    prelevAll().then(ps => {
+      const msg = "rapport de jardinage : " + wins + " fen\u00eatre(s) ouverte(s), " + (loops.length ? "boucles " + loops.join(" + ") + " ON" : "aucune boucle allum\u00e9e") + ", " + butins.length + " butin(s) en session, " + ps.length + " pr\u00e9l\u00e8vement(s) au coffre fort, " + (wAlive ? "ton monde vit \ud83c\udf0d" : "monde en jach\u00e8re") + (veg ? ", " + veg + " l\u00e9gume(s) ramass\u00e9(s) sur la Route Miroir \ud83e\udd55" : "");
+      status("\U0001F9F9 " + msg);
+      avantSay(msg);
+    });
+  }
+  $("btnJardin").addEventListener("click", gardenReport);
   $("btnCallMini").addEventListener("click", e => {
     e.stopPropagation();
     $("callWin").classList.add("mini");
