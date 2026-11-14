@@ -53,6 +53,15 @@
   .note{position:absolute;border-radius:6px;pointer-events:auto;cursor:grab;display:flex;align-items:center;
     font-size:10px;color:rgba(0,0,0,0.55);font-weight:700;padding-left:5px;overflow:hidden;white-space:nowrap}
   .note.sel{outline:2px solid #fff;box-shadow:0 0 10px rgba(255,255,255,0.5)}
+  #toolsBar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:13px}
+  #toolsBar .tool{padding:6px 12px;border:1px solid var(--line);border-radius:12px;background:var(--panel);color:var(--muted);cursor:pointer}
+  #toolsBar .tool.active{border-color:var(--gold);color:var(--gold)}
+  #toolsBar .swatch{width:20px;height:20px;border-radius:50%;border:2px solid rgba(255,255,255,0.25);cursor:pointer;padding:0;flex:none}
+  #toolsBar .swatch.active{border-color:#fff;box-shadow:0 0 6px rgba(255,255,255,0.7)}
+  #roll.tool-erase{cursor:crosshair}
+  #roll.tool-paint{cursor:cell}
+  #roll.tool-erase .note,#roll.tool-paint .note{cursor:crosshair}
+  #toolsBar .dotc{cursor:pointer}
   #playhead{position:absolute;top:0;bottom:0;width:2px;background:rgba(255,255,255,0.85);box-shadow:0 0 8px rgba(255,255,255,0.8);pointer-events:none;display:none}
   #notePanel{border:1px solid var(--gold);border-radius:14px;padding:10px 14px;background:var(--panel);
     display:flex;gap:14px;align-items:center;flex-wrap:wrap;font-size:13px}
@@ -105,6 +114,14 @@
         <div id="notesLayer"></div>
         <div id="playhead"></div>
       </div>
+    </div>
+    <div id="toolsBar">
+      <button class="tool active" data-tool="draw">✏️ Crayon</button>
+      <button class="tool" data-tool="erase">🧽 Gomme</button>
+      <button class="tool" data-tool="paint">🪣 Pot</button>
+      <button class="tool" id="btnSmooth">🪥 Aplanir</button>
+      <span style="color:var(--muted)">Couleur :</span>
+      <span id="palette" style="display:flex;gap:6px;align-items:center"></span>
     </div>
     <div id="notePanel" class="hidden">
       <span class="npName" id="npName">Note</span>
@@ -701,8 +718,17 @@
       const r1 = document.createElement("div");
       r1.className = "row1";
       const dot = document.createElement("span");
-      dot.className = "dot";
+      dot.className = "dot dotc";
       dot.style.background = t.color;
+      dot.title = "Clique : mettre la couleur du pinceau";
+      dot.addEventListener("click", e => {
+        e.stopPropagation();
+        if (!brushCol) { status("🎨 Choisis d'abord une couleur dans la palette"); return; }
+        t.color = brushCol;
+        renderTrackList();
+        renderNotes();
+        save();
+      });
       const name = document.createElement("span");
       name.className = "name";
       name.textContent = t.name;
@@ -815,10 +841,12 @@
       d.style.top = (R - 1 - n.row) * CH + 1 + "px";
       d.style.width = n.len * CW - 2 + "px";
       d.style.height = CH - 2 + "px";
-      d.style.background = t.color;
+      d.style.background = n.col || t.color;
       d.textContent = n.len >= 2 ? rowLabel(t, n.row) : "";
       d.addEventListener("pointerdown", e => {
         e.stopPropagation();
+        if (tool === "erase") { t.notes = t.notes.filter(x => x !== n); renderNotes(); save(); return; }
+        if (tool === "paint") { if (brushCol) n.col = brushCol; else delete n.col; renderNotes(); save(); return; }
         selectNote(n);
         dragNote = { n, startX: e.clientX, startLen: n.len };
       });
@@ -887,7 +915,55 @@
   });
 
   let dragNote = null, dragNew = false;
+  let tool = "draw", brushCol = null, dragErase = false, dragPaint = false;
   const roll = $("roll");
+  const PALETTE = ["#ff7e7e", "#ffd76a", "#8effa0", "#6ee7ff", "#c99cff", "#ff7eb6", "#ffa06e", "#f2f2f2"];
+  function renderPalette() {
+    const pal = $("palette");
+    pal.innerHTML = "";
+    const mk = (col, label) => {
+      const b = document.createElement("button");
+      b.className = "swatch" + (brushCol === col ? " active" : "");
+      b.title = label;
+      if (col) b.style.background = col;
+      else b.style.background = "repeating-linear-gradient(45deg,#666,#666 4px,#333 4px,#333 8px)";
+      b.addEventListener("click", () => {
+        brushCol = col;
+        if (selNote) { if (col) selNote.col = col; else delete selNote.col; renderNotes(); }
+        renderPalette();
+        save();
+      });
+      pal.appendChild(b);
+    };
+    mk(null, "Auto (couleur de la piste)");
+    for (const c of PALETTE) mk(c, c);
+  }
+  renderPalette();
+  document.querySelectorAll("#toolsBar [data-tool]").forEach(b => {
+    b.addEventListener("click", () => {
+      tool = b.dataset.tool;
+      document.querySelectorAll("#toolsBar [data-tool]").forEach(x => x.classList.toggle("active", x === b));
+      roll.classList.toggle("tool-erase", tool === "erase");
+      roll.classList.toggle("tool-paint", tool === "paint");
+      if (tool !== "draw") { selNote = null; $("notePanel").classList.add("hidden"); renderNotes(); }
+      status(tool === "erase" ? "🧽 Gomme : clique ou glisse sur les notes pour les effacer" :
+        tool === "paint" ? "🪣 Pot : clique les notes pour les repeindre (choisis une couleur)" :
+        "✏️ Crayon : dessine des notes");
+    });
+  });
+  $("btnSmooth").addEventListener("click", () => {
+    const t = tracks[selTrack];
+    if (t.notes.length < 2) { status("🪥 Il faut au moins 2 notes à aplanir"); return; }
+    const sorted = [...t.notes].sort((a, b) => a.step - b.step || a.row - b.row);
+    const v = sorted.map(n => n.vel);
+    sorted.forEach((n, i) => {
+      n.vel = clamp((v[i - 1] ?? v[i]) * 0.25 + v[i] * 0.5 + (v[i + 1] ?? v[i]) * 0.25, 0.1, 1);
+    });
+    if (selNote) $("npVel").value = Math.round(selNote.vel * 100);
+    renderNotes();
+    save();
+    status("🪥 Volumes aplanis — les transitions sont plus douces");
+  });
   roll.addEventListener("pointerdown", e => {
     ensureAudio();
     const rect = roll.getBoundingClientRect();
@@ -895,6 +971,20 @@
     const t = tracks[selTrack];
     const R = t.instrument === "drums" ? 4 : melRows();
     const row = clamp(R - 1 - Math.floor((e.clientY - rect.top) / CH), 0, R - 1);
+    if (tool === "erase") {
+      const hit = noteHit(t, step, row);
+      if (hit) { t.notes = t.notes.filter(x => x !== hit); renderNotes(); save(); }
+      dragErase = true;
+      roll.setPointerCapture(e.pointerId);
+      return;
+    }
+    if (tool === "paint") {
+      const hit = noteHit(t, step, row);
+      if (hit && brushCol) { hit.col = brushCol; renderNotes(); save(); }
+      dragPaint = !!hit;
+      roll.setPointerCapture(e.pointerId);
+      return;
+    }
     const hit = noteHit(t, step, row);
     if (hit) {
       selectNote(hit);
@@ -916,6 +1006,17 @@
     roll.setPointerCapture(e.pointerId);
   });
   window.addEventListener("pointermove", e => {
+    if (dragErase || dragPaint) {
+      const rect = roll.getBoundingClientRect();
+      const step = clamp(Math.floor((e.clientX - rect.left) / CW), 0, STEPS - 1);
+      const t = tracks[selTrack];
+      const R = t.instrument === "drums" ? 4 : melRows();
+      const row = clamp(R - 1 - Math.floor((e.clientY - rect.top) / CH), 0, R - 1);
+      const hit = noteHit(t, step, row);
+      if (dragErase && hit) { t.notes = t.notes.filter(x => x !== hit); renderNotes(); save(); }
+      if (dragPaint && hit && brushCol && hit.col !== brushCol) { hit.col = brushCol; renderNotes(); save(); }
+      return;
+    }
     if (!dragNote) return;
     const rect = roll.getBoundingClientRect();
     const step = clamp(Math.floor((e.clientX - rect.left) / CW), 0, STEPS - 1);
@@ -929,6 +1030,7 @@
     }
   });
   window.addEventListener("pointerup", () => {
+    if (dragErase || dragPaint) { dragErase = false; dragPaint = false; return; }
     if (dragNote) { save(); dragNote = null; }
   });
   function clamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
@@ -999,7 +1101,7 @@
       name: td.name || "Piste " + (i + 1),
       instrument: td.instrument || "piano",
       color: td.color || TRACK_COLORS[i % TRACK_COLORS.length],
-      notes: (td.notes || []).map(n => ({ step: n.step, row: n.row, len: n.len || 1, vel: n.vel || 0.8 })),
+      notes: (td.notes || []).map(n => ({ step: n.step, row: n.row, len: n.len || 1, vel: n.vel || 0.8, col: n.col || null })),
       muted: !!td.muted,
       fx: Object.assign({ vol: 0.8, echo: 0.2, cut: 0.85 }, td.fx),
       sampleBuffer: null,
