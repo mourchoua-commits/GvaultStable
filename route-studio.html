@@ -85,8 +85,11 @@
   .fwindow.open{display:flex;flex-direction:column}
   .fwinHead{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:10px 14px;border-bottom:1px solid var(--line);font-size:13px;color:var(--gold)}
   .fwinHead span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-  .fwclose,.fwmove{flex:none}
-  .fwclose{background:none;border:none;color:var(--muted);cursor:pointer;font-size:14px}
+  .fwclose,.fwmove,.fwfold{flex:none}
+  .fwclose,.fwfold{background:none;border:none;color:var(--muted);cursor:pointer;font-size:14px}
+  .fwfold{width:22px;padding:0}
+  .fwindow.folded .fwinBody,.fwindow.folded .fwgrip{display:none}
+  .fwindow.folded{height:auto!important;min-height:0}
   .fwinBody{flex:1;overflow:auto;padding:14px 16px 16px}
   #miniGame .fwinBody{padding:0}
   #miniGame iframe{width:100%;height:100%;border:0;display:block;min-height:180px}
@@ -1338,6 +1341,18 @@
     mv.textContent = "✥";
     mv.title = "Garde appuyé et glisse pour déplacer la fenêtre";
     head.insertBefore(mv, w.querySelector(".fwclose"));
+    const fold = document.createElement("button");
+    fold.className = "fwfold";
+    fold.id = "fwfold_" + w.id;
+    fold.textContent = "▾";
+    fold.title = "Replier la fenêtre (reste ouverte, prend une ligne) — re-clique pour déplier";
+    fold.addEventListener("pointerdown", e => e.stopPropagation());
+    fold.addEventListener("click", e => {
+      e.stopPropagation();
+      const f = w.classList.toggle("folded");
+      fold.textContent = f ? "▸" : "▾";
+    });
+    head.insertBefore(fold, mv);
     let mdrag = null;
     mv.addEventListener("pointerdown", e => {
       e.stopPropagation();
