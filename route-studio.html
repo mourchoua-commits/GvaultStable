@@ -81,6 +81,7 @@
   #colorWin{width:400px}
   .fwindow .cg{display:grid;grid-template-columns:repeat(12,24px);gap:3px;justify-content:center}
   .fwindow .csw{width:22px;height:22px;border-radius:5px;border:1px solid rgba(255,255,255,0.2);cursor:pointer;padding:0}
+  .csw.csel{outline:3px solid #ffd76a;outline-offset:1px}
   .fwindow .chex{margin-top:8px;width:100%;background:rgba(0,0,0,0.3);border:1px solid var(--line);border-radius:8px;color:var(--gold);padding:6px;font-size:13px}
   .fwindow.open{display:flex;flex-direction:column}
   .fwinHead{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:10px 14px;border-bottom:1px solid var(--line);font-size:13px;color:var(--gold)}
@@ -94,7 +95,7 @@
   #miniGame .fwinBody{padding:0}
   #miniGame iframe{width:100%;height:100%;border:0;display:block;min-height:180px}
   #magicPad{width:460px}
-  #padGrid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:12px}
+  #padGrid{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-top:12px}
   #padGrid .pad{aspect-ratio:1;border-radius:50%;border:2px solid rgba(255,255,255,0.25);cursor:pointer;padding:0;min-width:0}
   #padGrid .pad.pressed{outline:3px solid #fff;box-shadow:0 0 10px rgba(255,255,255,0.7)}
   #mixSwatch{width:26px;height:26px;border-radius:50%;border:2px solid rgba(255,255,255,0.3);background:#222;flex:none}
@@ -312,7 +313,7 @@
       <span id="mixHex">Touche 2 couleurs en même temps pour le mélange…</span>
       <button id="mixUse">🪣 Utiliser le mélange</button>
     </div>
-    <div style="margin-top:12px;font-size:12px;color:var(--muted)">💡 La grille vit : chaque nouvelle couleur ajoute sa rangée — nuance claire ✨, normale, foncée 🌙 et son <b>négatif</b> 🔄 !</div>
+    <div style="margin-top:12px;font-size:12px;color:var(--muted)">💡 La grille vit : chaque nouvelle couleur ajoute sa rangée — nuance claire ✨, normale, foncée 🌙, son <b>négatif</b> 🔄 et son <b>complémentaire</b> 🎯 (teinte +180°) ! Un clic sélectionne la couleur partout dans 🎨 Couleurs.</div>
     <div style="margin-top:10px;font-size:12px;color:var(--muted)">🎨 Sélecteur personnalisé</div>
     <div class="cg" id="padPrecGrid" style="margin-top:8px"></div>
     <label style="display:flex;gap:5px;align-items:center;margin-top:10px;font-size:12px;color:var(--muted)"><input id="padInv" type="checkbox"> 🔄 inversée</label>
@@ -1133,6 +1134,7 @@
     $("colHex").value = col || "";
     const pb = $("padBrush");
     if (pb) pb.style.background = col || "#888";
+    document.querySelectorAll(".csw").forEach(b => b.classList.toggle("csel", !!col && b.title === col));
     if (typeof rememberColor === "function") rememberColor(col);
   }
   function applyBrushToSel() {
@@ -1167,6 +1169,24 @@
   function invertHex(hx) {
     const [r, g, b] = hexToRgb(hx);
     return rgbToHex(255 - r, 255 - g, 255 - b);
+  }
+  function hexToHsl(hx) {
+    const [r, g, b] = hexToRgb(hx).map(v => v / 255);
+    const mx = Math.max(r, g, b), mn = Math.min(r, g, b);
+    let h = 0, s = 0;
+    const l = (mx + mn) / 2;
+    if (mx !== mn) {
+      const d = mx - mn;
+      s = l > 0.5 ? d / (2 - mx - mn) : d / (mx + mn);
+      if (mx === r) h = ((g - b) / d + (g < b ? 6 : 0)) * 60;
+      else if (mx === g) h = ((b - r) / d + 2) * 60;
+      else h = ((r - g) / d + 4) * 60;
+    }
+    return [h, Math.round(s * 100), Math.round(l * 100)];
+  }
+  function compHex(hx) {
+    const [h, s, l] = hexToHsl(hx);
+    return hslToHex((h + 180) % 360, s, l);
   }
   const cgHost = $("cgHost");
   for (let l = 7; l >= 1; l--) for (let h = 0; h < 12; h++) {
@@ -1548,6 +1568,7 @@
     if (!winInst && t.instrument === "sample" && t.sampleBuffer) scheduleSample(AC, g, t, { row: Math.floor(melRows() / 2), vel: 0.8 }, now, 0.5);
     else scheduleNote(AC, g, playInst === "drums" ? "pluck" : playInst, midi, now, 0.5, 0.8);
     if ($("padCap").checked) captureNote(midiToRow(t, midi));
+    setBrush(col);
     padActive.set(e.pointerId, col);
     pad.classList.add("pressed");
     if (padActive.size >= 2) {
@@ -1569,7 +1590,8 @@
         [mixHex([base, "#ffffff"]), 12, "claire · octave haute"],
         [base, 0, ""],
         [mixHex([base, "#000000"]), -12, "foncée · octave basse"],
-        [invertHex(base), 0, "négatif"]
+        [invertHex(base), 0, "négatif"],
+        [compHex(base), 0, "complémentaire · teinte +180°"]
       ];
       for (const [col, oct, tag] of shades) {
         const pad = document.createElement("button");
