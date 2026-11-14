@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Route Miroir</title>
+<style>
+  html, body {
+    margin: 0;
+    height: 100%;
+    overflow: hidden;
+    background: #0a0e1a;
+    font-family: "Segoe UI", system-ui, sans-serif;
+  }
+  #game {
+    display: block;
+    width: 100vw;
+    height: 100vh;
+    cursor: pointer;
+    touch-action: manipulation;
+  }
+  #hint {
+    position: fixed;
+    left: 50%;
+    bottom: 28px;
+    transform: translateX(-50%);
+    padding: 10px 22px;
+    border-radius: 999px;
+    background: rgba(10, 14, 26, 0.65);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    color: #eef2ff;
+    font-size: 15px;
+    letter-spacing: 0.3px;
+    pointer-events: none;
+    backdrop-filter: blur(6px);
+    transition: opacity 0.6s ease, transform 0.6s ease;
+    animation: float 2.4s ease-in-out infinite;
+    user-select: none;
+  }
+  #hint.hidden {
+    opacity: 0;
+    transform: translateX(-50%) translateY(14px);
+  }
+  @keyframes float {
+    0%, 100% { margin-bottom: 0; }
+    50% { margin-bottom: 6px; }
+  }
+</style>
+</head>
+<body>
+<canvas id="game"></canvas>
+<div id="hint">👆 Clique sur l'écran pour agrandir</div>
+<script>
+(() => {
+  "use strict";
+
+  const TAU = Math.PI * 2;
+  const rand = (a, b) => a + Math.random() * (b - a);
+  const pick = arr => arr[(Math.random() * arr.length) | 0];
+
+  const canvas = document.getElementById("game");
+  const ctx = canvas.getContext("2d");
+  const hint = document.getElementById("hint");
+
+  let W = 0, H = 0, dpr = 1, horizonY = 0, reflScale = 0.85;
+  let scene = null, sctx = null;
+
+  const stars = [];
+  const clouds = [];
+  const cars = [];
+  const people = [];
+  const buildings = [];
+
+  const CAR_COLORS = ["#e85d5d", "#5dc8e8", "#f2c14e", "#8ee85d", "#c98fe8", "#f2f2f2", "#f28c4e"];
+  const SHIRT_COLORS = ["#e85d5d", "#5dc8e8", "#f2c14e", "#c98fe8", "#f2f2f2", "#8ee85d"];
+
+  function resize() {
+    dpr = Math.min(window.devicePixelRatio || 1, 2);
+    W = window.innerWidth;
+    H = window.innerHeight;
+    canvas.width = Math.round(W * dpr);
+    canvas.height = Math.round(H * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    horizonY = Math.round(H * 0.52);
+    scene = document.createElement("canvas");
+    scene.width = canvas.width;
+    scene.height = Math.max(1, Math.round(horizonY * dpr));
+    sctx = scene.getContext("2d");
+    sctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  }
+
+  function initWorld() {
+    stars.length = 0;
+    for (let i = 0; i < 60; i++) {
+      stars.push({
+        fx: Math.random(),
+        fy: Math.random() * 0.55,
+        r: rand(0.6, 1.6),
+        tw: rand(0.5, 2),
+        ph: rand(0, TAU)
+      });
+    }
+
+    clouds.length = 0;
+    for (let i = 0; i < 7; i++) {
+      clouds.push({
+        fx: Math.random(),
+        fy: rand(0.08, 0.55),
+        s: rand(0.6, 1.5),
+        v: rand(4, 12),
+        a: rand(0.5, 0.9)
+      });
+    }
+
+    buildings.length = 0;
+    let bx = -40;
+    while (bx < 1.2) {
+      const bw = rand(30, 80);
+      const bh = rand(20, 90);
+      buildings.push({ fx: bx, w: bw, h: bh, lit: Math.random() < 0.7 });
+      bx += bw + rand(4, 18);
+    }
+
+    cars.length = 0;
+    for (let i = 0; i < 5; i++) {
+      cars.push(makeCar(1, Math.random()));
+    }
+    for (let i = 0; i < 4; i++) {
+      cars.push(makeCar(-1, Math.random()));
+    }
+
+    people.length = 0;
+    for (let i = 0; i < 6; i++) {
+      people.push({
+        x: rand(0, W),
+        dir: Math.random() < 0.5 ? 1 : -1,
+        v: rand(14, 30),
+        ph: rand(0, TAU),
+        shirt: pick(SHIRT_COLORS),
+        h: rand(0.85, 1.1)
+      });
+    }
+  }
+
+  function makeCar(dir, x01) {
+    const back = dir === -1;
+    return {
+      x: x01 * (W + 200) - 100,
+      dir,
+      v: rand(70, 150) * (back ? 0.8 : 1),
+      back,
+      color: pick(CAR_COLORS),
+      s: back ? rand(0.7, 0.8) : rand(0.95, 1.1),
+      truck: Math.random() < 0.25
+    };
+  }
+
+  function rr(c, x, y, w, h, r) {
+    c.beginPath();
+    if (c.roundRect) { c.roundRect(x, y, w, h, r); return; }
+    c.moveTo(x + r, y);
+    c.arcTo(x + w, y, x + w, y + h, r);
+    c.arcTo(x + w, y + h, x, y + h, r);
+    c.arcTo(x, y + h, x, y, r);
+    c.arcTo(x, y, x + w, y, r);
+    c.closePath();
+  }
+
+  function drawSky(c) {
+    const g = c.createLinearGradient(0, 0, 0, horizonY);
+    g.addColorStop(0, "#0d1636");
+    g.addColorStop(0.45, "#2c3f74");
+    g.addColorStop(0.75, "#7a5a8a");
+    g.addColorStop(0.94, "#e08a5e");
+    g.addColorStop(1, "#f4b26a");
+    c.fillStyle = g;
+    c.fillRect(0, 0, W, horizonY);
+
+    for (const s of stars) {
+      const y = s.fy * horizonY;
+      if (y > horizonY * 0.6) continue;
+      c.globalAlpha = 0.35 + 0.55 * Math.abs(Math.sin(s.tw * tNow + s.ph));
+      c.fillStyle = "#ffffff";
+      c.beginPath();
+      c.arc(s.fx * W, y, s.r, 0, TAU);
+      c.fill();
+    }
+    c.globalAlpha = 1;
+
+    const sunX = W * 0.72, sunY = horizonY - 26, sunR = 34;
+    const glow = c.createRadialGradient(sunX, sunY, 4, sunX, sunY, 130);
+    glow.addColorStop(0, "rgba(255,214,150,0.85)");
+    glow.addColorStop(0.35, "rgba(255,160,100,0.30)");
+    glow.addColorStop(1, "rgba(255,160,100,0)");
+    c.fillStyle = glow;
+    c.fillRect(sunX - 130, sunY - 130, 260, 260);
+    c.fillStyle = "#ffdca3";
+    c.beginPath();
+    c.arc(sunX, sunY, sunR, 0, TAU);
+    c.fill();
+  }
+
+  function drawCloud(c, x, y, s, alpha) {
+    c.save();
+    c.translate(x, y);
+    c.scale(s, s);
+    c.globalAlpha = alpha;
+    c.fillStyle = "#f6d9d0";
+    const puffs = [
+      [0, 0, 26], [24, -8, 20], [-24, -4, 18], [46, 2, 15], [-44, 4, 14], [10, -16, 16]
+    ];
+    for (const [px, py, pr] of puffs) {
+      c.beginPath();
+      c.arc(px, py, pr, 0, TAU);
+      c.fill();
+    }
+    c.globalAlpha = alpha * 0.5;
+    c.fillStyle = "#ffffff";
+    for (const [px, py, pr] of puffs) {
+      c.beginPath();
+      c.arc(px, py - pr * 0.25, pr * 0.7, 0, TAU);
+      c.fill();
+    }
+    c.restore();
+    c.globalAlpha = 1;
+  }
+
+  function drawCity(c) {
+    c.fillStyle = "#141c36";
+    for (const b of buildings) {
+      const x = b.fx * W;
+      const y = horizonY - b.h;
+      c.fillRect(x, y, b.w, b.h);
+      if (b.lit) {
+        c.fillStyle = "rgba(255,205,120,0.5)";
+        for (let wy = y + 8; wy < horizonY - 8; wy += 14) {
+          for (let wx = x + 6; wx < x + b.w - 8; wx += 12) {
+            if (Math.random() < 0.9) c.fillRect(wx, wy, 4, 6);
+          }
+        }
+        c.fillStyle = "#141c36";
+      }
+    }
+  }
+
+  function drawCar(c, car) {
+    const s = car.s;
+    const w = (car.truck ? 64 : 48) * s;
+    const h = (car.truck ? 20 : 14) * s;
+    const y = horizonY - (car.back ? 34 : 14) - h;
+    c.save();
+    c.translate(car.x, y);
+    if (car.dir === -1) { c.scale(-1, 1); }
+
+    c.fillStyle = "rgba(0,0,0,0.25)";
+    c.beginPath();
+    c.ellipse(w * 0.5, h + 3, w * 0.55, 3.5 * s, 0, 0, TAU);
+    c.fill();
+
+    c.fillStyle = car.color;
+    if (car.truck) {
+      rr(c, 0, 0, w * 0.62, h, 3 * s); c.fill();
+      rr(c, w * 0.64, h * 0.25, w * 0.36, h * 0.75, 3 * s); c.fill();
+      c.fillStyle = "rgba(20,28,54,0.9)";
+      rr(c, w * 0.68, h * 0.38, w * 0.24, h * 0.4, 2 * s); c.fill();
+    } else {
+      rr(c, 0, h * 0.3, w, h * 0.7, 4 * s); c.fill();
+      rr(c, w * 0.22, 0, w * 0.5, h * 0.5, 4 * s); c.fill();
+      c.fillStyle = "rgba(20,28,54,0.9)";
+      rr(c, w * 0.26, h * 0.06, w * 0.42, h * 0.36, 3 * s); c.fill();
+    }
+
+    c.fillStyle = "#1a2136";
+    const wr = 4.2 * s;
+    c.beginPath();
+    c.arc(w * 0.24, h + wr * 0.2, wr, 0, TAU);
+    c.arc(w * 0.78, h + wr * 0.2, wr, 0, TAU);
+    c.fill();
+
+    const beam = c.createRadialGradient(w + 2, h * 0.6, 1, w + 2, h * 0.6, 16 * s);
+    beam.addColorStop(0, "rgba(255,236,180,0.9)");
+    beam.addColorStop(1, "rgba(255,236,180,0)");
+    c.fillStyle = beam;
+    c.beginPath();
+    c.arc(w + 2, h * 0.6, 16 * s, 0, TAU);
+    c.fill();
+    c.fillStyle = "#ffedb8";
+    c.beginPath();
+    c.arc(w, h * 0.6, 2.2 * s, 0, TAU);
+    c.fill();
+    c.fillStyle = "#ff6b6b";
+    c.beginPath();
+    c.arc(1, h * 0.55, 1.8 * s, 0, TAU);
+    c.fill();
+
+    c.restore();
+  }
+
+  function drawPerson(c, p) {
+    const h = 24 * p.h;
+    const x = p.x;
+    const y = horizonY - (p.h > 0.97 ? 44 : 40);
+    const legSwing = Math.sin(p.ph) * 4 * p.h;
+    c.save();
+    c.translate(x, y);
+    if (p.dir === -1) c.scale(-1, 1);
+
+    c.strokeStyle = "#2a3352";
+    c.lineWidth = 2.4 * p.h;
+    c.lineCap = "round";
+    c.beginPath();
+    c.moveTo(0, -h * 0.42);
+    c.lineTo(legSwing, 0);
+    c.moveTo(0, -h * 0.42);
+    c.lineTo(-legSwing, 0);
+    c.stroke();
+
+    c.strokeStyle = "#2a3352";
+    c.beginPath();
+    c.moveTo(0, -h * 0.78);
+    c.lineTo(legSwing * 0.8, -h * 0.5);
+    c.stroke();
+
+    c.fillStyle = p.shirt;
+    rr(c, -3 * p.h, -h * 0.82, 6 * p.h, h * 0.42, 2.5 * p.h);
+    c.fill();
+
+    c.fillStyle = "#e8b98a";
+    c.beginPath();
+    c.arc(0, -h * 0.92, 3.4 * p.h, 0, TAU);
+    c.fill();
+
+    c.restore();
+  }
+
+  function drawWorld(t) {
+    drawSky(sctx);
+    for (const cl of clouds) drawCloud(sctx, cl.fx * W, cl.fy * horizonY, cl.s, cl.a);
+    drawCity(sctx);
+    for (const p of people) drawPerson(sctx, p);
+    for (const car of cars) drawCar(sctx, car);
+  }
+
+  function drawMirrorRoad(t) {
+    const g = ctx.createLinearGradient(0, horizonY, 0, H);
+    g.addColorStop(0, "#232c4c");
+    g.addColorStop(0.5, "#141b33");
+    g.addColorStop(1, "#0a0e1e");
+    ctx.fillStyle = g;
+    ctx.fillRect(0, horizonY, W, H - horizonY);
+
+    const reflH = (H - horizonY) / reflScale;
+    const srcAvail = horizonY;
+    const step = 3;
+    ctx.save();
+    ctx.globalAlpha = 0.42;
+    for (let y0 = 0; y0 < Math.min(reflH, srcAvail); y0 += step) {
+      const y1 = Math.min(y0 + step, reflH, srcAvail);
+      const srcTop = horizonY - y1 / reflScale;
+      const srcH = (y1 - y0) / reflScale;
+      const wobble = Math.sin(t * 1.8 + y0 * 0.06) * 1.6 * (0.3 + y0 / reflH);
+      ctx.drawImage(
+        scene,
+        0, Math.max(0, srcTop) * dpr, scene.width, Math.max(1, srcH * dpr),
+        wobble, horizonY + y0, W, y1 - y0
+      );
+    }
+    ctx.restore();
+
+    const fade = ctx.createLinearGradient(0, horizonY, 0, H);
+    fade.addColorStop(0, "rgba(20,27,51,0.05)");
+    fade.addColorStop(0.45, "rgba(16,22,42,0.45)");
+    fade.addColorStop(1, "rgba(10,14,30,0.9)");
+    ctx.fillStyle = fade;
+    ctx.fillRect(0, horizonY, W, H - horizonY);
+
+    ctx.strokeStyle = "rgba(255,205,150,0.5)";
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(0, horizonY);
+    ctx.lineTo(W, horizonY);
+    ctx.stroke();
+    const hglow = ctx.createLinearGradient(0, horizonY - 8, 0, horizonY + 14);
+    hglow.addColorStop(0, "rgba(255,180,120,0)");
+    hglow.addColorStop(0.5, "rgba(255,180,120,0.22)");
+    hglow.addColorStop(1, "rgba(255,180,120,0)");
+    ctx.fillStyle = hglow;
+    ctx.fillRect(0, horizonY - 8, W, 22);
+  }
+
+  let tNow = 0;
+  let last = performance.now();
+  let pulse = 0;
+
+  function frame(now) {
+    const dt = Math.min(0.05, (now - last) / 1000);
+    last = now;
+    tNow += dt;
+
+    for (const cl of clouds) {
+      cl.fx += (cl.v * dt) / W;
+      if (cl.fx > 1.2) cl.fx = -0.25;
+    }
+    for (const car of cars) {
+      car.x += car.dir * car.v * dt;
+      const margin = 160;
+      if (car.dir === 1 && car.x > W + margin) Object.assign(car, makeCar(1, 0), { x: -margin });
+      if (car.dir === -1 && car.x < -margin) Object.assign(car, makeCar(-1, 0), { x: W + margin });
+    }
+    for (const p of people) {
+      p.x += p.dir * p.v * dt;
+      p.ph += p.v * dt * 0.35;
+      if (p.x > W + 30) p.x = -30;
+      if (p.x < -30) p.x = W + 30;
+    }
+
+    pulse = Math.max(0, pulse - dt * 3.2);
+    const zoom = 1 + 0.07 * Math.sin(Math.min(1, pulse) * Math.PI);
+
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.clearRect(0, 0, W, H);
+    ctx.save();
+    ctx.translate(W / 2, H / 2);
+    ctx.scale(zoom, zoom);
+    ctx.translate(-W / 2, -H / 2);
+
+    ctx.fillStyle = "#0a0e1a";
+    ctx.fillRect(-W, -H, W * 3, H * 3);
+
+    drawWorld(tNow);
+    ctx.drawImage(scene, 0, 0, scene.width, scene.height, 0, 0, W, horizonY);
+    drawMirrorRoad(tNow);
+
+    ctx.restore();
+    requestAnimationFrame(frame);
+  }
+
+  canvas.addEventListener("click", () => {
+    pulse = 1;
+    hint.classList.add("hidden");
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen().catch(() => {});
+    } else {
+      document.exitFullscreen().catch(() => {});
+    }
+  });
+
+  window.addEventListener("resize", () => {
+    resize();
+  });
+
+  resize();
+  initWorld();
+  requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>
