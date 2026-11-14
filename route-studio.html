@@ -1727,6 +1727,7 @@
   }
   function whatDoing() {
     if (worldLoop) return "ton monde tourne en boucle \ud83e\ude90";
+    if (worldTimer) return "ton monde s'anime et teinte la couleur per\u00e7ue \ud83c\udf0d";
     if (drawLoop) return "ton dessin joue en boucle \ud83c\udfa8";
     if (micStream) return "le micro t'\u00e9coute \ud83c\udfa4";
     if (tool !== "draw") return "outil " + ({ erase: "gomme", paint: "pot de peinture", smudge: "estompe" }[tool] || tool) + " en main";
@@ -2195,6 +2196,7 @@
     if (open) {
       if (!worldTimer) worldTimer = setInterval(worldTick, 50);
       agentWake("magicSys", "choisis une matière, peins ton écosystème, puis ▶️ pour l'écouter.");
+      avantSay("Ton monde va PARTICIPER \u00e0 la couleur per\u00e7ue \u2014 ses mati\u00e8res vont teinter la visionneuse et la sonde !");
     }
   });
   $("btnDraw").addEventListener("click", () => {
@@ -3113,14 +3115,44 @@ function dockCallWin() {
     } catch (e) { parts.push("\ud83c\udfa7 terminal inconnu"); }
     return parts.join(" \u00b7 ");
   }
+    let worldColCache = null, worldColT = 0;
+  function worldColHsl() {
+    const now = Date.now();
+    if (worldColCache && now - worldColT < 250) return worldColCache;
+    worldColT = now;
+    let r = 0, g = 0, b = 0, n = 0;
+    for (let i = 0; i < WW * WH; i++) {
+      const m = world[i];
+      if (!m || m === 9) continue;
+      const c = MATCOL[m] || [10, 10, 20];
+      r += c[0]; g += c[1]; b += c[2]; n++;
+    }
+    if (!n) { worldColCache = null; return null; }
+    r /= 255 * n; g /= 255 * n; b /= 255 * n;
+    const mx = Math.max(r, g, b), mn = Math.min(r, g, b), d = mx - mn;
+    const l = (mx + mn) / 2;
+    const s = d ? d / (1 - Math.abs(2 * l - 1)) : 0;
+    let h = 0;
+    if (d) {
+      if (mx === r) h = ((g - b) / d) % 6;
+      else if (mx === g) h = (b - r) / d + 2;
+      else h = (r - g) / d + 4;
+      h = ((h * 60) % 360 + 360) % 360;
+    }
+    worldColCache = { h, s: s * 100, l: l * 100 };
+    return worldColCache;
+  }
   function perceivedCol() {
     let hue = 210, sat = 20, lit = 28, lvl = 0.2, hz = 0;
     try {
       if (!micStream || !micAN) {
-        if (!reconstTimer) return { off: true, hue, sat, lit, lvl, hz };
+        if (!reconstTimer && !worldTimer && !worldLoop) return { off: true, hue, sat, lit, lvl, hz, wfus: false };
+        if (!reconstTimer) { hue = 210; sat = 30; lit = 30; lvl = 0.2; }
+        else {
         hue = (pavHue($("pavSel").value || "Cr\u00e2ne rieur") + (Date.now() / 120) % 40) % 360;
         sat = 55; lit = 34 + 8 * Math.sin(Date.now() / 600);
         lvl = 0.35 + 0.25 * Math.abs(Math.sin(Date.now() / 500));
+        }
       } else {
       const n = micAN.frequencyBinCount;
       if (!lootFD || lootFD.length !== n) lootFD = new Uint8Array(n);
@@ -3143,7 +3175,21 @@ function dockCallWin() {
       }
       }
     } catch (e) {}
-    return { off: false, hue, sat, lit, lvl, hz };
+    let wfus = false;
+    if (worldTimer || worldLoop) {
+      const wc = worldColHsl();
+      if (wc) {
+        const solo = !micStream && !reconstTimer;
+        const k = solo ? 0.8 : 0.35;
+        const dh = ((wc.h - hue + 540) % 360) - 180;
+        hue = (hue + dh * k + 360) % 360;
+        sat = Math.min(95, sat * (1 - k) + wc.s * k);
+        lit = Math.min(78, lit * (1 - k * 0.5) + wc.l * (k * 0.5));
+        lvl = solo ? Math.max(lvl, 0.3) : lvl;
+        wfus = true;
+      }
+    }
+    return { off: false, hue, sat, lit, lvl, hz, wfus };
   }
   function updateCallColor() {
     const el = $("callColor"), nm = $("callColorName");
@@ -3155,7 +3201,7 @@ function dockCallWin() {
     el.style.background = col;
     el.style.boxShadow = "0 0 18px " + col;
     lootColorName = hueName(hue);
-    if (nm) nm.textContent = "🎨 " + lootColorName;
+    if (nm) nm.textContent = "🎨 " + lootColorName + (pc.wfus ? " + monde \ud83c\udf0d" : "");
     if (holdActive) {
       if (!fragT0) fragT0 = Date.now();
       fragTrail.push(col);
@@ -3406,7 +3452,7 @@ function dockCallWin() {
     ctx.strokeStyle = "hsla(" + hue + ",60%,70%,0.35)"; ctx.lineWidth = 1;
     ctx.strokeRect(W * 0.5 - 16, H * 0.5 - 16, 32, 32);
     ctx.beginPath(); ctx.moveTo(W * 0.5 - 26, H * 0.5); ctx.lineTo(W * 0.5 + 26, H * 0.5); ctx.moveTo(W * 0.5, H * 0.5 - 26); ctx.lineTo(W * 0.5, H * 0.5 + 26); ctx.stroke();
-    $("nasaTel").textContent = "\ud83d\udef0 SONDE ROUTESTUDIO-1 \u00b7 teinte " + Math.round(hue) + "\u00b0" + (pc.hz ? " \u00b7 " + pc.hz + " Hz" : "") + " \u00b7 niveau " + Math.round(lvl * 100) + "% \u00b7 cible : " + hueName(hue) + (holdActive && fragWarm ? " \u00b7 pr\u00e9l\u00e8vement vivant en cours" : (pc.off ? " \u00b7 veille (pas de son)" : ""));
+    $("nasaTel").textContent = "\ud83d\udef0 SONDE ROUTESTUDIO-1 \u00b7 teinte " + Math.round(hue) + "\u00b0" + (pc.hz ? " \u00b7 " + pc.hz + " Hz" : "") + " \u00b7 niveau " + Math.round(lvl * 100) + "% \u00b7 cible : " + hueName(hue) + (pc.wfus ? " \u00b7 monde fusionn\u00e9 \ud83c\udf0d" : "") + (holdActive && fragWarm ? " \u00b7 pr\u00e9l\u00e8vement vivant en cours" : (pc.off ? " \u00b7 veille (pas de son)" : ""));
     nasaRaf = requestAnimationFrame(nasaLoop);
   }
   $("btnNasa").addEventListener("click", () => {
