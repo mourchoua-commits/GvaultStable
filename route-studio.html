@@ -69,6 +69,9 @@
     box-shadow:0 12px 40px rgba(0,0,0,0.6);overflow:hidden}
   .fwgrip{position:absolute;right:2px;bottom:2px;width:26px;height:26px;display:flex;align-items:center;justify-content:center;
     color:var(--gold);cursor:nwse-resize;font-size:16px;touch-action:none;z-index:5;background:rgba(0,0,0,0.3);border-radius:8px}
+  .fwmove{background:rgba(0,0,0,0.3);border:1px solid var(--line);border-radius:8px;color:var(--gold);cursor:move;font-size:13px;padding:2px 9px;touch-action:none}
+  #btnRec.rec{border-color:#ff5e5e;color:#ff8a8a;animation:recpulse 1s infinite}
+  @keyframes recpulse{50%{opacity:0.55}}
   .fwindow.open{display:flex;flex-direction:column}
   .fwinHead{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 12px;border-bottom:1px solid var(--line);font-size:13px;color:var(--gold)}
   .fwclose{background:none;border:none;color:var(--muted);cursor:pointer;font-size:14px}
@@ -167,6 +170,7 @@
 </main>
 <footer>
   <canvas id="viz" width="440" height="88"></canvas>
+  <button id="btnRec">⏺ Enregistrer</button>
   <button id="btnWav">💾 Exporter en WAV</button>
   <button id="btnJsonOut">📁 Exporter (.json)</button>
   <label class="filebtn">🎛️ Importer un son (WAV/MP3)<input id="fileAudio" type="file" accept="audio/*" hidden></label>
@@ -1156,6 +1160,27 @@
     const head = w.querySelector(".fwinHead");
     let wdrag = null;
     w.addEventListener("pointerdown", () => { w.style.zIndex = ++winZ; });
+    const mv = document.createElement("button");
+    mv.className = "fwmove";
+    mv.textContent = "✥";
+    mv.title = "Garde appuyé et glisse pour déplacer la fenêtre";
+    head.insertBefore(mv, w.querySelector(".fwclose"));
+    let mdrag = null;
+    mv.addEventListener("pointerdown", e => {
+      e.stopPropagation();
+      const r = w.getBoundingClientRect();
+      mdrag = { dx: e.clientX - r.left, dy: e.clientY - r.top };
+      mv.setPointerCapture(e.pointerId);
+      w.style.zIndex = ++winZ;
+    });
+    mv.addEventListener("pointermove", e => {
+      if (!mdrag) return;
+      w.style.left = clamp(e.clientX - mdrag.dx, 0, window.innerWidth - 80) + "px";
+      w.style.top = clamp(e.clientY - mdrag.dy, 0, window.innerHeight - 40) + "px";
+      w.style.right = "auto";
+      w.style.bottom = "auto";
+    });
+    mv.addEventListener("pointerup", () => { mdrag = null; });
     head.addEventListener("pointerdown", e => {
       if (e.target.classList.contains("fwclose")) return;
       const r = w.getBoundingClientRect();
@@ -1435,6 +1460,46 @@
       : "⚠️ Ton navigateur ne supporte pas les vibrations (surtout Android sur mobile) — les pads jouent quand même le son.";
     const open = $("vibGrid").classList.toggle("open");
     if (open) status("📳 Touche un pad : motif de vibration + son !");
+  });
+
+  let mediaRec = null, recChunks = [], recStart = 0, recTimer = null, recDest = null;
+  $("btnRec").addEventListener("click", () => {
+    if (mediaRec && mediaRec.state === "recording") { mediaRec.stop(); return; }
+    if (!window.MediaRecorder) { status("❌ Ton navigateur ne sait pas enregistrer (essaie Chrome ou Firefox)"); return; }
+    ensureAudio();
+    recDest = AC.createMediaStreamDestination();
+    master.connect(recDest);
+    recChunks = [];
+    const mime = ["audio/webm;codecs=opus", "audio/webm", "audio/ogg;codecs=opus", "audio/mp4"]
+      .find(m => MediaRecorder.isTypeSupported(m));
+    try {
+      mediaRec = new MediaRecorder(recDest.stream, mime ? { mimeType: mime } : undefined);
+    } catch (err) {
+      status("❌ Enregistrement impossible : " + err.message);
+      return;
+    }
+    mediaRec.ondataavailable = e => { if (e.data && e.data.size) recChunks.push(e.data); };
+    mediaRec.onstop = () => {
+      try { master.disconnect(recDest); } catch (err) {}
+      const blob = new Blob(recChunks, { type: mediaRec.mimeType || "audio/webm" });
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = "route-studio-session.webm";
+      a.click();
+      clearInterval(recTimer);
+      $("btnRec").textContent = "⏺ Enregistrer";
+      $("btnRec").classList.remove("rec");
+      status("⏺ Session enregistrée — le fichier audio est téléchargé !");
+    };
+    mediaRec.start();
+    recStart = Date.now();
+    $("btnRec").textContent = "⏹ Stop (0:00)";
+    $("btnRec").classList.add("rec");
+    status("🔴 Ça enregistre tout ce qui sort du studio ! Reclique sur ⏹ pour arrêter et télécharger.");
+    recTimer = setInterval(() => {
+      const s = Math.floor((Date.now() - recStart) / 1000);
+      $("btnRec").textContent = "⏹ Stop (" + Math.floor(s / 60) + ":" + String(s % 60).padStart(2, "0") + ")";
+    }, 500);
   });
 
   function selectTrack(i) {
