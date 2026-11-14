@@ -37,6 +37,7 @@
   .track .dot{width:14px;height:14px;border-radius:50%;flex:none}
   .track .name{flex:1;font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-height:24px;display:flex;align-items:center}
   .track select{max-width:110px;background:#241a44;color:var(--text);border:1px solid var(--line);border-radius:8px;padding:3px 4px;font-size:12px}
+  .track .instLabel{font-size:12px;color:var(--muted);max-width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .track .mini{padding:4px 9px;font-size:13px;border-radius:9px}
   #fxPanel{border:1px solid var(--line);border-radius:14px;padding:10px;background:var(--panel);display:flex;flex-direction:column;gap:6px;font-size:13px}
   #fxPanel label{display:flex;align-items:center;gap:8px;color:var(--muted)}
@@ -187,6 +188,7 @@
   <button id="btnJsonOut">📁 Exporter (.json)</button>
   <label class="filebtn">🎛️ Importer un son (WAV/MP3)<input id="fileAudio" type="file" accept="audio/*" hidden></label>
   <label class="filebtn">📂 Importer<input id="fileJson" type="file" accept=".json,application/json" hidden></label>
+  <button id="btnMicOpen">🎤 Micro</button>
   <button id="btnMagic">🌈 Palette magique</button>
   <button id="btnInst">🎹 Grille instant</button>
   <button id="btnVib">📳 Vibrations</button>
@@ -224,6 +226,17 @@
     </div>
     <div class="cg" id="cgHost"></div>
     <input class="chex" id="cgHex" placeholder="#code hexa précis (ex : #ff7e7e)">
+  </div>
+</div>
+<div id="micWin" class="fwindow">
+  <div class="fwinHead"><span>🎤 Micro auto-tune — chante, c'est accordé !</span><button class="fwclose" data-close="micWin">✖</button></div>
+  <div class="fwinBody">
+    <div class="winRow">Piste : <select id="micTrackSel"></select>
+      <label style="display:flex;gap:5px;align-items:center"><input id="micCap" type="checkbox"> 📝 capturer</label>
+    </div>
+    <button id="btnMic">🎤 Activer le micro</button>
+    <div id="micInfo" style="margin-top:10px;font-size:13px;color:var(--muted)">Micro éteint</div>
+    <div style="margin-top:8px;font-size:12px;color:var(--muted)">💡 Chante une note : elle est détectée, corrigée sur ta gamme et jouée avec l'instrument de la piste choisie</div>
   </div>
 </div>
 <div id="miniGame" class="fwindow">
@@ -858,36 +871,45 @@
       ren.textContent = "✏️";
       ren.title = "Renommer la piste";
       ren.addEventListener("click", e => { e.stopPropagation(); renameTrack(i, t); });
-      const sel = document.createElement("select");
-      for (const [cat, glabel] of [["mel", "🎸 Instruments"], ["sfx", "💥 Bruits & FX"]]) {
-        const og = document.createElement("optgroup");
-        og.label = glabel;
-        for (const ins of INSTRUMENTS) {
-          if (ins.cat !== cat) continue;
+      let sel;
+      if (i === selTrack) {
+        sel = document.createElement("select");
+        for (const [cat, glabel] of [["mel", "🎸 Instruments"], ["sfx", "💥 Bruits & FX"]]) {
+          const og = document.createElement("optgroup");
+          og.label = glabel;
+          for (const ins of INSTRUMENTS) {
+            if (ins.cat !== cat) continue;
+            const o = document.createElement("option");
+            o.value = ins.id;
+            o.textContent = ins.label;
+            if (ins.id === t.instrument) o.selected = true;
+            sel.appendChild(o);
+          }
+          sel.appendChild(og);
+        }
+        if (t.instrument === "sample") {
           const o = document.createElement("option");
-          o.value = ins.id;
-          o.textContent = ins.label;
-          if (ins.id === t.instrument) o.selected = true;
+          o.value = "sample";
+          o.textContent = "🎛️ Sample" + (t.sampleName ? " · " + t.sampleName.slice(0, 12) : "");
+          o.selected = true;
           sel.appendChild(o);
         }
-        sel.appendChild(og);
+        sel.addEventListener("click", e => e.stopPropagation());
+        sel.addEventListener("change", e => {
+          e.stopPropagation();
+          t.instrument = e.target.value;
+          if (t.instrument !== "sample") t.sampleBuffer = null;
+          t.notes = t.notes.filter(n => n.row < (t.instrument === "drums" ? 4 : melRows()));
+          selectTrack(i);
+          save();
+        });
+      } else {
+        sel = document.createElement("span");
+        sel.className = "instLabel";
+        const ins = INSTRUMENTS.find(x => x.id === t.instrument);
+        sel.textContent = ins ? ins.label : "🎛️ Sample";
+        sel.title = "Sélectionne la piste pour changer d'instrument";
       }
-      if (t.instrument === "sample") {
-        const o = document.createElement("option");
-        o.value = "sample";
-        o.textContent = "🎛️ Sample" + (t.sampleName ? " · " + t.sampleName.slice(0, 12) : "");
-        o.selected = true;
-        sel.appendChild(o);
-      }
-      sel.addEventListener("click", e => e.stopPropagation());
-      sel.addEventListener("change", e => {
-        e.stopPropagation();
-        t.instrument = e.target.value;
-        if (t.instrument !== "sample") t.sampleBuffer = null;
-        t.notes = t.notes.filter(n => n.row < (t.instrument === "drums" ? 4 : melRows()));
-        selectTrack(i);
-        save();
-      });
       const mute = document.createElement("button");
       mute.className = "mini";
       mute.textContent = t.muted ? "🔇" : "🔈";
@@ -1666,6 +1688,91 @@
     const open = $("vibGrid").classList.toggle("open");
     if (open) status("📳 Touche un pad : motif de vibration + son !");
   });
+
+  let micStream = null, micAN = null, micTimer = null, micLastMidi = null;
+  $("btnMicOpen").addEventListener("click", () => {
+    fillTrackSel("micTrackSel");
+    const open = $("micWin").classList.toggle("open");
+    if (open) status("🎤 Active le micro, chante — chaque note est accordée à ta gamme !");
+  });
+  $("micTrackSel").addEventListener("change", () => trackSelChange("micTrackSel"));
+  $("btnMic").addEventListener("click", async () => {
+    if (micStream) {
+      micStream.getTracks().forEach(tr => tr.stop());
+      micStream = null;
+      clearInterval(micTimer);
+      micTimer = null;
+      $("btnMic").textContent = "🎤 Activer le micro";
+      $("micInfo").textContent = "Micro éteint";
+      status("🎤 Micro coupé");
+      return;
+    }
+    try {
+      micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    } catch (err) {
+      status("❌ Micro refusé ou indisponible : " + err.message);
+      return;
+    }
+    ensureAudio();
+    const src = AC.createMediaStreamSource(micStream);
+    micAN = AC.createAnalyser();
+    micAN.fftSize = 1024;
+    src.connect(micAN);
+    const data = new Float32Array(micAN.fftSize);
+    $("btnMic").textContent = "⏹ Couper le micro";
+    $("micInfo").textContent = "🎤 Écoute… chante une note !";
+    status("🎤 Micro actif — auto-tune accordé à ta gamme. Chante !");
+    micTimer = setInterval(() => {
+      micAN.getFloatTimeDomainData(data);
+      const f0 = autoCorrelate(data, AC.sampleRate);
+      if (f0 <= 0) return;
+      const midiF = 69 + 12 * Math.log2(f0 / 440);
+      const t = tracks[selTrack];
+      let midi;
+      if (freeMode) midi = Math.round(midiF);
+      else {
+        let best = null, bd = 1e9;
+        for (let r = 0; r < melRows(); r++) {
+          const m = rowToMidi(t, r);
+          const d = Math.abs(m - midiF);
+          if (d < bd) { bd = d; best = m; }
+        }
+        midi = best;
+      }
+      const cents = Math.round((midiF - midi) * 100);
+      $("micInfo").textContent = "🎤 " + NAMES[midi % 12] + (Math.floor(midi / 12) - 1) + " — corrigé de " + (cents > 0 ? "+" : "") + cents + " cents (" + Math.round(f0) + " Hz)";
+      if (midi !== micLastMidi) {
+        micLastMidi = midi;
+        padVoice(AC.currentTime, midi, 0.3);
+        if (typeof navigator.vibrate === "function") navigator.vibrate(10);
+        if ($("micCap").checked) captureNote(midiToRow(t, midi));
+      }
+    }, 90);
+  });
+
+  function autoCorrelate(buf, sampleRate) {
+    let SIZE = buf.length, rms = 0;
+    for (let i = 0; i < SIZE; i++) { const v = buf[i]; rms += v * v; }
+    rms = Math.sqrt(rms / SIZE);
+    if (rms < 0.008) return -1;
+    let r1 = 0, r2 = SIZE - 1;
+    const thres = 0.2;
+    for (let i = 0; i < SIZE / 2; i++) if (Math.abs(buf[i]) < thres) { r1 = i; break; }
+    for (let i = 1; i < SIZE / 2; i++) if (Math.abs(buf[SIZE - i]) < thres) { r2 = SIZE - i; break; }
+    buf = buf.slice(r1, r2);
+    SIZE = buf.length;
+    const c = new Array(SIZE).fill(0);
+    for (let i = 0; i < SIZE; i++) for (let j = 0; j < SIZE - i; j++) c[i] += buf[j] * buf[j + i];
+    let d = 0;
+    while (c[d] > c[d + 1]) d++;
+    let maxval = -1, maxpos = -1;
+    for (let i = d; i < SIZE; i++) if (c[i] > maxval) { maxval = c[i]; maxpos = i; }
+    let T0 = maxpos;
+    const x1 = c[T0 - 1], x2 = c[T0], x3 = c[T0 + 1];
+    const a = (x1 + x3 - 2 * x2) / 2, b = (x3 - x1) / 2;
+    if (a) T0 = T0 - b / (2 * a);
+    return sampleRate / T0;
+  }
 
   let mediaRec = null, recChunks = [], recStart = 0, recTimer = null, recDest = null;
   $("btnRec").addEventListener("click", () => {
