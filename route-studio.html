@@ -91,7 +91,7 @@
   #miniGame .fwinBody{padding:0}
   #miniGame iframe{width:100%;height:100%;border:0;display:block;min-height:180px}
   #magicPad{width:460px}
-  #padGrid{display:grid;grid-template-columns:repeat(6,1fr);gap:10px;margin-top:12px}
+  #padGrid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:12px}
   #padGrid .pad{aspect-ratio:1;border-radius:50%;border:2px solid rgba(255,255,255,0.25);cursor:pointer;padding:0;min-width:0}
   #padGrid .pad.pressed{outline:3px solid #fff;box-shadow:0 0 10px rgba(255,255,255,0.7)}
   #mixSwatch{width:26px;height:26px;border-radius:50%;border:2px solid rgba(255,255,255,0.3);background:#222;flex:none}
@@ -307,7 +307,8 @@
       <span id="mixHex">Touche 2 couleurs en même temps pour le mélange…</span>
       <button id="mixUse">🪣 Utiliser le mélange</button>
     </div>
-    <div style="margin-top:14px;font-size:12px;color:var(--muted)">🎨 Sélecteur personnalisé</div>
+    <div style="margin-top:12px;font-size:12px;color:var(--muted)">💡 La grille vit : chaque nouvelle couleur ajoute sa rangée — nuance claire ✨, normale, foncée 🌙 et son <b>négatif</b> 🔄 !</div>
+    <div style="margin-top:10px;font-size:12px;color:var(--muted)">🎨 Sélecteur personnalisé</div>
     <div class="cg" id="padPrecGrid" style="margin-top:8px"></div>
     <label style="display:flex;gap:5px;align-items:center;margin-top:10px;font-size:12px;color:var(--muted)"><input id="padInv" type="checkbox"> 🔄 inversée</label>
     <input class="chex" id="padPrecHex" placeholder="#code hexa précis (ex : #ff7e7e)">
@@ -1127,6 +1128,7 @@
     $("colHex").value = col || "";
     const pb = $("padBrush");
     if (pb) pb.style.background = col || "#888";
+    if (typeof rememberColor === "function") rememberColor(col);
   }
   function applyBrushToSel() {
     if (selNote) { if (brushCol) selNote.col = brushCol; else delete selNote.col; renderNotes(); }
@@ -1406,41 +1408,65 @@
   const padActive = new Map();
   let lastMix = null;
   const padGrid = $("padGrid");
-  const PAD_ROWS = [[74, 12], [58, 0], [40, -12]];
-  for (const [L, oct] of PAD_ROWS) for (const hue of HUES) {
-    const col = hslToHex(hue, 80, L);
-    const pad = document.createElement("button");
-    pad.className = "pad";
-    pad.style.background = col;
-    pad.title = "Teinte " + hue + "°" + (oct > 0 ? " · octave haute" : oct < 0 ? " · octave basse" : "");
-    pad.addEventListener("pointerdown", e => {
-      e.preventDefault();
-      ensureAudio();
-      const t = tracks[selTrack];
-      const list = [];
-      for (let r = 0; r < melRows(); r++) list.push(rowToMidi(t, r));
-      const midi = list[Math.min(list.length - 1, Math.floor(hue / 360 * list.length))] + oct;
-      const g = AC.createGain();
-      g.gain.value = 0.9;
-      g.connect(master);
-      const now = AC.currentTime;
-      if (t.instrument === "sample" && t.sampleBuffer) scheduleSample(AC, g, t, { row: Math.floor(melRows() / 2), vel: 0.8 }, now, 0.5);
-      else scheduleNote(AC, g, t.instrument === "drums" ? "pluck" : t.instrument, midi, now, 0.5, 0.8);
-      if ($("padCap").checked) captureNote(midiToRow(t, midi));
-      padActive.set(e.pointerId, col);
-      pad.classList.add("pressed");
-      if (padActive.size >= 2) {
-        lastMix = mixHex([...padActive.values()]);
-        $("mixSwatch").style.background = lastMix;
-        $("mixHex").textContent = "🎨 Mélange colorimétrique : " + lastMix;
-        $("mixUse").classList.add("show");
-      } else {
-        $("mixSwatch").style.background = col;
-        $("mixHex").textContent = "🎨 " + col + " — touche une 2e couleur en même temps !";
-      }
-    });
-    padGrid.appendChild(pad);
+  let padColors = HUES.map(h => hslToHex(h, 80, 60));
+  function rememberColor(col) {
+    if (!col || !/^#[0-9a-fA-F]{6}$/.test(col)) return;
+    col = col.toLowerCase();
+    if (padColors[0] === col) return;
+    padColors = padColors.filter(c => c !== col);
+    padColors.unshift(col);
+    if (padColors.length > 12) padColors.length = 12;
+    buildPadGrid();
   }
+  function padPress(col, oct, pad, e) {
+    e.preventDefault();
+    ensureAudio();
+    const t = tracks[selTrack];
+    const list = [];
+    for (let r = 0; r < melRows(); r++) list.push(rowToMidi(t, r));
+    const hue = rgbToHue(...hexToRgb(col));
+    const midi = list[Math.min(list.length - 1, Math.floor(hue / 360 * list.length))] + oct;
+    const g = AC.createGain();
+    g.gain.value = 0.9;
+    g.connect(master);
+    const now = AC.currentTime;
+    if (t.instrument === "sample" && t.sampleBuffer) scheduleSample(AC, g, t, { row: Math.floor(melRows() / 2), vel: 0.8 }, now, 0.5);
+    else scheduleNote(AC, g, t.instrument === "drums" ? "pluck" : t.instrument, midi, now, 0.5, 0.8);
+    if ($("padCap").checked) captureNote(midiToRow(t, midi));
+    padActive.set(e.pointerId, col);
+    pad.classList.add("pressed");
+    if (padActive.size >= 2) {
+      lastMix = mixHex([...padActive.values()]);
+      $("mixSwatch").style.background = lastMix;
+      $("mixHex").textContent = "🎨 Mélange colorimétrique : " + lastMix;
+      $("mixUse").classList.add("show");
+      rememberColor(lastMix);
+    } else {
+      $("mixSwatch").style.background = col;
+      $("mixHex").textContent = "🎨 " + col + " — touche une 2e couleur en même temps !";
+    }
+    rememberColor(col);
+  }
+  function buildPadGrid() {
+    padGrid.innerHTML = "";
+    for (const base of padColors) {
+      const shades = [
+        [mixHex([base, "#ffffff"]), 12, "claire · octave haute"],
+        [base, 0, ""],
+        [mixHex([base, "#000000"]), -12, "foncée · octave basse"],
+        [invertHex(base), 0, "négatif"]
+      ];
+      for (const [col, oct, tag] of shades) {
+        const pad = document.createElement("button");
+        pad.className = "pad";
+        pad.style.background = col;
+        pad.title = col + (tag ? " · " + tag : "");
+        pad.addEventListener("pointerdown", e => padPress(col, oct, pad, e));
+        padGrid.appendChild(pad);
+      }
+    }
+  }
+  buildPadGrid();
   window.addEventListener("pointerup", e => {
     if (!padActive.has(e.pointerId)) return;
     padActive.delete(e.pointerId);
