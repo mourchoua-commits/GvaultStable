@@ -58,10 +58,28 @@
   #toolsBar .tool.active{border-color:var(--gold);color:var(--gold)}
   #toolsBar .swatch{width:20px;height:20px;border-radius:50%;border:2px solid rgba(255,255,255,0.25);cursor:pointer;padding:0;flex:none}
   #toolsBar .swatch.active{border-color:#fff;box-shadow:0 0 6px rgba(255,255,255,0.7)}
-  #roll.tool-erase{cursor:crosshair}
+  #roll.tool-erase,#roll.tool-smudge{cursor:crosshair}
   #roll.tool-paint{cursor:cell}
-  #roll.tool-erase .note,#roll.tool-paint .note{cursor:crosshair}
+  #roll.tool-erase .note,#roll.tool-paint .note,#roll.tool-smudge .note{cursor:crosshair}
   #toolsBar .dotc{cursor:pointer}
+  #colPick{width:30px;height:24px;padding:0;border:none;background:none;cursor:pointer}
+  #colHex{width:80px;background:rgba(0,0,0,0.3);border:1px solid var(--line);border-radius:8px;color:var(--gold);padding:4px 6px;font-size:12px}
+  .fwindow{position:fixed;right:16px;bottom:64px;width:380px;max-width:calc(100vw - 32px);min-width:260px;min-height:150px;
+    background:var(--panel);border:1px solid var(--gold);border-radius:14px;z-index:60;display:none;
+    box-shadow:0 12px 40px rgba(0,0,0,0.6);resize:both;overflow:hidden}
+  .fwindow.open{display:flex;flex-direction:column}
+  .fwinHead{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 12px;border-bottom:1px solid var(--line);font-size:13px;color:var(--gold)}
+  .fwclose{background:none;border:none;color:var(--muted);cursor:pointer;font-size:14px}
+  .fwinBody{flex:1;overflow:auto;padding:10px}
+  #miniGame .fwinBody{padding:0}
+  #miniGame iframe{width:100%;height:calc(100% - 33px);border:0;display:block;min-height:180px}
+  #padGrid{display:grid;grid-template-columns:repeat(6,1fr);gap:8px}
+  #padGrid .pad{aspect-ratio:1;border-radius:50%;border:2px solid rgba(255,255,255,0.25);cursor:pointer;padding:0;min-width:0}
+  #padGrid .pad.pressed{outline:3px solid #fff;box-shadow:0 0 10px rgba(255,255,255,0.7)}
+  #mixRow{display:flex;gap:10px;align-items:center;margin-top:12px;font-size:13px;color:var(--muted);flex-wrap:wrap}
+  #mixSwatch{width:26px;height:26px;border-radius:50%;border:2px solid rgba(255,255,255,0.3);background:#222;flex:none}
+  #mixUse{display:none}
+  #mixUse.show{display:inline-block}
   #playhead{position:absolute;top:0;bottom:0;width:2px;background:rgba(255,255,255,0.85);box-shadow:0 0 8px rgba(255,255,255,0.8);pointer-events:none;display:none}
   #notePanel{border:1px solid var(--gold);border-radius:14px;padding:10px 14px;background:var(--panel);
     display:flex;gap:14px;align-items:center;flex-wrap:wrap;font-size:13px}
@@ -119,9 +137,12 @@
       <button class="tool active" data-tool="draw">✏️ Crayon</button>
       <button class="tool" data-tool="erase">🧽 Gomme</button>
       <button class="tool" data-tool="paint">🪣 Pot</button>
+      <button class="tool" data-tool="smudge">🫳 Estomper</button>
       <button class="tool" id="btnSmooth">🪥 Aplanir</button>
       <span style="color:var(--muted)">Couleur :</span>
       <span id="palette" style="display:flex;gap:6px;align-items:center"></span>
+      <input id="colPick" type="color" value="#ffffff" title="Sélecteur de couleur">
+      <input id="colHex" type="text" placeholder="#ff7e7e" title="Code hexadécimal">
     </div>
     <div id="notePanel" class="hidden">
       <span class="npName" id="npName">Note</span>
@@ -139,9 +160,27 @@
   <button id="btnJsonOut">📁 Exporter (.json)</button>
   <label class="filebtn">🎛️ Importer un son (WAV/MP3)<input id="fileAudio" type="file" accept="audio/*" hidden></label>
   <label class="filebtn">📂 Importer<input id="fileJson" type="file" accept=".json,application/json" hidden></label>
+  <button id="btnMagic">🌈 Palette magique</button>
+  <button id="btnMini">🚗 Mini jeu</button>
   <a class="hublink" href="jeux.html">🎮 Mes jeux</a>
   <span id="status"></span>
 </footer>
+<div id="miniGame" class="fwindow">
+  <div class="fwinHead"><span>🚗 Route Miroir — mini fenêtre (tire le bord pour redimensionner)</span><button class="fwclose" data-close="miniGame">✖</button></div>
+  <div class="fwinBody"></div>
+</div>
+<div id="magicPad" class="fwindow">
+  <div class="fwinHead"><span>🌈 Palette magique — touche les couleurs 🎵</span><button class="fwclose" data-close="magicPad">✖</button></div>
+  <div class="fwinBody">
+    <div id="padGrid"></div>
+    <div id="mixRow">
+      <span id="mixSwatch"></span>
+      <span id="mixHex">Touche 2 couleurs en même temps pour le mélange…</span>
+      <button id="mixUse">🪣 Utiliser le mélange</button>
+    </div>
+    <div style="margin-top:8px;font-size:12px;color:var(--muted)">💡 Joue avec l'instrument de la piste sélectionnée — la teinte donne la note, claire = aigu</div>
+  </div>
+</div>
 <script>
 (() => {
   "use strict";
@@ -847,6 +886,7 @@
         e.stopPropagation();
         if (tool === "erase") { t.notes = t.notes.filter(x => x !== n); renderNotes(); save(); return; }
         if (tool === "paint") { if (brushCol) n.col = brushCol; else delete n.col; renderNotes(); save(); return; }
+        if (tool === "smudge") { n.vel = Math.max(0.1, n.vel * 0.85); renderNotes(); save(); return; }
         selectNote(n);
         dragNote = { n, startX: e.clientX, startLen: n.len };
       });
@@ -915,7 +955,7 @@
   });
 
   let dragNote = null, dragNew = false;
-  let tool = "draw", brushCol = null, dragErase = false, dragPaint = false;
+  let tool = "draw", brushCol = null, dragErase = false, dragPaint = false, dragSmudge = false;
   const roll = $("roll");
   const PALETTE = ["#ff7e7e", "#ffd76a", "#8effa0", "#6ee7ff", "#c99cff", "#ff7eb6", "#ffa06e", "#f2f2f2"];
   function renderPalette() {
@@ -928,9 +968,8 @@
       if (col) b.style.background = col;
       else b.style.background = "repeating-linear-gradient(45deg,#666,#666 4px,#333 4px,#333 8px)";
       b.addEventListener("click", () => {
-        brushCol = col;
+        setBrush(col);
         if (selNote) { if (col) selNote.col = col; else delete selNote.col; renderNotes(); }
-        renderPalette();
         save();
       });
       pal.appendChild(b);
@@ -938,17 +977,38 @@
     mk(null, "Auto (couleur de la piste)");
     for (const c of PALETTE) mk(c, c);
   }
+  function setBrush(col) {
+    brushCol = col;
+    renderPalette();
+    $("colPick").value = col || "#ffffff";
+    $("colHex").value = col || "";
+  }
+  function applyBrushToSel() {
+    if (selNote) { if (brushCol) selNote.col = brushCol; else delete selNote.col; renderNotes(); }
+  }
   renderPalette();
+  $("colPick").addEventListener("input", e => { setBrush(e.target.value.toLowerCase()); applyBrushToSel(); save(); });
+  $("colHex").addEventListener("change", e => {
+    let v = e.target.value.trim();
+    if (v && !v.startsWith("#")) v = "#" + v;
+    if (/^#[0-9a-fA-F]{6}$/.test(v)) { setBrush(v.toLowerCase()); applyBrushToSel(); save(); }
+    else status("❌ Hexa invalide — format attendu : #ff7e7e");
+  });
+  const TOOL_HINTS = {
+    draw: "✏️ Crayon : dessine des notes",
+    erase: "🧽 Gomme : clique ou glisse sur les notes pour les effacer",
+    paint: "🪣 Pot : clique les notes pour les repeindre (choisis une couleur)",
+    smudge: "🫳 Estomper : glisse sur les notes pour les faire fondre (fade out)"
+  };
   document.querySelectorAll("#toolsBar [data-tool]").forEach(b => {
     b.addEventListener("click", () => {
       tool = b.dataset.tool;
       document.querySelectorAll("#toolsBar [data-tool]").forEach(x => x.classList.toggle("active", x === b));
       roll.classList.toggle("tool-erase", tool === "erase");
       roll.classList.toggle("tool-paint", tool === "paint");
+      roll.classList.toggle("tool-smudge", tool === "smudge");
       if (tool !== "draw") { selNote = null; $("notePanel").classList.add("hidden"); renderNotes(); }
-      status(tool === "erase" ? "🧽 Gomme : clique ou glisse sur les notes pour les effacer" :
-        tool === "paint" ? "🪣 Pot : clique les notes pour les repeindre (choisis une couleur)" :
-        "✏️ Crayon : dessine des notes");
+      status(TOOL_HINTS[tool]);
     });
   });
   $("btnSmooth").addEventListener("click", () => {
@@ -985,6 +1045,13 @@
       roll.setPointerCapture(e.pointerId);
       return;
     }
+    if (tool === "smudge") {
+      const hit = noteHit(t, step, row);
+      if (hit) hit.vel = Math.max(0.1, hit.vel * 0.85);
+      dragSmudge = true;
+      roll.setPointerCapture(e.pointerId);
+      return;
+    }
     const hit = noteHit(t, step, row);
     if (hit) {
       selectNote(hit);
@@ -1006,7 +1073,7 @@
     roll.setPointerCapture(e.pointerId);
   });
   window.addEventListener("pointermove", e => {
-    if (dragErase || dragPaint) {
+    if (dragErase || dragPaint || dragSmudge) {
       const rect = roll.getBoundingClientRect();
       const step = clamp(Math.floor((e.clientX - rect.left) / CW), 0, STEPS - 1);
       const t = tracks[selTrack];
@@ -1015,6 +1082,8 @@
       const hit = noteHit(t, step, row);
       if (dragErase && hit) { t.notes = t.notes.filter(x => x !== hit); renderNotes(); save(); }
       if (dragPaint && hit && brushCol && hit.col !== brushCol) { hit.col = brushCol; renderNotes(); save(); }
+      if (dragSmudge && hit) hit.vel = Math.max(0.1, hit.vel * 0.92);
+      if (dragSmudge && hit && Math.random() < 0.25) { renderNotes(); save(); }
       return;
     }
     if (!dragNote) return;
@@ -1030,10 +1099,98 @@
     }
   });
   window.addEventListener("pointerup", () => {
-    if (dragErase || dragPaint) { dragErase = false; dragPaint = false; return; }
+    if (dragErase || dragPaint || dragSmudge) { dragErase = false; dragPaint = false; dragSmudge = false; return; }
     if (dragNote) { save(); dragNote = null; }
   });
   function clamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
+
+  $("btnMini").addEventListener("click", () => {
+    const w = $("miniGame");
+    const open = w.classList.toggle("open");
+    if (open && !w.querySelector("iframe")) {
+      const f = document.createElement("iframe");
+      f.src = "route-miroir.html";
+      f.title = "Route Miroir";
+      w.querySelector(".fwinBody").appendChild(f);
+    }
+    if (open) status("🚗 Mini Route Miroir ouvert — clique dedans pour jouer, tire le bord pour redimensionner");
+  });
+  document.querySelectorAll(".fwclose").forEach(b => {
+    b.addEventListener("click", () => $(b.dataset.close).classList.remove("open"));
+  });
+
+  const HUES = [0, 30, 60, 90, 120, 150, 180, 210, 240, 270, 300, 330];
+  const padActive = new Map();
+  let lastMix = null;
+  function hslToHex(h, s, l) {
+    const a = s / 100 * Math.min(l / 100, 1 - l / 100);
+    const f = n => {
+      const k = (n + h / 30) % 12;
+      const c = l / 100 - a * Math.max(-1, Math.min(k - 3, Math.min(9 - k, 1)));
+      return Math.round(255 * c).toString(16).padStart(2, "0");
+    };
+    return "#" + f(0) + f(8) + f(4);
+  }
+  function hexToRgb(hx) {
+    const m = hx.replace("#", "");
+    return [parseInt(m.slice(0, 2), 16), parseInt(m.slice(2, 4), 16), parseInt(m.slice(4, 6), 16)];
+  }
+  function rgbToHex(r, g, b) { return "#" + [r, g, b].map(v => Math.round(v).toString(16).padStart(2, "0")).join(""); }
+  function mixHex(list) {
+    const rgbs = list.map(hexToRgb);
+    const n = rgbs.length;
+    return rgbToHex(rgbs.reduce((s, c) => s + c[0], 0) / n, rgbs.reduce((s, c) => s + c[1], 0) / n, rgbs.reduce((s, c) => s + c[2], 0) / n);
+  }
+  const padGrid = $("padGrid");
+  for (const hue of HUES) {
+    const col = hslToHex(hue, 80, 60);
+    const pad = document.createElement("button");
+    pad.className = "pad";
+    pad.style.background = col;
+    pad.title = "Teinte " + hue + "°";
+    pad.addEventListener("pointerdown", e => {
+      e.preventDefault();
+      ensureAudio();
+      const t = tracks[selTrack];
+      const list = [];
+      for (let r = 0; r < melRows(); r++) list.push(rowToMidi(t, r));
+      const midi = list[Math.min(list.length - 1, Math.floor(hue / 360 * list.length))];
+      const g = AC.createGain();
+      g.gain.value = 0.9;
+      g.connect(master);
+      const now = AC.currentTime;
+      if (t.instrument === "sample" && t.sampleBuffer) scheduleSample(AC, g, t, { row: Math.floor(melRows() / 2), vel: 0.8 }, now, 0.5);
+      else scheduleNote(AC, g, t.instrument === "drums" ? "pluck" : t.instrument, midi, now, 0.5, 0.8);
+      padActive.set(e.pointerId, col);
+      pad.classList.add("pressed");
+      if (padActive.size >= 2) {
+        lastMix = mixHex([...padActive.values()]);
+        $("mixSwatch").style.background = lastMix;
+        $("mixHex").textContent = "🎨 Mélange colorimétrique : " + lastMix;
+        $("mixUse").classList.add("show");
+      } else {
+        $("mixSwatch").style.background = col;
+        $("mixHex").textContent = "🎨 " + col + " — touche une 2e couleur en même temps !";
+      }
+    });
+    padGrid.appendChild(pad);
+  }
+  window.addEventListener("pointerup", e => {
+    if (!padActive.has(e.pointerId)) return;
+    padActive.delete(e.pointerId);
+    document.querySelectorAll("#padGrid .pad.pressed").forEach(p => p.classList.remove("pressed"));
+  });
+  $("mixUse").addEventListener("click", () => {
+    if (!lastMix) return;
+    setBrush(lastMix);
+    applyBrushToSel();
+    save();
+    status("🪣 Mélange appliqué au pinceau : " + lastMix);
+  });
+  $("btnMagic").addEventListener("click", () => {
+    const open = $("magicPad").classList.toggle("open");
+    if (open) status("🌈 Touche une couleur : elle joue une note selon sa teinte. Deux à la fois = mélange !");
+  });
 
   function selectTrack(i) {
     selTrack = i;
