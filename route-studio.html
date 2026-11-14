@@ -298,6 +298,12 @@
     <div class="winRow">🎤 Micro : <select id="micDevSel" title="Choisis le micro que tu veux !"></select></div>
     <button id="btnMic">🎤 Activer le micro</button>
     <div id="micInfo" style="margin-top:10px;font-size:13px;color:var(--muted)">Micro éteint</div>
+    <div id="butinRow" class="winRow" style="display:none;margin-top:10px;gap:8px;align-items:center;flex-wrap:wrap">
+      <span id="butinInfo">🎁 Butin prêt !</span>
+      <button id="btnButinPlay">▶️ Écouter</button>
+      <button id="btnButinLoop">🔁 Boucle</button>
+      <button id="btnButinSample">➕ Sample sur la piste</button>
+    </div>
     <div style="margin-top:8px;font-size:12px;color:var(--muted)">💡 Chante une note : elle est détectée, corrigée sur ta gamme et jouée avec l'instrument de la piste choisie — 🔒 Refusé ? Barre d'adresse → Autoriser le micro : la relance est automatique !</div>
   </div>
 </div>
@@ -2368,6 +2374,7 @@
   });
 
   let micStream = null, micAN = null, micTimer = null, micLastMidi = null, micPreT = 0;
+  let callRec = null, callChunks = [], callButin = null, butinLoop = false, butinSrc = null;
   $("btnMicOpen").addEventListener("click", () => {
     syncWinSels();
     const open = $("micWin").classList.toggle("open");
@@ -2392,6 +2399,7 @@
       $("micInfo").textContent = "Micro éteint";
       status("🎤 Micro coupé");
       closeCall();
+      harvestButin();
       return;
     }
     await openMic();
@@ -2437,10 +2445,72 @@
     clearInterval(callTimerInt);
     callTimerInt = null;
   }
-  $("btnCallEnd").addEventListener("click", () => {
-    if (micStream) $("btnMic").click();
-    closeCall();
-    status("🛏️ Le Micro rejoint l'équipage pour la prochaine session — micro coupé !");
+  function stopButin() { if (butinSrc) { try { butinSrc.stop(); } catch (e) {} butinSrc = null; } }
+  async function harvestButin() {
+    if (!callRec) return;
+    const rec = callRec;
+    callRec = null;
+    if (rec.state !== "inactive") {
+      await new Promise(res => {
+        rec.onstop = () => res();
+        try { rec.stop(); } catch (e) { res(); }
+        setTimeout(res, 800);
+      });
+    }
+    if (!callChunks.length) return;
+    const blob = new Blob(callChunks);
+    callChunks = [];
+    try {
+      ensureAudio();
+      const buf = await AC.decodeAudioData(await blob.arrayBuffer());
+      callButin = buf;
+      $("butinRow").style.display = "flex";
+      $("butinInfo").textContent = "🎁 Butin de l'abordage : " + Math.max(1, Math.round(buf.duration)) + "s de chant capturé !";
+      status("🎁 Butin récupéré — écoute, mets en boucle ou pose-le en sample !");
+    } catch (e) {
+      status("🎁 Le chant n'a pas pu être décodé — mais les notes capturées restent dans la piste !");
+    }
+  }
+  $("btnCallEnd").addEventListener("click", async () => {
+    if (micStream) {
+      micStream.getTracks().forEach(tr => tr.stop());
+      micStream = null;
+      clearInterval(micTimer);
+      micTimer = null;
+      $("btnMic").textContent = "🎤 Activer le micro";
+      $("micInfo").textContent = "Micro éteint";
+      closeCall();
+    }
+    await harvestButin();
+    if (!callButin) status("🛏️ Le Micro rejoint l'équipage pour la prochaine session — micro coupé !");
+  });
+  $("btnButinPlay").addEventListener("click", () => {
+    if (!callButin) return;
+    ensureAudio();
+    stopButin();
+    const src = AC.createBufferSource();
+    src.buffer = callButin;
+    src.loop = butinLoop;
+    src.connect(master);
+    src.start();
+    butinSrc = src;
+    status(butinLoop ? "🔁 Le butin tourne en boucle !" : "▶️ Lecture du butin !");
+  });
+  $("btnButinLoop").addEventListener("click", () => {
+    butinLoop = !butinLoop;
+    $("btnButinLoop").classList.toggle("on");
+    if (butinSrc) butinSrc.loop = butinLoop;
+    status(butinLoop ? "🔁 Boucle activée — le chant tourne tant que tu veux !" : "⏹ Boucle désactivée");
+  });
+  $("btnButinSample").addEventListener("click", () => {
+    if (!callButin) return;
+    const t = tracks[selTrack];
+    t.instrument = "sample";
+    t.sampleBuffer = callButin;
+    t.sampleName = "butin-micro";
+    renderTrackList();
+    save();
+    status("🎁 Butin posé comme sample sur « " + t.name + " » — place tes notes, ça jouera ton chant !");
   });
   $("callWin").addEventListener("click", e => { if (e.target && e.target.id === "callWin") $("btnCallEnd").click(); });
   async function openMic() {
@@ -2490,6 +2560,17 @@
     $("micInfo").textContent = "🎤 Écoute… chante une note !";
     status("🏴‍☠️ L'équipage fait chanter le Micro sur la planche — à toi de chanter !");
     openCall();
+    stopButin();
+    callButin = null;
+    $("butinRow").style.display = "none";
+    callChunks = [];
+    try {
+      if (window.MediaRecorder) {
+        callRec = new MediaRecorder(micStream);
+        callRec.ondataavailable = ev => { if (ev.data && ev.data.size) callChunks.push(ev.data); };
+        callRec.start();
+      } else callRec = null;
+    } catch (e) { callRec = null; }
     micTimer = setInterval(() => {
       micAN.getFloatTimeDomainData(data);
       const f0 = autoCorrelate(data, AC.sampleRate);
