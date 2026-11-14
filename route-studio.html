@@ -2662,14 +2662,20 @@
     if (!callButin) return;
     addButinToTrack(callButin, "butin-micro");
   });
-  $("btnCallMini").addEventListener("click", () => {
+  $("btnCallMini").addEventListener("click", e => {
+    e.stopPropagation();
     $("callWin").classList.add("mini");
-    status("➖ Appel réduit — l'équipage continue de chanter, crée en même temps ! (clique la pilule pour rouler l'appel)");
+    status("➖ Appel réduit — l'équipage continue de chanter, crée en même temps ! (clique la pilule pour rouvrir l'appel)");
   });
   $("callCard").addEventListener("click", e => {
-    if ($("callWin").classList.contains("mini") && e.target && e.target.id !== "btnCallEnd") $("callWin").classList.remove("mini");
+    if ($("callWin").classList.contains("mini") && e.target && e.target.id !== "btnCallEnd" && e.target.id !== "btnCallMini") $("callWin").classList.remove("mini");
   });
-  $("callWin").addEventListener("click", e => { if (e.target && e.target.id === "callWin") $("btnCallEnd").click(); });
+  $("callWin").addEventListener("click", e => {
+    if (e.target && e.target.id === "callWin" && !$("callWin").classList.contains("mini")) {
+      $("callWin").classList.add("mini");
+      status("➖ Appel réduit — l'équipage continue de chanter, crée en même temps ! (clique la pilule pour rouvrir l'appel)");
+    }
+  });
   async function openMic() {
     if (window.isSecureContext === false) {
       $("micInfo").textContent = "🔒 Le micro exige une page https — ouvre la version en ligne sur raw.githack.com (le fichier local en double-clic ne peut pas l'avoir) !";
