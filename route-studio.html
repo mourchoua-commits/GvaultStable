@@ -123,6 +123,14 @@
   @keyframes prePulse{0%,100%{background:rgba(255,215,106,0.05)}50%{background:rgba(255,215,106,0.22)}}
   @keyframes preSayK{0%,100%{opacity:.55}50%{opacity:1}}
   .preSay{animation:preSayK .8s ease-in-out infinite;color:#ffd76a}
+  #callWin{position:fixed;inset:0;background:rgba(8,6,20,0.82);display:none;align-items:center;justify-content:center;z-index:9999;backdrop-filter:blur(6px)}
+  #callWin.open{display:flex}
+  #callCard{width:min(340px,90vw);border-radius:28px;padding:26px 22px;text-align:center;background:linear-gradient(160deg,#241a44,#3a1f3d);border:1px solid rgba(255,255,255,0.18);box-shadow:0 30px 80px rgba(0,0,0,0.6)}
+  #callAvatar{width:84px;height:84px;margin:0 auto 10px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:40px;background:linear-gradient(160deg,#6ee7ff,#ff7eb6);animation:preSayK 1.6s ease-in-out infinite}
+  #callName{font-weight:bold;font-size:18px}
+  #callTimer{color:#a99cc9;font-size:14px;margin-top:4px;font-variant-numeric:tabular-nums}
+  #callNote{margin-top:14px;font-size:20px;min-height:28px;color:#ffd76a}
+  #btnCallEnd{margin-top:18px;width:100%;padding:13px;border-radius:999px;border:none;background:linear-gradient(90deg,#c9543f,#a7372a);color:#fff;font-weight:bold;font-size:15px;cursor:pointer}
   .pad,.csw{transition:transform .12s,filter .12s}
   .pad:hover,.csw:hover{filter:brightness(1.3);transform:scale(1.07)}
   #notePanel{border:1px solid var(--gold);border-radius:14px;padding:10px 14px;background:var(--panel);
@@ -284,6 +292,15 @@
     <button id="btnMic">🎤 Activer le micro</button>
     <div id="micInfo" style="margin-top:10px;font-size:13px;color:var(--muted)">Micro éteint</div>
     <div style="margin-top:8px;font-size:12px;color:var(--muted)">💡 Chante une note : elle est détectée, corrigée sur ta gamme et jouée avec l'instrument de la piste choisie — 🔒 Refusé ? Barre d'adresse → Autoriser le micro : la relance est automatique !</div>
+  </div>
+</div>
+<div id="callWin">
+  <div id="callCard">
+    <div id="callAvatar">🎤</div>
+    <div id="callName">Appel avec Route Studio 🎹</div>
+    <div id="callTimer">connexion…</div>
+    <div id="callNote">…</div>
+    <button id="btnCallEnd">📵 Raccrocher</button>
   </div>
 </div>
 <div id="miniGame" class="fwindow">
@@ -2365,6 +2382,7 @@
       $("btnMic").textContent = "🎤 Activer le micro";
       $("micInfo").textContent = "Micro éteint";
       status("🎤 Micro coupé");
+      closeCall();
       return;
     }
     await openMic();
@@ -2392,10 +2410,36 @@
       };
     } catch (e) { micPermWatch = false; }
   }
+  let callTimerInt = null, callT0 = 0;
+  function openCall() {
+    $("callWin").classList.add("open");
+    $("callNote").textContent = "🎤 Écoute… chante une note !";
+    $("callTimer").textContent = "connexion…";
+    callT0 = Date.now();
+    clearInterval(callTimerInt);
+    callTimerInt = setInterval(() => {
+      const s = Math.floor((Date.now() - callT0) / 1000);
+      $("callTimer").textContent = Math.floor(s / 60) + ":" + String(s % 60).padStart(2, "0");
+    }, 500);
+  }
+  function closeCall() {
+    $("callWin").classList.remove("open");
+    clearInterval(callTimerInt);
+    callTimerInt = null;
+  }
+  $("btnCallEnd").addEventListener("click", () => {
+    if (micStream) $("btnMic").click();
+    closeCall();
+    status("📵 Appel terminé — le micro est coupé !");
+  });
+  $("callWin").addEventListener("click", e => { if (e.target && e.target.id === "callWin") $("btnCallEnd").click(); });
   async function openMic() {
     if (window.isSecureContext === false) {
       $("micInfo").textContent = "🔒 Le micro exige une page https — ouvre la version en ligne sur raw.githack.com (le fichier local en double-clic ne peut pas l'avoir) !";
       status("🔒 Micro indisponible hors https — ouvre la version en ligne !");
+      openCall();
+      $("callNote").textContent = "🔒 Appel impossible hors https — ouvre la version en ligne !";
+      $("callTimer").textContent = "hors ligne";
       return;
     }
     try {
@@ -2406,6 +2450,9 @@
         $("micInfo").textContent = "🔒 Micro refusé par le navigateur ! Barre d'adresse → icône 🔒/🎛 → Micro : Autoriser → puis le micro se relancera TOUT SEUL !";
         status("🔒 Micro bloqué — autorise-le dans la barre d'adresse, je le relance automatiquement après !");
         watchMicPerm();
+        openCall();
+        $("callNote").textContent = "🔒 Appel refusé — barre d'adresse → Micro : Autoriser !";
+        $("callTimer").textContent = "en attente d'autorisation…";
       } else status("❌ Micro refusé ou indisponible : " + err.message);
       return;
     }
@@ -2431,6 +2478,7 @@
     $("btnMic").textContent = "⏹ Couper le micro";
     $("micInfo").textContent = "🎤 Écoute… chante une note !";
     status("🎤 Micro actif — auto-tune accordé à ta gamme. Chante !");
+    openCall();
     micTimer = setInterval(() => {
       micAN.getFloatTimeDomainData(data);
       const f0 = autoCorrelate(data, AC.sampleRate);
@@ -2450,6 +2498,7 @@
       }
       const cents = Math.round((midiF - midi) * 100);
       $("micInfo").textContent = "🎤 " + NAMES[midi % 12] + (Math.floor(midi / 12) - 1) + " — corrigé de " + (cents > 0 ? "+" : "") + cents + " cents (" + Math.round(f0) + " Hz)";
+      $("callNote").textContent = $("micInfo").textContent;
       if (midi !== micLastMidi) {
         const mi = $("micInfo");
         mi.classList.add("preSay");
