@@ -210,6 +210,7 @@
   <button id="btnInst">🎹 Grille instant</button>
   <button id="btnVib">📳 Vibrations</button>
   <button id="btnMini">🚗 Mini jeu</button>
+  <button id="btnOrganize">🪄 Organiser</button>
   <a class="hublink" href="jeux.html">🎮 Mes jeux</a>
   <span id="status"></span>
 </footer>
@@ -1214,7 +1215,7 @@
     if (tgt) $("colTarget").value = tgt;
     $("colInv").checked = !!inv;
     $("colorWin").classList.add("open");
-    $("colorWin").style.zIndex = ++winZ;
+    agentWake("colorWin", "la couleur exacte pour tout Route Studio !");
   }
   $("btnGridCol").addEventListener("click", () => openColorWin("brush", false));
   $("npGridCol").addEventListener("click", () => openColorWin("note", false));
@@ -1321,7 +1322,7 @@
       f.title = "Route Miroir";
       w.querySelector(".fwinBody").appendChild(f);
     }
-    if (open) status("🚗 Mini Route Miroir ouvert — clique dedans pour jouer, tire le bord pour redimensionner");
+    if (open) agentWake("miniGame", "clique dedans pour jouer, tire le bord pour redimensionner");
   });
   document.querySelectorAll(".fwclose").forEach(b => {
     b.addEventListener("click", () => $(b.dataset.close).classList.remove("open"));
@@ -1384,6 +1385,104 @@
     });
     grip.addEventListener("pointerup", () => { rs = null; });
   });
+
+  const AGENTS = {
+    drawWin: { emoji: "\ud83d\udd8c\ufe0f", name: "Dessineur", w: 700, h: 520, big: true, say: "grande grille pr\u00eate \u2014 dessine, \u00e7a sonne !" },
+    magicSys: { emoji: "\ud83e\ude90", name: "Magicien", w: 640, h: 480, big: true, say: "atelier de mati\u00e8res ouvert \u2014 m\u00e9lange ton monde !" },
+    magicPad: { emoji: "\ud83c\udf08", name: "Palette", w: 470, h: 540, say: "palette vivante en place \u2014 touche les couleurs !" },
+    colorWin: { emoji: "\ud83c\udfa8", name: "Colorix", w: 400, h: 430, say: "s\u00e9lecteur pr\u00e9cis d\u00e9ploy\u00e9 \u2014 la couleur exacte existe !" },
+    instGrid: { emoji: "\ud83c\udfb9", name: "Instanto", w: 430, h: 370, say: "grille instant arm\u00e9e \u2014 clique, \u00e7a joue !" },
+    vibGrid: { emoji: "\ud83d\udcf3", name: "Vibra", w: 390, h: 350, say: "pads calibr\u00e9s \u2014 touche-les !" },
+    micWin: { emoji: "\ud83c\udfa4", name: "Tuneur", w: 400, h: 310, say: "micro en \u00e9coute \u2014 chante juste !" },
+    miniGame: { emoji: "\ud83d\ude97", name: "Miroir", w: 370, h: 300, corner: true, say: "route en miroir gar\u00e9e dans le coin \u2014 roule !" }
+  };
+  function openWins() {
+    return [...document.querySelectorAll(".fwindow")].filter(w => w.classList.contains("open"));
+  }
+  function whatDoing() {
+    if (worldLoop) return "ton monde tourne en boucle \ud83e\ude90";
+    if (drawLoop) return "ton dessin joue en boucle \ud83c\udfa8";
+    if (micStream) return "le micro t'\u00e9coute \ud83c\udfa4";
+    if (tool !== "draw") return "outil " + ({ erase: "gomme", paint: "pot de peinture", smudge: "estompe" }[tool] || tool) + " en main";
+    return null;
+  }
+  function rectsOverlap(a, b) {
+    return a.left < b.right - 8 && b.left < a.right - 8 && a.top < b.bottom - 8 && b.top < a.bottom - 8;
+  }
+  function agentPlace(id) {
+    const role = AGENTS[id] || {};
+    const w = $(id);
+    const vw = window.innerWidth, vh = window.innerHeight;
+    const maxW = Math.min(role.w || 400, vw - 24);
+    const maxH = Math.min(role.h || 360, vh - 90);
+    w.style.right = "auto";
+    w.style.bottom = "auto";
+    const others = openWins().filter(o => o !== w).map(o => o.getBoundingClientRect());
+    function scan(winW, winH) {
+      const step = 36;
+      let best = null, bestScore = Infinity;
+      const yFrom = role.corner ? vh - winH - 16 : 64;
+      const yTo = role.corner ? 64 : vh - winH - 8;
+      const yStep = role.corner ? -step : step;
+      for (let y = yFrom; role.corner ? y >= yTo : y <= yTo; y += yStep) {
+        for (let x = vw - winW - 16; x >= 8; x -= step) {
+          const r = { left: x, top: y, right: x + winW, bottom: y + winH };
+          let score = 0;
+          for (const o of others) {
+            const ox = Math.max(0, Math.min(r.right, o.right) - Math.max(r.left, o.left));
+            const oy = Math.max(0, Math.min(r.bottom, o.bottom) - Math.max(r.top, o.top));
+            score += ox * oy;
+          }
+          if (score < bestScore) { bestScore = score; best = [x, y]; }
+          if (score === 0) return [x, y, 0];
+        }
+      }
+      return best ? [best[0], best[1], bestScore] : [16, 64, Infinity];
+    }
+    let winW = maxW, winH = maxH;
+    let [x, y, score] = scan(winW, winH);
+    if (score > 0) {
+      for (const f of [0.8, 0.65, 0.5]) {
+        const r = scan(Math.round(maxW * f), Math.round(maxH * f));
+        if (r[2] === 0) { winW = Math.round(maxW * f); winH = Math.round(maxH * f); [x, y] = r; break; }
+      }
+    }
+    w.style.width = winW + "px";
+    w.style.height = winH + "px";
+    w.style.left = Math.round(clamp(x, 0, Math.max(0, vw - 80))) + "px";
+    w.style.top = Math.round(clamp(y, 50, Math.max(50, vh - 40))) + "px";
+    w.style.zIndex = ++winZ;
+    return score === 0;
+  }
+  function agentWake(id, msg) {
+    const a = AGENTS[id];
+    if (!a) return;
+    agentPlace(id);
+    const ctx = whatDoing();
+    status(a.emoji + " Agent " + a.name + " en poste \u2014 " + (msg || a.say) + (ctx ? " (je vois : " + ctx + ")" : ""));
+  }
+  function organizeAll() {
+    const wins = openWins();
+    if (!wins.length) { status("\ud83e\ude84 Aucune fen\u00eatre ouverte \u2014 ouvre-en une, mon agent s'occupe de la placer !"); return; }
+    wins.sort((a, b) => ((AGENTS[b.id] && AGENTS[b.id].big) ? 1 : 0) - ((AGENTS[a.id] && AGENTS[a.id].big) ? 1 : 0));
+    const vw = window.innerWidth, vh = window.innerHeight - 70;
+    const cols = Math.min(wins.length, vw > 1100 ? 3 : 2);
+    const rows = Math.ceil(wins.length / cols);
+    const cw = (vw - 24 - (cols - 1) * 10) / cols;
+    const ch = (vh - 10 * (rows - 1)) / rows;
+    wins.forEach((w, i) => {
+      const c = i % cols, r = Math.floor(i / cols);
+      w.style.right = "auto";
+      w.style.bottom = "auto";
+      w.style.left = Math.round(12 + c * (cw + 10)) + "px";
+      w.style.top = Math.round(60 + r * (ch + 10)) + "px";
+      w.style.width = Math.round(cw) + "px";
+      w.style.height = Math.round(ch) + "px";
+      w.style.zIndex = ++winZ;
+    });
+    status("\ud83e\ude84 Agent Organisateur : " + wins.length + " fen\u00eatre" + (wins.length > 1 ? "s" : "") + " rang\u00e9e" + (wins.length > 1 ? "s" : "") + " proprement \u2014 tout est visible, \u00e0 toi de jouer !");
+  }
+  $("btnOrganize").addEventListener("click", organizeAll);
 
   function hslToHex(h, s, l) {
     const a = s / 100 * Math.min(l / 100, 1 - l / 100);
@@ -1690,18 +1789,18 @@
   $("btnMagic").addEventListener("click", () => {
     syncWinSels();
     const open = $("magicPad").classList.toggle("open");
-    if (open) status("🌈 Touche les couleurs (clair = aigu, foncé = grave), mélange-les, choisis ton pinceau !");
+    if (open) agentWake("magicPad", "touche les couleurs (clair = aigu, foncé = grave), mélange-les, choisis ton pinceau !");
   });
   $("btnMagicSys").addEventListener("click", () => {
     const open = $("magicSys").classList.toggle("open");
     if (open) {
       if (!worldTimer) worldTimer = setInterval(worldTick, 50);
-      status("🪐 Magic System ! Choisis une matière, peins ton écosystème, puis ▶️ pour l'écouter.");
+      agentWake("magicSys", "choisis une matière, peins ton écosystème, puis ▶️ pour l'écouter.");
     }
   });
   $("btnDraw").addEventListener("click", () => {
     const open = $("drawWin").classList.toggle("open");
-    if (open) status("🎨 Dessine ! Chaque couleur = SA note (lumière ÷ 2⁴⁰). ▶️ pour balayer ton dessin !");
+    if (open) agentWake("drawWin", "chaque couleur = SA note (lumière ÷ 2⁴⁰), ▶️ pour balayer ton dessin !");
   });
 
   const padMini = $("padMiniGrid");
@@ -2055,7 +2154,7 @@
     buildInstGrid();
     syncWinSels();
     const open = $("instGrid").classList.toggle("open");
-    if (open) status("🎹 Clique ou glisse : ça joue instantanément et se note dans la piste choisie !");
+    if (open) agentWake("instGrid", "clique ou glisse : ça joue instantanément et se note dans la piste choisie !");
   });
 
   const VIB_ROWS = [
@@ -2090,14 +2189,14 @@
       ? "💡 Chaque ligne = un motif (Long, Double, Triple, Roulement), plus à droite = plus rapide. Teste sur mobile !"
       : "⚠️ Ton navigateur ne supporte pas les vibrations (surtout Android sur mobile) — les pads jouent quand même le son.";
     const open = $("vibGrid").classList.toggle("open");
-    if (open) status("📳 Touche un pad : motif de vibration + son !");
+    if (open) agentWake("vibGrid", "touche un pad : motif de vibration + son !");
   });
 
   let micStream = null, micAN = null, micTimer = null, micLastMidi = null;
   $("btnMicOpen").addEventListener("click", () => {
     syncWinSels();
     const open = $("micWin").classList.toggle("open");
-    if (open) status("🎤 Active le micro, chante — chaque note est accordée à ta gamme !");
+    if (open) agentWake("micWin", "active le micro, chante — chaque note est accordée à ta gamme !");
   });
   $("micTrackSel").addEventListener("change", () => trackSelChange("micTrackSel"));
   $("btnMic").addEventListener("click", async () => {
