@@ -10,7 +10,7 @@
     --text:#f5efff; --muted:#a99cc9; --gold:#ffd76a; --pink:#ff7eb6; --cyan:#6ee7ff;
   }
   *{box-sizing:border-box}
-  html,body{margin:0;min-height:100%;color:var(--text);font-family:"Segoe UI",system-ui,sans-serif;
+  html,body{margin:0;min-height:100%;color:var(--text);font-family:"Segoe UI",system-ui,sans-serif;user-select:none;-webkit-user-select:none;
     background:radial-gradient(circle at 20% -10%,#3b2a6e 0%,transparent 45%),radial-gradient(circle at 90% 0%,#7a3b5e 0%,transparent 40%),linear-gradient(180deg,var(--bg1),var(--bg2));
     background-attachment:fixed}
   header{padding:14px 18px 8px;display:flex;flex-wrap:wrap;gap:12px;align-items:center}
@@ -41,11 +41,11 @@
   #fxPanel label{display:flex;align-items:center;gap:8px;color:var(--muted)}
   #fxPanel label span{width:52px}
   #gridArea{flex:1;min-width:560px;display:flex;flex-direction:column;gap:10px}
-  #rollWrap{display:flex;border:1px solid var(--line);border-radius:14px;overflow:hidden;background:rgba(0,0,0,0.25)}
+  #rollWrap{display:flex;border:1px solid var(--line);border-radius:14px;overflow-x:auto;overflow-y:hidden;background:rgba(0,0,0,0.25)}
   #rowLabels{width:64px;flex:none;display:flex;flex-direction:column;border-right:1px solid var(--line)}
   #rowLabels div{height:24px;font-size:11px;color:var(--muted);display:flex;align-items:center;justify-content:flex-end;padding-right:8px}
   #rowLabels div.oct{color:var(--gold)}
-  #roll{position:relative;flex:1;cursor:pointer;touch-action:none}
+  #roll{position:relative;flex:1;min-width:578px;cursor:pointer;touch-action:none}
   #cells{display:grid}
   #cells .cell{height:24px;border-right:1px solid rgba(255,255,255,0.05);border-bottom:1px solid rgba(255,255,255,0.05)}
   #cells .cell.beat{background:rgba(255,255,255,0.045)}
@@ -586,7 +586,7 @@
     }
     roll.setPointerCapture(e.pointerId);
   });
-  roll.addEventListener("pointermove", e => {
+  window.addEventListener("pointermove", e => {
     if (!dragNote) return;
     const rect = roll.getBoundingClientRect();
     const step = clamp(Math.floor((e.clientX - rect.left) / CW), 0, STEPS - 1);
@@ -599,8 +599,8 @@
       refreshNpLen();
     }
   });
-  roll.addEventListener("pointerup", () => {
-    if (dragNote) { save(); if (!dragNew) {} dragNote = null; }
+  window.addEventListener("pointerup", () => {
+    if (dragNote) { save(); dragNote = null; }
   });
   function clamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
 
@@ -655,9 +655,6 @@
   function save() {
     try { localStorage.setItem("route_studio_song", serialize()); } catch (e) {}
   }
-  let saveTimer = null;
-  function saveSoon() { clearTimeout(saveTimer); saveTimer = setTimeout(save, 300); }
-
   function loadSong(data) {
     stop();
     for (const t of tracks) removeLiveChain(t);
@@ -896,6 +893,8 @@
   $("metro").addEventListener("change", () => {});
   window.addEventListener("keydown", e => {
     if (e.code === "Space") {
+      const tag = (e.target.tagName || "").toLowerCase();
+      if (tag === "button" || tag === "input" || tag === "select") return;
       e.preventDefault();
       playing ? stop() : play();
     }

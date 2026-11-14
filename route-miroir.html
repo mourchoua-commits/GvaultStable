@@ -774,6 +774,11 @@
     }
   });
 
+  goEl.addEventListener("click", () => {
+    ensureAudio();
+    if (gameOver) resetGame();
+  });
+
   window.addEventListener("resize", resize);
 
   resize();
