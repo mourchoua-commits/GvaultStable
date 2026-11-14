@@ -206,6 +206,13 @@
   #micWin #btnListen:hover,#micWin #btnButinOpen:hover{filter:brightness(1.2)}
   #micWin #btnButinOpen{border-radius:12px;border-color:rgba(255,215,106,0.5)}
   #micWin #butinCount{color:#8fb8d0}
+  #prlevWin{left:16px;right:auto;bottom:64px;width:400px;background:linear-gradient(180deg,#241a08,#0f0a04);border-color:#c9a44a}
+  #prelevList{display:flex;flex-direction:column;gap:6px;max-height:260px;overflow:auto}
+  .prelevRow{display:flex;align-items:center;gap:8px;font-size:12px;color:#ffe9a8;background:rgba(0,0,0,0.3);border:1px solid rgba(255,215,106,0.25);border-radius:10px;padding:6px 8px}
+  .prelevRow i{width:16px;height:16px;border-radius:50%;flex:none;border:1px solid rgba(255,215,106,0.5)}
+  .prelevRow span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .prelevRow button{flex:none;background:rgba(0,0,0,0.3);border:1px solid var(--line);border-radius:8px;color:var(--gold);cursor:pointer;padding:3px 8px}
+  #prelevTip{font-size:11px;color:#8fb8d0;line-height:1.5}
   .pad,.csw{transition:transform .12s,filter .12s}
   .pad:hover,.csw:hover{filter:brightness(1.3);transform:scale(1.07)}
   #notePanel{border:1px solid var(--gold);border-radius:14px;padding:10px 14px;background:var(--panel);
@@ -359,6 +366,13 @@
     <div class="winRow" id="echoStatus">💬 …</div>
   </div>
 </div>
+<div id="prlevWin" class="fwindow">
+  <div class="fwinHead"><span>🗄️ Le coffre fort — prélèvements entreposés</span><button class="fwclose" data-close="prlevWin">✖</button></div>
+  <div class="fwinBody">
+    <div id="prelevList"></div>
+    <div id="prelevTip">Chaque prélèvement (maintien du Micro) est entreposé DANS le navigateur (IndexedDB) — ferme, rouvre, reviens demain : ils sont toujours là, relisibles !</div>
+  </div>
+</div>
 <div id="gateWin" class="fwindow">
   <div class="fwinHead"><span>🪩 La Passerelle — porte vers le navigateur</span><button class="fwclose" data-close="gateWin">✖</button></div>
   <div class="fwinBody">
@@ -393,6 +407,7 @@
       </div>
       <div class="winRow" style="margin:0;gap:8px;align-items:center">
         <button id="btnButinOpen">🎁 Coffre au butin</button>
+        <button id="btnPrelevOpen">🗄️ Coffre fort</button>
         <span id="butinCount" style="font-size:12px;color:#8fb8d0">coffre vide — maintiens le Micro !</span>
       </div>
       <div class="micTip">💡 Maintiens le GROS bouton (ou clique vite : il reste pressé tout seul) — ça enregistre et la visionneuse peint les couleurs en direct ; relâche ou reclique → le butin part au coffre, teinté de la couleur du moment, co-détenu à par égal avec le port. 🎵 Écoute = l'auto-tune accorde ta voix sans enregistrer.</div>
@@ -1651,7 +1666,8 @@
     echoWin: { emoji: "\ud83e\ude9e", name: "\u00c9cho", w: 340, h: 320, say: "fen\u00eatre \u00e9cho en poste \u2014 elle se met \u00e0 jour toute seule selon tes choix !" },
     butinWin: { emoji: "\ud83c\udf81", name: "Pillard", w: 420, h: 400, say: "coffre au butin ouvert — \u00e9coute, boucle, pose en sample !" },
     miniGame: { emoji: "\ud83d\ude97", name: "Miroir", w: 370, h: 300, corner: true, say: "route en miroir gar\u00e9e dans le coin \u2014 roule !" },
-    gateWin: { emoji: "\ud83e\udea9", name: "Passerelle", w: 340, h: 260, say: "passerelle pos\u00e9e \u2014 le port est observ\u00e9 en direct !" }
+    gateWin: { emoji: "\ud83e\udea9", name: "Passerelle", w: 340, h: 260, say: "passerelle pos\u00e9e \u2014 le port est observ\u00e9 en direct !" },
+    prlevWin: { emoji: "\ud83d\uddc4\ufe0f", name: "Gardien", w: 400, h: 380, say: "coffre fort gard\u00e9 \u2014 tes pr\u00e9l\u00e8vements dorment en s\u00e9curit\u00e9, relisibles demain !" }
   };
   function openWins() {
     return [...document.querySelectorAll(".fwindow")].filter(w => w.classList.contains("open"));
@@ -2630,6 +2646,8 @@
         renderButins();
         $("butinRow").style.display = "flex";
         $("butinInfo").textContent = "\ud83c\udf81 Butin \u00ab " + nameC + " \u00bb : " + Math.max(1, Math.round(buf.duration)) + "s \u2014 fragrance \u00ab " + nameC + " \u00bb au coffre \u2014 pr\u00e9lev\u00e9 via " + fragTerm + " !";
+        $("butinInfo").textContent += " \ud83d\uddc4\ufe0f entrepos\u00e9 au coffre fort";
+        prelevSave({ name: "Butin \u00ab " + nameC + " \u00bb " + butinSeq, col: fragWarm ? "hsl(" + Math.round(fragWarm.h) + "," + Math.round(fragWarm.s) + "%," + Math.round(fragWarm.l) + "%)" : "#1a2233", term: fragTerm, date: new Date().toLocaleString("fr-FR").slice(0, 16), dur: buf.duration, blob: blob });
         status("🤝 Butin récupéré au relâché — à toi et au port, à la même hauteur : co-propriété à par égal, pas une taxe !");
       } catch (e) { status("❌ Le butin n'a pas pu être décodé — retente un maintien !"); }
     } else status("Rien enregistré cette fois — maintiens le bouton plus longtemps !");
@@ -3070,6 +3088,97 @@ function dockCallWin() {
   $("btnButinSample").addEventListener("click", () => {
     if (!callButin) return;
     addButinToTrack(callButin, "butin-micro");
+  });
+  let prelevDB = null, prelevSrc = null;
+  function prelevOpen() {
+    return new Promise(res => {
+      try {
+        if (!window.indexedDB) return res(null);
+        const rq = window.indexedDB.open("route-studio-prelev", 1);
+        rq.onupgradeneeded = () => { rq.result.createObjectStore("prelevs", { keyPath: "id", autoIncrement: true }); };
+        rq.onsuccess = () => { prelevDB = rq.result; res(prelevDB); };
+        rq.onerror = () => res(null);
+      } catch (e) { res(null); }
+    });
+  }
+  async function prelevSave(entry) {
+    const db = prelevDB || await prelevOpen();
+    if (!db) return false;
+    return new Promise(res => {
+      try {
+        const tx = db.transaction("prelevs", "readwrite");
+        tx.objectStore("prelevs").add(entry);
+        tx.oncomplete = () => res(true);
+        tx.onerror = () => res(false);
+      } catch (e) { res(false); }
+    });
+  }
+  async function prelevAll() {
+    const db = prelevDB || await prelevOpen();
+    if (!db) return [];
+    return new Promise(res => {
+      try {
+        const rq = db.transaction("prelevs").objectStore("prelevs").getAll();
+        rq.onsuccess = () => res(rq.result || []);
+        rq.onerror = () => res([]);
+      } catch (e) { res([]); }
+    });
+  }
+  async function prelevDel(id) {
+    const db = prelevDB || await prelevOpen();
+    if (!db) return;
+    try { const tx = db.transaction("prelevs", "readwrite"); tx.objectStore("prelevs").delete(id); } catch (e) {}
+  }
+  function stopPrelev() { if (prelevSrc) { try { prelevSrc.stop(); } catch (e) {} prelevSrc = null; } }
+  async function playPrelev(it) {
+    try {
+      ensureAudio();
+      stopPrelev();
+      stopButin();
+      const buf = await AC.decodeAudioData(await it.blob.arrayBuffer());
+      const src = AC.createBufferSource();
+      src.buffer = buf;
+      src.connect(master);
+      src.start();
+      prelevSrc = src;
+      status("\ud83d\uddc4\ufe0f Relecture de \u00ab " + it.name + " \u00bb \u2014 entrepos\u00e9 le " + (it.date || "?") + ", \u00e7a sonne toujours juste !");
+    } catch (e) { status("\u274c Ce pr\u00e9l\u00e8vement n'a pas pu \u00eatre relu \u2014 retente !"); }
+  }
+  async function renderPrelevs() {
+    const list = $("prelevList");
+    if (!list) return;
+    const items = await prelevAll();
+    list.innerHTML = "";
+    if (!items.length) {
+      const empty = document.createElement("div");
+      empty.style.cssText = "font-size:13px;color:var(--muted);padding:6px 0";
+      empty.textContent = window.indexedDB ? " Coffre fort vide \u2014 maintiens le Micro : chaque pr\u00e9l\u00e8vement s'y entrepose pour plus tard !" : " Stockage indisponible ici (navigation priv\u00e9e ?) \u2014 les pr\u00e9l\u00e8vements restent en m\u00e9moire pour la session.";
+      list.appendChild(empty);
+      return;
+    }
+    items.slice().reverse().forEach(it => {
+      const row = document.createElement("div");
+      row.className = "prelevRow";
+      const dot = document.createElement("i");
+      dot.style.background = it.col || "#1a2233";
+      const lab = document.createElement("span");
+      lab.textContent = it.name + " \u00b7 " + Math.max(1, Math.round(it.dur || 0)) + "s \u00b7 " + (it.date || "") + (it.term ? " \u00b7 " + it.term : "");
+      const bp = document.createElement("button");
+      bp.textContent = "\u25b6\ufe0f";
+      bp.title = "Relire ce pr\u00e9l\u00e8vement";
+      bp.addEventListener("click", () => playPrelev(it));
+      const bd = document.createElement("button");
+      bd.textContent = "\ud83d\uddd1\ufe0f";
+      bd.title = "Jeter ce pr\u00e9l\u00e8vement";
+      bd.addEventListener("click", async () => { await prelevDel(it.id); renderPrelevs(); status("\ud83d\uddc4\ufe0f Pr\u00e9l\u00e8vement jet\u00e9 \u2014 le coffre fort se r\u00e9organise !"); });
+      row.appendChild(dot); row.appendChild(lab); row.appendChild(bp); row.appendChild(bd);
+      list.appendChild(row);
+    });
+  }
+  $("btnPrelevOpen").addEventListener("click", () => {
+    const w = $("prlevWin");
+    const open = w.classList.toggle("open");
+    if (open) { renderPrelevs(); agentWake("prlevWin", "coffre fort ouvert \u2014 tes pr\u00e9l\u00e8vements t'attendent, m\u00eame apr\u00e8s fermeture du studio !"); }
   });
   $("btnCallMini").addEventListener("click", e => {
     e.stopPropagation();
