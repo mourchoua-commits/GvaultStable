@@ -123,14 +123,21 @@
   @keyframes prePulse{0%,100%{background:rgba(255,215,106,0.05)}50%{background:rgba(255,215,106,0.22)}}
   @keyframes preSayK{0%,100%{opacity:.55}50%{opacity:1}}
   .preSay{animation:preSayK .8s ease-in-out infinite;color:#ffd76a}
-  #callWin{position:fixed;inset:0;background:rgba(8,6,20,0.82);display:none;align-items:center;justify-content:center;z-index:9999;backdrop-filter:blur(6px)}
+  #callWin{position:fixed;inset:0;background:rgba(4,10,24,0.85);display:none;align-items:center;justify-content:center;z-index:9999;backdrop-filter:blur(6px)}
   #callWin.open{display:flex}
-  #callCard{width:min(340px,90vw);border-radius:28px;padding:26px 22px;text-align:center;background:linear-gradient(160deg,#241a44,#3a1f3d);border:1px solid rgba(255,255,255,0.18);box-shadow:0 30px 80px rgba(0,0,0,0.6)}
-  #callAvatar{width:84px;height:84px;margin:0 auto 10px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:40px;background:linear-gradient(160deg,#6ee7ff,#ff7eb6);animation:preSayK 1.6s ease-in-out infinite}
-  #callName{font-weight:bold;font-size:18px}
-  #callTimer{color:#a99cc9;font-size:14px;margin-top:4px;font-variant-numeric:tabular-nums}
-  #callNote{margin-top:14px;font-size:20px;min-height:28px;color:#ffd76a}
-  #btnCallEnd{margin-top:18px;width:100%;padding:13px;border-radius:999px;border:none;background:linear-gradient(90deg,#c9543f,#a7372a);color:#fff;font-weight:bold;font-size:15px;cursor:pointer}
+  #callCard{width:min(340px,90vw);border-radius:28px;padding:26px 22px;text-align:center;position:relative;overflow:hidden;background:linear-gradient(180deg,#12325a 0%,#1b4a72 55%,#0e2c4a 100%);border:1px solid rgba(110,231,255,0.3);box-shadow:0 30px 80px rgba(0,0,0,0.6)}
+  #callCard::before,#callCard::after{content:"";position:absolute;left:-20%;right:-20%;height:70px;bottom:-12px;background:radial-gradient(circle at 10px -6px,transparent 14px,rgba(110,231,255,0.28) 15px) repeat-x;background-size:36px 36px;animation:waveMove 7s linear infinite;pointer-events:none}
+  #callCard::after{bottom:-26px;opacity:.5;animation-duration:11s}
+  @keyframes waveMove{to{transform:translateX(36px)}}
+  #callCrew{font-size:22px;letter-spacing:8px;animation:crewBob 2.4s ease-in-out infinite}
+  @keyframes crewBob{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
+  #callAvatar{width:84px;height:84px;margin:14px auto 0;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:40px;background:linear-gradient(160deg,#6ee7ff,#ff7eb6);animation:plankRock 2.2s ease-in-out infinite;position:relative;z-index:2}
+  @keyframes plankRock{0%,100%{transform:rotate(-6deg) translateY(0)}50%{transform:rotate(6deg) translateY(-3px)}}
+  #callPlank{width:150px;height:14px;margin:2px auto 8px;border-radius:4px;background:linear-gradient(180deg,#a3743c,#7a5426);box-shadow:0 3px 0 #5c3d18;transform:rotate(-4deg)}
+  #callName{font-weight:bold;font-size:18px;position:relative;z-index:2}
+  #callTimer{color:#a9c9dd;font-size:14px;margin-top:4px;font-variant-numeric:tabular-nums;position:relative;z-index:2}
+  #callNote{margin-top:14px;font-size:20px;min-height:28px;color:#ffd76a;position:relative;z-index:2}
+  #btnCallEnd{margin-top:18px;width:100%;padding:13px;border-radius:999px;border:none;background:linear-gradient(90deg,#c9543f,#a7372a);color:#fff;font-weight:bold;font-size:15px;cursor:pointer;position:relative;z-index:2}
   .pad,.csw{transition:transform .12s,filter .12s}
   .pad:hover,.csw:hover{filter:brightness(1.3);transform:scale(1.07)}
   #notePanel{border:1px solid var(--gold);border-radius:14px;padding:10px 14px;background:var(--panel);
@@ -296,11 +303,13 @@
 </div>
 <div id="callWin">
   <div id="callCard">
+    <div id="callCrew">🏴‍☠️ 🦜 ⚓️ 🗺️ 🧭</div>
     <div id="callAvatar">🎤</div>
-    <div id="callName">Appel avec Route Studio 🎹</div>
-    <div id="callTimer">connexion…</div>
+    <div id="callPlank"></div>
+    <div id="callName">L'équipage a abordé le Micro !</div>
+    <div id="callTimer">⚓ l'équipage rame vers le Micro…</div>
     <div id="callNote">…</div>
-    <button id="btnCallEnd">📵 Raccrocher</button>
+    <button id="btnCallEnd">⛵ Renvoyer le Micro à la mer</button>
   </div>
 </div>
 <div id="miniGame" class="fwindow">
@@ -2363,7 +2372,7 @@
     syncWinSels();
     const open = $("micWin").classList.toggle("open");
     if (open) {
-      agentWake("micWin", "active le micro, chante — chaque note est accordée à ta gamme !");
+      agentWake("micWin", "l'équipage aborde le micro — chante, chaque note est accordée à ta gamme !");
       if (navigator.permissions && navigator.permissions.query) {
         navigator.permissions.query({ name: "microphone" }).then(st => {
           if (st.state === "granted" && !micStream) $("micInfo").textContent = "🎤 Micro déjà autorisé — appuie sur Activer, aucune demande ne sera refaite !";
@@ -2403,8 +2412,8 @@
       const st = await navigator.permissions.query({ name: "microphone" });
       st.onchange = () => {
         if (st.state === "granted" && !micStream) {
-          $("micInfo").textContent = "🎤 Micro autorisé — relance automatique !";
-          status("🎤 Micro autorisé — je relance tout seul !");
+          $("micInfo").textContent = "🎤 Le Micro accepte de monter à bord — relance automatique !";
+          status("🎤 Le Micro monte sur la planche — je le relance tout seul !");
           openMic();
         }
       };
@@ -2413,8 +2422,8 @@
   let callTimerInt = null, callT0 = 0;
   function openCall() {
     $("callWin").classList.add("open");
-    $("callNote").textContent = "🎤 Écoute… chante une note !";
-    $("callTimer").textContent = "connexion…";
+    $("callNote").textContent = "🎤 Le Micro est sur la planche — chante, l'équipage écoute !";
+    $("callTimer").textContent = "⚓ l'équipage rame vers le Micro…";
     callT0 = Date.now();
     clearInterval(callTimerInt);
     callTimerInt = setInterval(() => {
@@ -2430,7 +2439,7 @@
   $("btnCallEnd").addEventListener("click", () => {
     if (micStream) $("btnMic").click();
     closeCall();
-    status("📵 Appel terminé — le micro est coupé !");
+    status("⛵ Le Micro est libre — il repart en mer, micro coupé !");
   });
   $("callWin").addEventListener("click", e => { if (e.target && e.target.id === "callWin") $("btnCallEnd").click(); });
   async function openMic() {
@@ -2438,7 +2447,7 @@
       $("micInfo").textContent = "🔒 Le micro exige une page https — ouvre la version en ligne sur raw.githack.com (le fichier local en double-clic ne peut pas l'avoir) !";
       status("🔒 Micro indisponible hors https — ouvre la version en ligne !");
       openCall();
-      $("callNote").textContent = "🔒 Appel impossible hors https — ouvre la version en ligne !";
+      $("callNote").textContent = "🌊 Calme plat — le Micro exige une page https : ouvre la version en ligne !";
       $("callTimer").textContent = "hors ligne";
       return;
     }
@@ -2451,7 +2460,7 @@
         status("🔒 Micro bloqué — autorise-le dans la barre d'adresse, je le relance automatiquement après !");
         watchMicPerm();
         openCall();
-        $("callNote").textContent = "🔒 Appel refusé — barre d'adresse → Micro : Autoriser !";
+        $("callNote").textContent = "🔒 Le Micro refuse de monter à bord ! Barre d'adresse → Micro : Autoriser !";
         $("callTimer").textContent = "en attente d'autorisation…";
       } else status("❌ Micro refusé ou indisponible : " + err.message);
       return;
@@ -2477,7 +2486,7 @@
     const data = new Float32Array(micAN.fftSize);
     $("btnMic").textContent = "⏹ Couper le micro";
     $("micInfo").textContent = "🎤 Écoute… chante une note !";
-    status("🎤 Micro actif — auto-tune accordé à ta gamme. Chante !");
+    status("🏴‍☠️ L'équipage fait chanter le Micro sur la planche — à toi de chanter !");
     openCall();
     micTimer = setInterval(() => {
       micAN.getFloatTimeDomainData(data);
