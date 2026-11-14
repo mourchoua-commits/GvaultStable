@@ -95,7 +95,7 @@
   #miniGame .fwinBody{padding:0}
   #miniGame iframe{width:100%;height:100%;border:0;display:block;min-height:180px}
   #magicPad{width:460px}
-  #padGrid{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-top:12px}
+  #padGrid{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin-top:12px}
   #padGrid .pad{aspect-ratio:1;border-radius:50%;border:2px solid rgba(255,255,255,0.25);cursor:pointer;padding:0;min-width:0}
   #padGrid .pad.pressed{outline:3px solid #fff;box-shadow:0 0 10px rgba(255,255,255,0.7)}
   #mixSwatch{width:26px;height:26px;border-radius:50%;border:2px solid rgba(255,255,255,0.3);background:#222;flex:none}
@@ -313,7 +313,7 @@
       <span id="mixHex">Touche 2 couleurs en même temps pour le mélange…</span>
       <button id="mixUse">🪣 Utiliser le mélange</button>
     </div>
-    <div style="margin-top:12px;font-size:12px;color:var(--muted)">💡 La grille vit : chaque nouvelle couleur ajoute sa rangée — nuance claire ✨, normale, foncée 🌙, son <b>négatif</b> 🔄 et son <b>complémentaire</b> 🎯 (teinte +180°) ! Un clic sélectionne la couleur partout dans 🎨 Couleurs.</div>
+    <div style="margin-top:12px;font-size:12px;color:var(--muted)">💡 La grille vit : chaque nouvelle couleur ajoute sa rangée — claire ✨, normale, foncée 🌙, <b>négatif</b> 🔄, <b>complémentaire</b> 🎯 (+180°) et <b>réinversée</b> ♾️ ! Et les anciennes couleurs s'influencent entre elles (alterné avec leur négatif) → les teintes et les notes dérivent à chaque ajout ! Un clic sélectionne la couleur partout dans 🎨 Couleurs.</div>
     <div style="margin-top:10px;font-size:12px;color:var(--muted)">🎨 Sélecteur personnalisé</div>
     <div class="cg" id="padPrecGrid" style="margin-top:8px"></div>
     <label style="display:flex;gap:5px;align-items:center;margin-top:10px;font-size:12px;color:var(--muted)"><input id="padInv" type="checkbox"> 🔄 inversée</label>
@@ -1542,10 +1542,17 @@
   let lastMix = null;
   const padGrid = $("padGrid");
   let padColors = HUES.map(h => hslToHex(h, 80, 60));
+  let padFlip = false;
   function rememberColor(col) {
     if (!col || !/^#[0-9a-fA-F]{6}$/.test(col)) return;
     col = col.toLowerCase();
     if (padColors[0] === col) return;
+    padFlip = !padFlip;
+    const inf = padFlip ? col : invertHex(col);
+    padColors = padColors.map(c => {
+      const a = hexToRgb(c), b = hexToRgb(inf);
+      return rgbToHex(a[0] * 0.85 + b[0] * 0.15, a[1] * 0.85 + b[1] * 0.15, a[2] * 0.85 + b[2] * 0.15);
+    });
     padColors = padColors.filter(c => c !== col);
     padColors.unshift(col);
     if (padColors.length > 12) padColors.length = 12;
@@ -1591,7 +1598,8 @@
         [base, 0, ""],
         [mixHex([base, "#000000"]), -12, "foncée · octave basse"],
         [invertHex(base), 0, "négatif"],
-        [compHex(base), 0, "complémentaire · teinte +180°"]
+        [compHex(base), 0, "complémentaire · teinte +180°"],
+        [invertHex(compHex(base)), 0, "réinversée · complémentaire inversée"]
       ];
       for (const [col, oct, tag] of shades) {
         const pad = document.createElement("button");
