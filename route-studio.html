@@ -151,6 +151,12 @@
   #btnCallHelp,#btnCallSample{display:none;margin-top:10px;width:100%;padding:10px;border-radius:999px;border:1px solid rgba(255,255,255,0.3);color:#fff;font-weight:bold;font-size:13px;cursor:pointer;position:relative;z-index:2}
   #callWin.reconst #btnCallHelp,#callWin.reconst #btnCallSample{display:block}
   #btnCallHelp{background:linear-gradient(90deg,#2a7a4f,#1d5c3a)}
+  #callColorRow{display:none;align-items:center;justify-content:center;gap:10px;margin-top:10px;position:relative;z-index:2}
+  #callWin.open:not(.reconst) #callColorRow{display:flex}
+  #callColor{width:46px;height:46px;border-radius:50%;border:2px solid rgba(255,255,255,0.5);background:#1a2233;transition:background 0.15s,box-shadow 0.15s}
+  #callColorName{font-size:13px;color:#fff;font-weight:bold}
+  #btnCallLoot{display:none;margin-top:10px;width:100%;padding:10px;border-radius:999px;border:1px solid rgba(255,255,255,0.3);color:#fff;font-weight:bold;font-size:13px;cursor:pointer;position:relative;z-index:2;background:linear-gradient(90deg,#8a6d1d,#5c4a13)}
+  #callWin.open:not(.reconst) #btnCallLoot{display:block}
   #btnCallSample{background:linear-gradient(90deg,#8a5cc9,#5c3a9e)}
   .pad,.csw{transition:transform .12s,filter .12s}
   .pad:hover,.csw:hover{filter:brightness(1.3);transform:scale(1.07)}
@@ -339,6 +345,8 @@
     <div id="callName">L'équipage a abordé le Micro !</div>
     <div id="callTimer">⚓ l'équipage rame vers le Micro…</div>
     <div id="callNote">…</div>
+    <div id="callColorRow"><div id="callColor"></div><div id="callColorName">🎨 la couleur du butin…</div></div>
+    <button id="btnCallLoot" title="Récupère le butin MAINTENANT, sans raccrocher — la bordée continue !">🪙 Récupérer le butin — au moment voulu de la couleur !</button>
     <button id="btnCallEnd">🛏️ Le Micro descend se reposer (il reste à bord !)</button>
     <button id="btnCallHelp">🏴‍☠️ Hisser NOTRE pavillon — on ne demande pas, on débarque !</button>
     <button id="btnCallSample">🎁 Sampler l'ambiance du navire</button>
@@ -2700,12 +2708,77 @@
       butins.push({ name: "Butin " + butinSeq, buffer: buf });
       renderButins();
       $("butinRow").style.display = "flex";
-      $("butinInfo").textContent = "🎁 Butin de l'abordage : " + Math.max(1, Math.round(buf.duration)) + "s de chant capturé !";
+      $("butinInfo").textContent = "🎁 Butin de l'abordage : " + Math.max(1, Math.round(buf.duration)) + "s de chant capturé !" + (lootColorName ? " — teinté « " + lootColorName + " »" : "");
       status("🏴‍☠️ L'équipage revient au navire avec le butin — écoute, mets en boucle ou pose-le en sample !");
     } catch (e) {
       status("🎁 Le chant n'a pas pu être décodé — mais les notes capturées restent dans la piste !");
     }
   }
+  let lootFD = null, lootColorName = "";
+  function hueName(h) {
+    const names = [[15, "Rouge cardinal"], [45, "Or de doubloon"], [75, "Verte marée"], [150, "Émeraude"], [210, "Azur hauturier"], [270, "Indigo nuit"], [330, "Pourpre corsaire"], [361, "Rose flibuste"]];
+    for (const p of names) if (h < p[0]) return p[1];
+    return "Rose flibuste";
+  }
+  function updateCallColor() {
+    const el = $("callColor"), nm = $("callColorName");
+    if (!el || !micStream || !micAN) return;
+    let hue = 210, sat = 20, lit = 28;
+    try {
+      const n = micAN.frequencyBinCount;
+      if (!lootFD || lootFD.length !== n) lootFD = new Uint8Array(n);
+      micAN.getByteFrequencyData(lootFD);
+      let sum = 0, dom = 0, domV = 0;
+      for (let i = 1; i < n; i++) { sum += lootFD[i]; if (lootFD[i] > domV) { domV = lootFD[i]; dom = i; } }
+      if (sum > n * 2) {
+        const f = dom * AC.sampleRate / (micAN.fftSize || 1024);
+        hue = Math.max(0, Math.min(330, Math.log2(Math.max(40, f) / 80) / 4.64 * 300));
+        const avg = sum / (n * 255);
+        sat = Math.round(38 + avg * 140);
+        lit = Math.round(32 + domV / 255 * 30);
+      }
+      if (reconstTimer || butinPlay) {
+        const fond = (Date.now() / 80) % 360;
+        hue = (hue * 0.7 + fond * 0.3) % 360;
+        lit = Math.min(70, lit + 6);
+      }
+    } catch (e) {}
+    const col = "hsl(" + Math.round(hue) + "," + Math.max(12, Math.min(90, sat)) + "%," + Math.max(15, Math.min(75, lit)) + "%)";
+    el.style.background = col;
+    el.style.boxShadow = "0 0 18px " + col;
+    lootColorName = hueName(hue);
+    if (nm) nm.textContent = "🎨 " + lootColorName;
+  }
+  $("btnCallLoot").addEventListener("click", async () => {
+    if (!callRec || callRec.state === "inactive") { status("🎙 Rien à récupérer — le Micro n'enregistre pas encore !"); return; }
+    const rec = callRec;
+    callRec = null;
+    const nameC = lootColorName || "Butin";
+    if (rec.state !== "inactive") {
+      await new Promise(res => { rec.onstop = () => res(); try { rec.stop(); } catch (e) { res(); } setTimeout(res, 800); });
+    }
+    if (callChunks.length) {
+      const blob = new Blob(callChunks);
+      callChunks = [];
+      try {
+        ensureAudio();
+        const buf = await AC.decodeAudioData(await blob.arrayBuffer());
+        butinSeq++;
+        butins.push({ name: "Butin « " + nameC + " » " + butinSeq, buffer: buf });
+        renderButins();
+        $("butinRow").style.display = "flex";
+        $("butinInfo").textContent = "🪙 Butin « " + nameC + " » : " + Math.max(1, Math.round(buf.duration)) + "s — la couleur du moment est au coffre !";
+        status("🪙 Butin récupéré au moment voulu — « " + nameC + " » veille dans le coffre, et la bordée continue de chanter !");
+      } catch (e) { status("❌ Ce morceau de butin n'a pas pu être décodé — la bordée continue !"); }
+    }
+    try {
+      if (micStream && window.MediaRecorder) {
+        callRec = new MediaRecorder(micStream);
+        callRec.ondataavailable = ev => { if (ev.data && ev.data.size) callChunks.push(ev.data); };
+        callRec.start();
+      }
+    } catch (e) {}
+  });
   $("btnCallEnd").addEventListener("click", async () => {
     if (micStream) {
       micStream.getTracks().forEach(tr => tr.stop());
@@ -2814,6 +2887,7 @@
       } else callRec = null;
     } catch (e) { callRec = null; }
     micTimer = setInterval(() => {
+      updateCallColor();
       micAN.getFloatTimeDomainData(data);
       const f0 = autoCorrelate(data, AC.sampleRate);
       if (f0 <= 0) return;
