@@ -231,7 +231,7 @@
 <div id="vibGrid" class="fwindow">
   <div class="fwinHead"><span>📳 Vibrations — touche les pads</span><button class="fwclose" data-close="vibGrid">✖</button></div>
   <div class="fwinBody">
-    <div class="winRow">Piste : <select id="vibTrackSel"></select> 🎹 <select id="vibInstSel" title="Instrument de la piste · choisis-en un autre pour ➕ Nouvelle piste"></select></div>
+    <div class="winRow">Piste : <select id="vibTrackSel"></select> 🎹 <select id="vibInstSel" title="Instrument propre de cette fenêtre · ➡️ pour le mettre sur la piste"></select> <button id="vibToTrack" title="Mettre l'instrument de cette fenêtre sur la piste sélectionnée">➡️</button></div>
     <div id="vibPads"></div>
     <label style="display:flex;gap:5px;align-items:center;margin-top:8px;font-size:12px;color:var(--muted)"><input id="vibMedley" type="checkbox"> 🎶 Médley — chaque pulsation change d'instrument !</label>
     <div id="vibNote" style="margin-top:8px;font-size:12px;color:var(--muted)"></div>
@@ -254,7 +254,7 @@
 <div id="micWin" class="fwindow">
   <div class="fwinHead"><span>🎤 Micro auto-tune — chante, c'est accordé !</span><button class="fwclose" data-close="micWin">✖</button></div>
   <div class="fwinBody">
-    <div class="winRow">Piste : <select id="micTrackSel"></select> 🎹 <select id="micInstSel" title="Instrument de la piste · choisis-en un autre pour ➕ Nouvelle piste"></select>
+    <div class="winRow">Piste : <select id="micTrackSel"></select> 🎹 <select id="micInstSel" title="Instrument propre de cette fenêtre · ➡️ pour le mettre sur la piste"></select> <button id="micToTrack" title="Mettre l'instrument de cette fenêtre sur la piste sélectionnée">➡️</button>
       <label style="display:flex;gap:5px;align-items:center"><input id="micCap" type="checkbox"> 📝 capturer</label>
     </div>
     <button id="btnMic">🎤 Activer le micro</button>
@@ -299,7 +299,7 @@
 <div id="magicPad" class="fwindow">
   <div class="fwinHead"><span>🌈 Palette magique — touche les couleurs 🎵</span><button class="fwclose" data-close="magicPad">✖</button></div>
   <div class="fwinBody">
-    <div class="winRow">Piste : <select id="padTrackSel"></select> 🎹 <select id="padInstSel" title="Instrument de la piste · choisis-en un autre pour ➕ Nouvelle piste"></select>
+    <div class="winRow">Piste : <select id="padTrackSel"></select> 🎹 <select id="padInstSel" title="Instrument propre de cette fenêtre · ➡️ pour le mettre sur la piste"></select> <button id="padToTrack" title="Mettre l'instrument de cette fenêtre sur la piste sélectionnée">➡️</button>
       <label style="display:flex;gap:5px;align-items:center"><input id="padCap" type="checkbox" checked> 📝 capturer dans la piste</label>
     </div>
     <div class="winRow">🎨 Pinceau : <span id="padBrush" style="width:16px;height:16px;border-radius:50%;border:2px solid rgba(255,255,255,0.4);background:#888;display:inline-block;flex:none"></span>
@@ -1543,8 +1543,10 @@
     g.gain.value = 0.9;
     g.connect(master);
     const now = AC.currentTime;
-    if (t.instrument === "sample" && t.sampleBuffer) scheduleSample(AC, g, t, { row: Math.floor(melRows() / 2), vel: 0.8 }, now, 0.5);
-    else scheduleNote(AC, g, t.instrument === "drums" ? "pluck" : t.instrument, midi, now, 0.5, 0.8);
+    const winInst = $("padInstSel") && $("padInstSel").value;
+    const playInst = winInst || t.instrument;
+    if (!winInst && t.instrument === "sample" && t.sampleBuffer) scheduleSample(AC, g, t, { row: Math.floor(melRows() / 2), vel: 0.8 }, now, 0.5);
+    else scheduleNote(AC, g, playInst === "drums" ? "pluck" : playInst, midi, now, 0.5, 0.8);
     if ($("padCap").checked) captureNote(midiToRow(t, midi));
     padActive.set(e.pointerId, col);
     pad.classList.add("pressed");
@@ -1906,13 +1908,14 @@
     const t = tracks[selTrack];
     return rowToMidi(t, midiToRow(t, midiF));
   }
-  function padVoice(time, midi, dur) {
+  function padVoice(time, midi, dur, inst) {
     const t = tracks[selTrack];
     const g = AC.createGain();
     g.gain.value = 0.9;
     g.connect(master);
-    if (t.instrument === "sample" && t.sampleBuffer) scheduleSample(AC, g, t, { row: Math.floor(melRows() / 2), vel: 0.8 }, time, dur);
-    else scheduleNote(AC, g, t.instrument === "drums" ? "pluck" : t.instrument, midi, time, dur, 0.8);
+    const use = inst || t.instrument;
+    if (!inst && t.instrument === "sample" && t.sampleBuffer) scheduleSample(AC, g, t, { row: Math.floor(melRows() / 2), vel: 0.8 }, time, dur);
+    else scheduleNote(AC, g, use === "drums" ? "pluck" : use, midi, time, dur, 0.8);
   }
   function drawGrid() {
     dctx.clearRect(0, 0, dp.width, dp.height);
@@ -2081,11 +2084,11 @@
     const ins = INSTRUMENTS.find(i => i.id === t.instrument);
     return ins ? ins.label : t.instrument;
   }
-  let newInstPick = "synth";
   function fillInstSels() {
     for (const id of ["vibInstSel", "micInstSel", "padInstSel"]) {
       const s = $(id);
-      if (!s) continue;
+      if (!s || !s.options || s.options.length) continue;
+      const cur = tracks[selTrack] ? tracks[selTrack].instrument : "synth";
       s.innerHTML = "";
       for (const [cat, glabel] of [["mel", "🎹 Instruments"], ["sfx", "💥 Bruits & FX"]]) {
         const og = document.createElement("optgroup");
@@ -2095,7 +2098,7 @@
           const o = document.createElement("option");
           o.value = ins.id;
           o.textContent = ins.label;
-          if (ins.id === newInstPick) o.selected = true;
+          if (ins.id === cur) o.selected = true;
           og.appendChild(o);
         }
         s.appendChild(og);
@@ -2103,7 +2106,6 @@
     }
   }
   function syncWinSels() {
-    if (tracks[selTrack]) newInstPick = tracks[selTrack].instrument;
     fillTrackSel("instTrackSel");
     fillTrackSel("padTrackSel");
     fillTrackSel("vibTrackSel");
@@ -2128,20 +2130,35 @@
   function trackSelChange(id) {
     const v = $(id).value;
     if (v === "new") {
-      addTrack(newInstPick);
-      const ins = INSTRUMENTS.find(i => i.id === newInstPick);
-      status("➕ Nouvelle piste créée avec " + (ins ? ins.label : newInstPick) + " — la fenêtre joue et capture dessus !");
+      const map = { instTrackSel: "instSel", padTrackSel: "padInstSel", vibTrackSel: "vibInstSel", micTrackSel: "micInstSel" };
+      const s = $(map[id]);
+      const pick = s && s.value && s.value !== "track" ? s.value : "synth";
+      addTrack(pick);
+      const ins = INSTRUMENTS.find(i => i.id === pick);
+      status("➕ Nouvelle piste créée avec " + (ins ? ins.label : pick) + " — la fenêtre joue et capture dessus !");
     } else selectTrack(Number(v));
     syncWinSels();
   }
   for (const id of ["vibInstSel", "micInstSel", "padInstSel"]) {
     $(id).addEventListener("change", e => {
-      newInstPick = e.target.value;
-      fillInstSels();
-      const ins = INSTRUMENTS.find(i => i.id === newInstPick);
-      status("🎹 " + (ins ? ins.label : newInstPick) + " prêt pour ➕ Nouvelle piste !");
+      const ins = INSTRUMENTS.find(i => i.id === e.target.value);
+      status("🎹 " + (ins ? ins.label : e.target.value) + " : c'est l'instrument de cette fenêtre ! ➡️ pour le mettre sur la piste");
     });
   }
+  function winToTrack(selId) {
+    const t = tracks[selTrack];
+    const s = $(selId);
+    if (!t || !s || !s.value || s.value === "track") return;
+    t.instrument = s.value;
+    if (t.instrument !== "sample") t.sampleBuffer = null;
+    t.notes = t.notes.filter(n => n.row < (t.instrument === "drums" ? 4 : melRows()));
+    selectTrack(selTrack);
+    save();
+    status("➡️ " + instLabelOf(t) + " installé sur la piste « " + t.name + " » !");
+  }
+  $("vibToTrack").addEventListener("click", () => winToTrack("vibInstSel"));
+  $("micToTrack").addEventListener("click", () => winToTrack("micInstSel"));
+  $("padToTrack").addEventListener("click", () => winToTrack("padInstSel"));
   $("instTrackSel").addEventListener("change", () => trackSelChange("instTrackSel"));
   $("padTrackSel").addEventListener("change", () => trackSelChange("padTrackSel"));
   $("vibTrackSel").addEventListener("change", () => trackSelChange("vibTrackSel"));
@@ -2202,7 +2219,7 @@
             medleyIdx++;
             tt += (p[i] + (p[i + 1] || 0)) / 1000;
           }
-        } else padVoice(AC.currentTime, instMidi(ri), 0.25);
+        } else padVoice(AC.currentTime, instMidi(ri), 0.25, $("vibInstSel") && $("vibInstSel").value);
         b.classList.add("on");
         setTimeout(() => b.classList.remove("on"), 200);
       });
