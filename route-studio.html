@@ -56,10 +56,12 @@
     font-size:10px;color:rgba(0,0,0,0.55);font-weight:700;padding-left:5px;overflow:hidden;white-space:nowrap}
   .note.sel{outline:2px solid #fff;box-shadow:0 0 10px rgba(255,255,255,0.5)}
   #toolsBar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:13px}
-  #toolsBar .tool{padding:6px 12px;border:1px solid var(--line);border-radius:12px;background:var(--panel);color:var(--muted);cursor:pointer}
-  #toolsBar .tool.active{border-color:var(--gold);color:var(--gold)}
-  #toolsBar .swatch{width:20px;height:20px;border-radius:50%;border:2px solid rgba(255,255,255,0.25);cursor:pointer;padding:0;flex:none}
-  #toolsBar .swatch.active{border-color:#fff;box-shadow:0 0 6px rgba(255,255,255,0.7)}
+  #toolsBar .tool,#colPanel .tool{padding:6px 12px;border:1px solid var(--line);border-radius:12px;background:var(--panel);color:var(--muted);cursor:pointer}
+  #toolsBar .tool.active,#colPanel .tool.active{border-color:var(--gold);color:var(--gold)}
+  #colPanel{border:1px solid var(--line);border-radius:14px;padding:10px;background:var(--panel);display:flex;flex-direction:column;gap:8px;font-size:13px}
+  #colPanel .crow{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  #toolsBar .swatch,#colPanel .swatch{width:20px;height:20px;border-radius:50%;border:2px solid rgba(255,255,255,0.25);cursor:pointer;padding:0;flex:none}
+  #toolsBar .swatch.active,#colPanel .swatch.active{border-color:#fff;box-shadow:0 0 6px rgba(255,255,255,0.7)}
   #roll.tool-erase,#roll.tool-smudge{cursor:crosshair}
   #roll.tool-paint{cursor:cell}
   #roll.tool-erase .note,#roll.tool-paint .note,#roll.tool-smudge .note{cursor:crosshair}
@@ -141,6 +143,18 @@
     <h2>🎧 MES PISTES</h2>
     <div id="trackList"></div>
     <button id="btnAddTrack">➕ Ajouter une piste</button>
+    <div id="colPanel">
+      <b style="color:var(--gold)">🎨 Couleur</b>
+      <div class="crow"><span id="palette" style="display:flex;gap:6px;align-items:center"></span></div>
+      <div class="crow">
+        <input id="colPick" type="color" value="#ffffff" title="Sélecteur de couleur">
+        <input id="colHex" type="text" placeholder="#ff7e7e" title="Code hexadécimal">
+      </div>
+      <div class="crow">
+        <button class="tool" id="btnGridCol">🎨 Grille</button>
+        <button class="tool" id="btnInvCol">🔄 Inversée</button>
+      </div>
+    </div>
     <div id="fxPanel">
       <b style="color:var(--gold)">🎛️ Réglages de la piste</b>
       <label><span>Volume</span><input id="fxVol" type="range" min="0" max="100" value="80"></label>
@@ -163,12 +177,6 @@
       <button class="tool" data-tool="paint">🪣 Pot</button>
       <button class="tool" data-tool="smudge">🫳 Estomper</button>
       <button class="tool" id="btnSmooth">🪥 Aplanir</button>
-      <span style="color:var(--muted)">Couleur :</span>
-      <span id="palette" style="display:flex;gap:6px;align-items:center"></span>
-      <input id="colPick" type="color" value="#ffffff" title="Sélecteur de couleur">
-      <input id="colHex" type="text" placeholder="#ff7e7e" title="Code hexadécimal">
-      <button class="tool" id="btnGridCol">🎨 Grille</button>
-      <button class="tool" id="btnInvCol">🔄 Inversée</button>
     </div>
     <div id="notePanel" class="hidden">
       <span class="npName" id="npName">Note</span>
