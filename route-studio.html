@@ -369,6 +369,7 @@
 <div id="prlevWin" class="fwindow">
   <div class="fwinHead"><span>🗄️ Le coffre fort — prélèvements entreposés</span><button class="fwclose" data-close="prlevWin">✖</button></div>
   <div class="fwinBody">
+    <div class="winRow" style="margin:0 0 8px"><button id="btnButinLink">🎁 Coffre au butin</button><span id="prelevButinCount" style="font-size:12px;color:#8fb8d0"></span></div>
     <div id="prelevList"></div>
     <div id="prelevTip">Chaque prélèvement MIXTE (extérieur + intérieur, maintien du Micro) est entreposé DANS le navigateur (IndexedDB) — ferme, rouvre, reviens demain : ils sont toujours là, relisibles !</div>
   </div>
@@ -433,6 +434,7 @@
 <div id="butinWin" class="fwindow">
   <div class="fwinHead"><span>🎁 Coffre au butin — tous les chants capturés</span><button class="fwclose" data-close="butinWin">✖</button></div>
   <div class="fwinBody">
+    <div class="winRow" style="margin:0 0 8px"><button id="btnFortLink">🗄️ Coffre fort</button><span id="butinFortCount" style="font-size:12px;color:#8fb8d0"></span></div>
     <div id="butinList"></div>
     <div id="lootPay" style="margin-top:8px;font-size:12px;color:var(--gold)"></div>
     <div style="margin-top:8px;font-size:12px;color:var(--muted)">💡 ➕ pose le chant comme sample sur la piste sélectionnée — tes notes de la grille le joueront ! (les butins vivent pendant la session)</div>
@@ -2910,10 +2912,11 @@ function dockCallWin() {
     }
     butins.forEach((b, idx) => {
       const row = document.createElement("div");
-      row.className = "winRow";
-      row.style.cssText = "gap:8px;align-items:center;padding:6px 0;border-bottom:1px dashed var(--line)";
+      row.className = "prelevRow";
+      const dot = document.createElement("i");
+      dot.style.background = "hsl(" + hueOfName(b.name) + ",72%,46%)";
+      row.appendChild(dot);
       const lab = document.createElement("span");
-      lab.style.cssText = "flex:1;font-size:13px";
       lab.textContent = "🎁 " + b.name + " · " + Math.max(1, Math.round(b.buffer.duration)) + "s";
       row.appendChild(lab);
       const bp = document.createElement("button");
@@ -2973,6 +2976,7 @@ function dockCallWin() {
     const w = $("butinWin");
     const open = w.classList.toggle("open");
     if (open) { renderButins(); agentWake("butinWin", "ton butin est à l'abri — écoute, boucle, pose en sample !"); }
+    prelevAll().then(n => { const el = $("butinFortCount"); if (el) el.textContent = n.length + " pr\u00e9l\u00e8vement(s) entrepos\u00e9s au coffre fort"; });
   });
   const PAVS = [["Crâne rieur", 8], ["Sabre d'abordage", 45], ["Vague noire", 265], ["Enfants Perdus", 150], ["Cœur de Marée", 205], ["Kraken chantant", 325]];
   function pavHue(name) { const p = PAVS.find(q => q[0] === name); return p ? p[1] : 210; }
@@ -3201,6 +3205,21 @@ function dockCallWin() {
       bp.textContent = "\u25b6\ufe0f";
       bp.title = "Relire ce pr\u00e9l\u00e8vement";
       bp.addEventListener("click", () => playPrelev(it));
+      const br = document.createElement("button");
+      br.textContent = "\u21a9\ufe0f";
+      br.title = "Rapporter au Coffre au butin (play, boucle, sample, grille !)";
+      br.addEventListener("click", async () => {
+        try {
+          ensureAudio();
+          const buf = await AC.decodeAudioData(await it.blob.arrayBuffer());
+          callButin = buf;
+          butins.push({ name: it.name, buffer: buf });
+          renderButins();
+          $("butinRow").style.display = "flex";
+          status("\u21a9\ufe0f \u00ab " + it.name + " \u00bb rapport\u00e9 au Coffre au butin \u2014 play, boucle, sample, grille : tout est possible !");
+        } catch (e) { status("\u274c Rapport impossible \u2014 retente !"); }
+      });
+      row.appendChild(br);
       const bd = document.createElement("button");
       bd.textContent = "\ud83d\uddd1\ufe0f";
       bd.title = "Jeter ce pr\u00e9l\u00e8vement";
@@ -3213,6 +3232,18 @@ function dockCallWin() {
     const w = $("prlevWin");
     const open = w.classList.toggle("open");
     if (open) { renderPrelevs(); agentWake("prlevWin", "coffre fort ouvert \u2014 tes pr\u00e9l\u00e8vements t'attendent, m\u00eame apr\u00e8s fermeture du studio !"); }
+    const pel = $("prelevButinCount");
+    if (pel) pel.textContent = butins.length + " butin(s) en session au coffre au butin";
+  });
+  $("btnFortLink").addEventListener("click", () => {
+    $("prlevWin").classList.add("open");
+    renderPrelevs();
+    agentWake("prlevWin", "coffre fort ouvert depuis le coffre au butin \u2014 les deux coffres sont fr\u00e8res, m\u00eame ergonomie !");
+  });
+  $("btnButinLink").addEventListener("click", () => {
+    $("butinWin").classList.add("open");
+    renderButins();
+    agentWake("butinWin", "coffre au butin ouvert depuis le coffre fort \u2014 les deux coffres sont fr\u00e8res, m\u00eame ergonomie !");
   });
   $("btnCallMini").addEventListener("click", e => {
     e.stopPropagation();
