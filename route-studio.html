@@ -140,6 +140,16 @@
   #callNote{margin-top:14px;font-size:20px;min-height:28px;color:#ffd76a;position:relative;z-index:2}
   #btnCallEnd{margin-top:18px;width:100%;padding:13px;border-radius:999px;border:none;background:linear-gradient(90deg,#c9543f,#a7372a);color:#fff;font-weight:bold;font-size:15px;cursor:pointer;position:relative;z-index:2}
   #btnCallMini{position:absolute;top:10px;right:12px;z-index:3;background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.25);color:#fff;border-radius:8px;padding:2px 9px;cursor:pointer;font-size:14px}
+  #callThemeSel{position:absolute;top:10px;left:12px;z-index:3;background:rgba(0,0,0,0.35);color:#fff;border:1px solid rgba(255,255,255,0.25);border-radius:8px;padding:3px 6px;font-size:12px;cursor:pointer}
+  #callWin.theme-pixel #callCard{border-radius:0;border:3px solid #6fe26f;font-family:'Courier New',monospace}
+  #callWin.theme-pixel #callAvatar,#callWin.theme-pixel #callPavFlag,#callWin.theme-pixel #callColor{border-radius:0}
+  #callWin.theme-cosmic #callCard{background:radial-gradient(circle at 25% 15%,#33206e 0%,#140a33 45%,#070312 100%);border-color:rgba(190,150,255,0.55)}
+  #callWin.theme-matrix #callCard{background:linear-gradient(180deg,#021208 0%,#041a0c 60%,#021008 100%);border-color:rgba(60,255,120,0.55)}
+  #callWin.theme-matrix #callName,#callWin.theme-matrix #callNote,#callWin.theme-matrix #callTimer,#callWin.theme-matrix #callPavName,#callWin.theme-matrix #callColorName{color:#54ff8a;text-shadow:0 0 8px rgba(60,255,120,0.55);font-family:'Courier New',monospace}
+  #callWin.mini #callThemeSel{display:none}
+  #callEq{display:none;justify-content:center;align-items:flex-end;gap:3px;height:34px;margin-top:10px;position:relative;z-index:2}
+  #callWin.open #callEq{display:flex}
+  #callEq span{width:6px;border-radius:2px;transition:height 0.12s}
   #callWin.mini{pointer-events:none;padding:0}
   #callWin.mini #callCard{pointer-events:auto;width:auto;padding:10px 14px;display:flex;gap:10px;align-items:center;cursor:pointer;border-radius:999px}
   #callWin.mini #callCrew,#callWin.mini #callPlank,#callWin.mini #callName,#callWin.mini #btnCallMini{display:none}
@@ -343,6 +353,7 @@
 <div id="callWin">
   <div id="callCard">
     <button id="btnCallMini" title="Réduire l'appel — l'équipage continue de chanter pendant que tu crées !">➖</button>
+    <select id="callThemeSel" title="Thème de l'appel"><option value="pirate">🌊 Pirate</option><option value="pixel">👾 Pixel</option><option value="cosmic">🌌 Cosmique</option><option value="matrix">🟩 Matrix</option></select>
     <div id="callCrew">🏴‍☠️ 🦜 ⚓️ 🗺️ 🧭</div>
     <div id="callAvatar">🎤</div>
     <div id="callPlank"></div>
@@ -351,6 +362,7 @@
     <div id="callNote">…</div>
     <div id="callPavRow"><div id="callPavFlag"></div><div id="callPavName">Pavillon…</div></div>
     <div id="callColorRow"><div id="callColor"></div><div id="callColorName">🎨 couleur perçue…</div></div>
+    <div id="callEq"></div>
     <button id="btnCallLoot" title="Récupère le chant enregistré jusqu'à maintenant, sans terminer l'appel">🪙 Récupérer le butin maintenant</button>
     <button id="btnCallEnd">Terminer l'appel — le Micro reste à bord</button>
     <button id="btnCallHelp">⛵ Hisser un pavillon (nouvelle tentative)</button>
@@ -2616,6 +2628,18 @@
     showPav();
     openMic();
   });
+  function applyCallTheme() {
+    const t = $("callThemeSel").value || localStorage.getItem("rsCallTheme") || "pirate";
+    const w = $("callWin");
+    ["theme-pirate", "theme-pixel", "theme-cosmic", "theme-matrix"].forEach(c => w.classList.remove(c));
+    w.classList.add("theme-" + t);
+  }
+  $("callThemeSel").addEventListener("change", () => {
+    applyCallTheme();
+    try { localStorage.setItem("rsCallTheme", $("callThemeSel").value); } catch (e) {}
+  });
+  try { const sth = localStorage.getItem("rsCallTheme"); if (sth) $("callThemeSel").value = sth; } catch (e) {}
+  applyCallTheme();
   $("btnCallSample").addEventListener("click", async () => {
     if (!window.OfflineAudioContext) { status("❌ Ce navigateur ne sait pas cuisiner un sample offline"); return; }
     try {
@@ -2752,12 +2776,13 @@
   function updateCallColor() {
     const el = $("callColor"), nm = $("callColorName");
     if (!el) return;
-    let hue = 210, sat = 20, lit = 28;
+    let hue = 210, sat = 20, lit = 28, lvl = 0.2;
     try {
       if (!micStream || !micAN) {
         if (!reconstTimer) return;
         hue = (pavHue($("pavSel").value || "Crâne rieur") + (Date.now() / 120) % 40) % 360;
         sat = 55; lit = 34 + 8 * Math.sin(Date.now() / 600);
+        lvl = 0.35 + 0.25 * Math.abs(Math.sin(Date.now() / 500));
       } else {
       const n = micAN.frequencyBinCount;
       if (!lootFD || lootFD.length !== n) lootFD = new Uint8Array(n);
@@ -2768,6 +2793,7 @@
         const f = dom * AC.sampleRate / (micAN.fftSize || 1024);
         hue = Math.max(0, Math.min(330, Math.log2(Math.max(40, f) / 80) / 4.64 * 300));
         const avg = sum / (n * 255);
+        lvl = Math.min(1, avg * 4);
         sat = Math.round(38 + avg * 140);
         lit = Math.round(32 + domV / 255 * 30);
       }
@@ -2783,6 +2809,29 @@
     el.style.boxShadow = "0 0 18px " + col;
     lootColorName = hueName(hue);
     if (nm) nm.textContent = "🎨 " + lootColorName;
+    const av = $("callAvatar");
+    if (av) {
+      av.style.filter = "brightness(" + (1 + lvl * 0.6).toFixed(2) + ")";
+      av.style.boxShadow = "0 0 " + Math.round(10 + lvl * 26) + "px hsl(" + Math.round(hue) + ",80%,55%)";
+    }
+    const fl = $("callPavFlag");
+    if (fl) fl.style.boxShadow = "0 0 " + Math.round(8 + lvl * 20) + "px hsl(" + Math.round(hue) + ",80%,45%)";
+    const eq = $("callEq");
+    if (eq && eq.children) {
+      if (!eq.children.length) for (let i = 0; i < 14; i++) eq.appendChild(document.createElement("span"));
+      for (let i = 0; i < eq.children.length; i++) {
+        const b = eq.children[i];
+        let v;
+        if (micStream && micAN && lootFD) {
+          const a = Math.floor(i * lootFD.length / 14), z = Math.max(a + 1, Math.floor((i + 1) * lootFD.length / 14));
+          let s = 0;
+          for (let j = a; j < z; j++) s += lootFD[j];
+          v = s / ((z - a) * 255);
+        } else v = 0.25 + 0.55 * Math.abs(Math.sin(Date.now() / 400 + i * 0.9)) * lvl;
+        b.style.height = Math.round(4 + v * 28) + "px";
+        b.style.background = "hsl(" + Math.round(hue) + ",70%," + Math.round(40 + v * 25) + "%)";
+      }
+    }
   }
   $("btnCallLoot").addEventListener("click", async () => {
     if (!callRec || callRec.state === "inactive") { status("🎙 Rien à récupérer — le Micro n'enregistre pas encore !"); return; }
