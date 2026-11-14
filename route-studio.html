@@ -74,11 +74,10 @@
   @keyframes recpulse{50%{opacity:0.55}}
   .winRow{display:flex;gap:10px;align-items:center;font-size:12px;color:var(--muted);margin-bottom:8px;flex-wrap:wrap}
   .winRow select{background:rgba(0,0,0,0.3);border:1px solid var(--line);border-radius:8px;color:var(--gold);padding:4px 6px;font-size:12px;max-width:150px}
-  .cgrid{position:fixed;left:50%;top:18%;transform:translateX(-50%);display:none;grid-template-columns:repeat(12,22px);gap:3px;
-    padding:10px;background:var(--panel);border:1px solid var(--gold);border-radius:12px;z-index:70;box-shadow:0 12px 40px rgba(0,0,0,0.6)}
-  .cgrid.open{display:grid}
-  .cgrid .csw{width:20px;height:20px;border-radius:5px;border:1px solid rgba(255,255,255,0.2);cursor:pointer;padding:0}
-  .cgrid .chex{grid-column:1 / -1;background:rgba(0,0,0,0.3);border:1px solid var(--line);border-radius:8px;color:var(--gold);padding:4px 6px;font-size:12px}
+  #colorWin{width:400px}
+  #colorWin .cg{display:grid;grid-template-columns:repeat(12,24px);gap:3px;justify-content:center}
+  #colorWin .csw{width:22px;height:22px;border-radius:5px;border:1px solid rgba(255,255,255,0.2);cursor:pointer;padding:0}
+  #colorWin .chex{margin-top:8px;width:100%;background:rgba(0,0,0,0.3);border:1px solid var(--line);border-radius:8px;color:var(--gold);padding:6px;font-size:13px}
   .fwindow.open{display:flex;flex-direction:column}
   .fwinHead{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 12px;border-bottom:1px solid var(--line);font-size:13px;color:var(--gold)}
   .fwclose{background:none;border:none;color:var(--muted);cursor:pointer;font-size:14px}
@@ -205,8 +204,23 @@
 <div id="vibGrid" class="fwindow">
   <div class="fwinHead"><span>📳 Vibrations — touche les pads</span><button class="fwclose" data-close="vibGrid">✖</button></div>
   <div class="fwinBody">
+    <div class="winRow">Piste : <select id="vibTrackSel"></select></div>
     <div id="vibPads"></div>
     <div id="vibNote" style="margin-top:8px;font-size:12px;color:var(--muted)"></div>
+  </div>
+</div>
+<div id="colorWin" class="fwindow">
+  <div class="fwinHead"><span>🎨 Couleurs — précis, pour tout Route Studio</span><button class="fwclose" data-close="colorWin">✖</button></div>
+  <div class="fwinBody">
+    <div class="winRow">Appliquer à : <select id="colTarget">
+      <option value="brush">🖌️ Pinceau (dessin)</option>
+      <option value="note">🎵 Note sélectionnée</option>
+      <option value="track">🛤️ Piste entière</option>
+    </select>
+    <label style="display:flex;gap:5px;align-items:center"><input id="colInv" type="checkbox"> 🔄 inversée</label>
+    </div>
+    <div class="cg" id="cgHost"></div>
+    <input class="chex" id="cgHex" placeholder="#code hexa précis (ex : #ff7e7e)">
   </div>
 </div>
 <div id="miniGame" class="fwindow">
@@ -1069,44 +1083,62 @@
     const [r, g, b] = hexToRgb(hx);
     return rgbToHex(255 - r, 255 - g, 255 - b);
   }
-  function buildColorGrid(btnId, onPick) {
-    const pop = document.createElement("div");
-    pop.className = "cgrid";
-    (document.body || document.createElement("div")).appendChild(pop);
-    const add = hex => {
-      const b = document.createElement("button");
-      b.className = "csw";
-      b.style.background = hex;
-      b.title = hex;
-      b.addEventListener("click", () => { pop.classList.remove("open"); onPick(hex); });
-      pop.appendChild(b);
-    };
-    for (let l = 7; l >= 1; l--) for (let h = 0; h < 12; h++) add(hslToHex(h * 30, 85, 10 + l * 11));
-    for (let i = 0; i <= 10; i++) add(rgbToHex(i * 25.5, i * 25.5, i * 25.5));
-    const inp = document.createElement("input");
-    inp.className = "chex";
-    inp.placeholder = "#code hexa précis";
-    inp.addEventListener("change", () => {
-      let v = inp.value.trim();
-      if (v && !v.startsWith("#")) v = "#" + v;
-      if (/^#[0-9a-fA-F]{6}$/.test(v)) { pop.classList.remove("open"); onPick(v.toLowerCase()); }
-      else status("❌ Hexa invalide — format : #ff7e7e");
-    });
-    pop.appendChild(inp);
-    $(btnId).addEventListener("click", e => {
-      e.stopPropagation();
-      pop.classList.toggle("open");
-    });
+  const cgHost = $("cgHost");
+  for (let l = 7; l >= 1; l--) for (let h = 0; h < 12; h++) {
+    const hex = hslToHex(h * 30, 85, 10 + l * 11);
+    const b = document.createElement("button");
+    b.className = "csw";
+    b.style.background = hex;
+    b.title = hex;
+    b.addEventListener("click", () => applyPick(hex));
+    cgHost.appendChild(b);
   }
-  buildColorGrid("btnGridCol", hex => { setBrush(hex); applyBrushToSel(); save(); });
-  buildColorGrid("npGridCol", hex => { if (selNote) { selNote.col = hex; renderNotes(); save(); } });
-  buildColorGrid("btnInvCol", hex => {
-    const inv = invertHex(hex);
-    setBrush(inv);
-    applyBrushToSel();
+  for (let i = 0; i <= 10; i++) {
+    const hex = rgbToHex(i * 25.5, i * 25.5, i * 25.5);
+    const b = document.createElement("button");
+    b.className = "csw";
+    b.style.background = hex;
+    b.title = hex;
+    b.addEventListener("click", () => applyPick(hex));
+    cgHost.appendChild(b);
+  }
+  function applyPick(hex) {
+    if ($("colInv").checked) {
+      const inv = invertHex(hex);
+      status("🔄 " + hex + " inversée → " + inv);
+      hex = inv;
+    }
+    const tgt = $("colTarget").value;
+    if (tgt === "brush") {
+      setBrush(hex);
+      applyBrushToSel();
+    } else if (tgt === "note") {
+      if (selNote) { selNote.col = hex; renderNotes(); }
+      else status("🎵 Sélectionne d'abord une note sur la grille");
+    } else if (tgt === "track") {
+      const t = tracks[selTrack];
+      t.color = hex;
+      for (const n of t.notes) n.col = null;
+      renderTrackList();
+      renderNotes();
+    }
     save();
-    status("🔄 " + hex + " inversée → " + inv);
+  }
+  $("cgHex").addEventListener("change", e => {
+    let v = e.target.value.trim();
+    if (v && !v.startsWith("#")) v = "#" + v;
+    if (/^#[0-9a-fA-F]{6}$/.test(v)) applyPick(v.toLowerCase());
+    else status("❌ Hexa invalide — format : #ff7e7e");
   });
+  function openColorWin(tgt, inv) {
+    if (tgt) $("colTarget").value = tgt;
+    $("colInv").checked = !!inv;
+    $("colorWin").classList.add("open");
+    $("colorWin").style.zIndex = ++winZ;
+  }
+  $("btnGridCol").addEventListener("click", () => openColorWin("brush", false));
+  $("npGridCol").addEventListener("click", () => openColorWin("note", false));
+  $("btnInvCol").addEventListener("click", () => openColorWin("brush", true));
   $("btnSmooth").addEventListener("click", () => {
     const t = tracks[selTrack];
     if (t.notes.length < 2) { status("🪥 Il faut au moins 2 notes à aplanir"); return; }
@@ -1508,9 +1540,11 @@
     } else selectTrack(Number(v));
     fillTrackSel("instTrackSel");
     fillTrackSel("padTrackSel");
+    fillTrackSel("vibTrackSel");
   }
   $("instTrackSel").addEventListener("change", () => trackSelChange("instTrackSel"));
   $("padTrackSel").addEventListener("change", () => trackSelChange("padTrackSel"));
+  $("vibTrackSel").addEventListener("change", () => trackSelChange("vibTrackSel"));
   let capStep = 0;
   function midiToRow(t, midi) {
     for (let r = 0; r < melRows(); r++) if (rowToMidi(t, r) === midi) return r;
@@ -1562,6 +1596,7 @@
     }
   });
   $("btnVib").addEventListener("click", () => {
+    fillTrackSel("vibTrackSel");
     const ok = typeof navigator.vibrate === "function";
     $("vibNote").textContent = ok
       ? "💡 Chaque ligne = un motif (Long, Double, Triple, Roulement), plus à droite = plus rapide. Teste sur mobile !"
