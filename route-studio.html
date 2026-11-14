@@ -74,29 +74,29 @@
   .fwmove{background:rgba(0,0,0,0.3);border:1px solid var(--line);border-radius:8px;color:var(--gold);cursor:move;font-size:13px;padding:2px 9px;touch-action:none}
   #btnRec.rec{border-color:#ff5e5e;color:#ff8a8a;animation:recpulse 1s infinite}
   @keyframes recpulse{50%{opacity:0.55}}
-  .winRow{display:flex;gap:10px;align-items:center;font-size:12px;color:var(--muted);margin-bottom:8px;flex-wrap:wrap}
+  .winRow{display:flex;gap:12px;align-items:center;font-size:12px;color:var(--muted);margin-bottom:12px;flex-wrap:wrap}
   .winRow select{background:rgba(0,0,0,0.3);border:1px solid var(--line);border-radius:8px;color:var(--gold);padding:4px 6px;font-size:12px;max-width:150px}
   #colorWin{width:400px}
   #colorWin .cg{display:grid;grid-template-columns:repeat(12,24px);gap:3px;justify-content:center}
   #colorWin .csw{width:22px;height:22px;border-radius:5px;border:1px solid rgba(255,255,255,0.2);cursor:pointer;padding:0}
   #colorWin .chex{margin-top:8px;width:100%;background:rgba(0,0,0,0.3);border:1px solid var(--line);border-radius:8px;color:var(--gold);padding:6px;font-size:13px}
   .fwindow.open{display:flex;flex-direction:column}
-  .fwinHead{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 12px;border-bottom:1px solid var(--line);font-size:13px;color:var(--gold)}
+  .fwinHead{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:10px 14px;border-bottom:1px solid var(--line);font-size:13px;color:var(--gold)}
   .fwinHead span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .fwclose,.fwmove{flex:none}
   .fwclose{background:none;border:none;color:var(--muted);cursor:pointer;font-size:14px}
-  .fwinBody{flex:1;overflow:auto;padding:10px}
+  .fwinBody{flex:1;overflow:auto;padding:14px 16px 16px}
   #miniGame .fwinBody{padding:0}
   #miniGame iframe{width:100%;height:100%;border:0;display:block;min-height:180px}
-  #padGrid{display:grid;grid-template-columns:repeat(6,1fr);gap:8px}
+  #padGrid{display:grid;grid-template-columns:repeat(6,1fr);gap:10px;margin-top:12px}
   #padGrid .pad{aspect-ratio:1;border-radius:50%;border:2px solid rgba(255,255,255,0.25);cursor:pointer;padding:0;min-width:0}
   #padGrid .pad.pressed{outline:3px solid #fff;box-shadow:0 0 10px rgba(255,255,255,0.7)}
-  #mixRow{display:flex;gap:10px;align-items:center;margin-top:12px;font-size:13px;color:var(--muted);flex-wrap:wrap}
+  #mixRow{display:flex;gap:12px;align-items:center;margin-top:14px;font-size:13px;color:var(--muted);flex-wrap:wrap}
   #mixSwatch{width:26px;height:26px;border-radius:50%;border:2px solid rgba(255,255,255,0.3);background:#222;flex:none}
   #mixUse{display:none}
   #mixUse.show{display:inline-block}
   #drawPad{width:100%;border:1px solid var(--line);border-radius:10px;background:rgba(0,0,0,0.35);cursor:crosshair;touch-action:none;margin-top:12px;display:block}
-  #drawRow{display:flex;gap:8px;align-items:center;margin-top:10px;flex-wrap:wrap;font-size:13px;color:var(--muted)}
+  #drawRow{display:flex;gap:10px;align-items:center;margin-top:12px;flex-wrap:wrap;font-size:13px;color:var(--muted)}
   .fwinHead{cursor:move;user-select:none}
   #instCells{display:grid;grid-template-columns:repeat(12,1fr);gap:4px}
   .icell{aspect-ratio:1;border-radius:8px;border:1px solid rgba(255,255,255,0.15);cursor:pointer;padding:0;min-width:0;transition:transform .08s,box-shadow .08s}
@@ -253,10 +253,11 @@
       <span id="padMiniGrid" style="display:flex;gap:3px;flex-wrap:wrap"></span>
       <button id="padMoreCol" style="font-size:11px;padding:3px 8px">fenêtre 🎨</button>
     </div>
-    <details style="margin-top:2px">
-      <summary style="cursor:pointer;font-size:12px;color:var(--muted)">🎨 Sélecteur précis (rectangle)</summary>
-      <div id="padPrecGrid" style="margin-top:8px;display:grid;grid-template-columns:repeat(12,20px);gap:3px;justify-content:center"></div>
-      <input id="padPrecHex" placeholder="#code hexa précis (ex : #ff7e7e)" style="margin-top:6px;width:100%;background:rgba(0,0,0,0.3);border:1px solid var(--line);border-radius:8px;color:var(--gold);padding:5px;font-size:12px">
+    <details style="margin-top:12px">
+      <summary style="cursor:pointer;font-size:12px;color:var(--muted)">🎨 Sélecteur personnalisé (rectangle)</summary>
+      <div id="padPrecGrid" style="margin-top:10px;display:grid;grid-template-columns:repeat(12,22px);gap:4px;justify-content:center"></div>
+      <label style="display:flex;gap:5px;align-items:center;margin-top:10px;font-size:12px;color:var(--muted)"><input id="padInv" type="checkbox"> 🔄 inversée</label>
+      <input id="padPrecHex" placeholder="#code hexa précis (ex : #ff7e7e)" style="margin-top:8px;width:100%;background:rgba(0,0,0,0.3);border:1px solid var(--line);border-radius:8px;color:var(--gold);padding:6px;font-size:13px">
     </details>
     <div id="padGrid"></div>
     <div id="mixRow">
@@ -1439,28 +1440,36 @@
   }
   $("padMoreCol").addEventListener("click", () => openColorWin("brush", false));
   const padPrec = $("padPrecGrid");
+  const padPick = hx => {
+    if ($("padInv").checked) {
+      const inv = invertHex(hx);
+      status("🔄 " + hx + " inversée → " + inv);
+      hx = inv;
+    }
+    setBrush(hx);
+  };
   for (let l = 7; l >= 1; l--) for (let h = 0; h < 12; h++) {
     const hex = hslToHex(h * 30, 85, 10 + l * 11);
     const b = document.createElement("button");
-    b.style.cssText = "width:18px;height:18px;border-radius:4px;border:1px solid rgba(255,255,255,0.2);cursor:pointer;padding:0";
+    b.style.cssText = "width:20px;height:20px;border-radius:5px;border:1px solid rgba(255,255,255,0.2);cursor:pointer;padding:0";
     b.style.background = hex;
     b.title = hex;
-    b.addEventListener("click", () => setBrush(hex));
+    b.addEventListener("click", () => padPick(hex));
     padPrec.appendChild(b);
   }
-  for (let i = 0; i <= 6; i++) {
-    const hex = rgbToHex(i * 42.5, i * 42.5, i * 42.5);
+  for (let i = 0; i <= 10; i++) {
+    const hex = rgbToHex(i * 25.5, i * 25.5, i * 25.5);
     const b = document.createElement("button");
-    b.style.cssText = "width:18px;height:18px;border-radius:4px;border:1px solid rgba(255,255,255,0.2);cursor:pointer;padding:0";
+    b.style.cssText = "width:20px;height:20px;border-radius:5px;border:1px solid rgba(255,255,255,0.2);cursor:pointer;padding:0";
     b.style.background = hex;
     b.title = hex;
-    b.addEventListener("click", () => setBrush(hex));
+    b.addEventListener("click", () => padPick(hex));
     padPrec.appendChild(b);
   }
   $("padPrecHex").addEventListener("change", e => {
     let v = e.target.value.trim();
     if (v && !v.startsWith("#")) v = "#" + v;
-    if (/^#[0-9a-fA-F]{6}$/.test(v)) setBrush(v.toLowerCase());
+    if (/^#[0-9a-fA-F]{6}$/.test(v)) padPick(v.toLowerCase());
     else status("❌ Hexa invalide — format : #ff7e7e");
   });
 
