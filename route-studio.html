@@ -209,6 +209,7 @@
   <label class="filebtn">📂 Importer<input id="fileJson" type="file" accept=".json,application/json" hidden></label>
   <button id="btnMicOpen">🎤 Micro</button>
   <button id="btnEchoOpen">🪞 Écho</button>
+  <button id="btnMagicAgents">✨ Magie</button>
   <button id="btnMagic">🌈 Palette magique</button>
   <button id="btnMagicSys">🪐 Magic System</button>
   <button id="btnDraw">🎨 Dessinateur</button>
@@ -261,6 +262,7 @@
     <div class="winRow" id="echoNote">🎚️ …</div>
     <div class="winRow" id="echoMic">🎤 …</div>
     <div class="winRow" id="echoLoops">🔁 …</div>
+    <div class="winRow" id="echoMagic">✨ …</div>
     <div class="winRow" id="echoStatus">💬 …</div>
   </div>
 </div>
@@ -2370,6 +2372,8 @@
     }, 90);
   });
 
+  const MAGIC = { on: true, lastBrush: null, lastNoteCount: -1, lastAct: 0, lastMsg: "les agents magiciens observent…" };
+  function magicSay(msg) { MAGIC.lastMsg = msg; refreshEcho(); }
   function refreshEcho() {
     const w = $("echoWin");
     if (!w || !w.classList.contains("open")) return;
@@ -2379,6 +2383,7 @@
     $("echoNote").textContent = "🎚️ Tempo : " + $("tempo").value + (freeMode ? " · 🎲 mode libre" : " · gamme accordée") + (selNote != null ? " · 🎵 note sélectionnée" : "");
     $("echoMic").textContent = micStream ? "🎤 " + $("micInfo").textContent : "🎤 Micro éteint";
     $("echoLoops").textContent = "🔁 Monde : " + (worldLoop ? "ON" : "off") + " · Dessin : " + (drawLoop ? "ON" : "off");
+    $("echoMagic").textContent = "✨ " + (MAGIC.on ? MAGIC.lastMsg : "agents magiciens endormis — bouton ✨ Magie !");
     $("echoStatus").textContent = "💬 " + $("status").textContent;
   }
   setInterval(refreshEcho, 400);
@@ -2387,6 +2392,54 @@
     const open = $("echoWin").classList.toggle("open");
     if (open) agentWake("echoWin", "fenêtre écho en poste — elle se met à jour toute seule selon tes choix !");
     refreshEcho();
+  });
+
+  function magicNote(midi, inst) {
+    ensureAudio();
+    const g = AC.createGain();
+    g.gain.value = 0.22;
+    g.connect(master);
+    scheduleNote(AC, g, inst, midi, AC.currentTime + 0.02, 0.5, 0.5);
+  }
+  function magicTick() {
+    if (!MAGIC.on) return;
+    const t = tracks[selTrack];
+    const now = Date.now();
+    if (MAGIC.lastNoteCount === -1) MAGIC.lastNoteCount = t.notes.length;
+    if (now - MAGIC.lastAct < 3500) return;
+    if (brushCol && brushCol !== MAGIC.lastBrush) {
+      MAGIC.lastBrush = brushCol;
+      MAGIC.lastAct = now;
+      if (Math.random() < 0.6) {
+        const [h, s, l] = hexToHsl(brushCol);
+        const c = hslToHex((h + (Math.random() < 0.5 ? 37 : 180)) % 360, Math.max(45, s), l);
+        rememberColor(c);
+        magicSay("🎨 Coloriste a glissé la nuance " + c + " dans la palette magique — sans rien te demander !");
+      }
+      return;
+    }
+    if (t.notes.length !== MAGIC.lastNoteCount) {
+      MAGIC.lastNoteCount = t.notes.length;
+      MAGIC.lastAct = now;
+      const last = t.notes[t.notes.length - 1];
+      if (last) {
+        magicNote(rowToMidi(t, last.row) + (Math.random() < 0.5 ? 4 : 7), Math.random() < 0.5 ? "bell" : "choir");
+        magicSay("🎶 Harmonique a soufflé une harmonie au-dessus de ta note !");
+      }
+      return;
+    }
+    if (now - MAGIC.lastAct > 12000 && AC) {
+      MAGIC.lastAct = now;
+      magicNote(rowToMidi(t, Math.floor(Math.random() * melRows())), "mbox");
+      magicSay("🌙 Gardien a fait tinter une note d'ambiance dans ton silence…");
+    }
+  }
+  setInterval(magicTick, 1200);
+  $("btnMagicAgents").addEventListener("click", () => {
+    MAGIC.on = !MAGIC.on;
+    $("btnMagicAgents").classList.toggle("on");
+    status(MAGIC.on ? "✨ Agents magiciens réveillés — ils regardent et créent !" : "✨ Agents magiciens endormis");
+    magicSay(MAGIC.on ? "les agents s'éveillent — ils observent et créent sans rien demander !" : "les agents dorment…");
   });
 
   function autoCorrelate(buf, sampleRate) {
