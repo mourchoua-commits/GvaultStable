@@ -313,6 +313,7 @@
       <label style="display:flex;gap:5px;align-items:center"><input id="micCap" type="checkbox"> 📝 capturer</label>
     </div>
     <div class="winRow">🎤 Micro : <select id="micDevSel" title="Choisis le micro que tu veux !"></select></div>
+    <div class="winRow">🏴‍☠️ Pavillon : <select id="pavSel" title="L'équipage choisit SON pavillon — on ne demande jamais, on débarque !"><option>Crâne rieur</option><option>Sabre d'abordage</option><option>Vague noire</option><option>Enfants Perdus</option><option>Cœur de Marée</option><option>Kraken chantant</option></select></div>
     <button id="btnMic">🎤 Activer le micro</button>
     <div id="micInfo" style="margin-top:10px;font-size:13px;color:var(--muted)">Micro éteint</div>
     <div style="font-size:12px;color:var(--gold);margin:12px 0 6px">🎁 Le butin</div>
@@ -326,7 +327,7 @@
       <button id="btnButinOpen">🎁 Coffre au butin</button>
       <span id="butinCount" style="font-size:12px;color:var(--muted)">coffre vide — aborde le Micro !</span>
     </div>
-    <div style="margin-top:8px;font-size:12px;color:var(--muted)">💡 Chante une note : elle est détectée, corrigée sur ta gamme et jouée avec l'instrument de la piste choisie — 🔒 Refusé ? Barre d'adresse → Autoriser le micro : la relance est automatique ! ➖ dans l'appel = appel réduit, tu continues à créer pendant la bordée !</div>
+    <div style="margin-top:8px;font-size:12px;color:var(--muted)">💡 Chante une note : elle est détectée, corrigée sur ta gamme et jouée avec l'instrument de la piste choisie — 🔒 Refusé ? On ne supplie jamais : barre d'adresse → 🎙 → le pavillon sera reconnu, le Micro montera tout seul ! ➖ dans l'appel = appel réduit, tu continues à créer pendant la bordée !</div>
   </div>
 </div>
 <div id="callWin">
@@ -339,7 +340,7 @@
     <div id="callTimer">⚓ l'équipage rame vers le Micro…</div>
     <div id="callNote">…</div>
     <button id="btnCallEnd">🛏️ Le Micro descend se reposer (il reste à bord !)</button>
-    <button id="btnCallHelp">🪜 Aider le Micro à monter (hisser le pavillon)</button>
+    <button id="btnCallHelp">🏴‍☠️ Hisser NOTRE pavillon — on ne demande pas, on débarque !</button>
     <button id="btnCallSample">🎁 Sampler l'ambiance du navire</button>
   </div>
 </div>
@@ -2468,8 +2469,8 @@
       agentWake("micWin", "l'équipage aborde le micro — chante, chaque note est accordée à ta gamme !");
       if (navigator.permissions && navigator.permissions.query) {
         navigator.permissions.query({ name: "microphone" }).then(st => {
-          if (st.state === "granted" && !micStream) $("micInfo").textContent = "🎤 Micro déjà autorisé — appuie sur Activer, aucune demande ne sera refaite !";
-          else if (st.state === "denied") $("micInfo").textContent = "🔒 Pavillon refusé par le port — barre d'adresse → 🎙 → Micro : Autoriser !";
+          if (st.state === "granted" && !micStream) $("micInfo").textContent = "🏴‍☠️ Le port reconnaît déjà notre pavillon — appuie sur Activer, on ne redemande jamais rien !";
+          else if (st.state === "denied") $("micInfo").textContent = "🔒 Le port boude notre pavillon — barre d'adresse → 🎙 → Autoriser et il s'inclinera !";
         }).catch(() => {});
       }
     }
@@ -2507,8 +2508,8 @@
       const st = await navigator.permissions.query({ name: "microphone" });
       st.onchange = () => {
         if (st.state === "granted" && !micStream) {
-          $("micInfo").textContent = "🏴‍☠️ Pavillon hissé ! Le Micro monte à bord — l'équipage le fait monter tout seul !";
-          status("🎤 Le Micro monte sur la planche — je le relance tout seul !");
+          $("micInfo").textContent = "🏴‍☠️ Le port s'est incliné devant notre pavillon ! Le Micro monte à bord TOUT SEUL — comme prévu, capitaine !";
+          status("🏴‍☠️ Pavillon reconnu — le Micro monte sur la planche tout seul, on n'a rien demandé !");
           openMic();
         }
       };
@@ -2584,7 +2585,7 @@
     $("callWin").classList.add("open");
     $("callWin").classList.add("reconst");
     $("callName").textContent = "🛳️ Reconstitution — la vie à bord";
-    $("callNote").textContent = "🌊 Le Micro est au quai : l'équipage sample tout ce qu'il voit — vagues, mouettes, grincements, cloche !";
+    $("callNote").textContent = "🌊 Le Micro est au quai : l'équipage hisse le Pavillon « " + ($("pavSel").value || "Crâne rieur") + " » et sample tout ce qu'il voit, même autour — vagues, mouettes, grincements, cloche !";
     $("callTimer").textContent = "en reconstitution";
     startReconstAmbience();
   }
@@ -2756,18 +2757,20 @@
   });
   async function openMic() {
     if (window.isSecureContext === false) {
-      $("micInfo").textContent = "🌊 Calme plat — le Micro exige une page https : ouvre la version en ligne sur raw.githack.com (le fichier local en double-clic ne peut pas l'avoir) !";
+      $("micInfo").textContent = "🌊 Calme plat — ce quai n'a même pas de https : pas de pavillon sur une passerelle pourrie ! Ouvre la version en ligne sur raw.githack.com (le fichier local en double-clic ne peut pas l'avoir) !";
       status("🌊 Calme plat — Micro indisponible hors https : ouvre la version en ligne !");
       openReconst();
       return;
     }
+    const pav = $("pavSel").value || "Crâne rieur";
+    $("micInfo").textContent = "🏴‍☠️ L'équipage hisse le Pavillon « " + pav + " » — on ne demande pas, on débarque !";
     try {
       const dev = $("micDevSel").value;
       micStream = await navigator.mediaDevices.getUserMedia(dev ? { audio: { deviceId: { exact: dev } } } : { audio: true });
     } catch (err) {
       if (err && (err.name === "NotAllowedError" || err.name === "SecurityError")) {
-        $("micInfo").textContent = "🏴‍☠️ Le Micro refuse de monter à bord — la loi du port (le navigateur) exige le pavillon ! Barre d'adresse → icône 🎙 → Autoriser → il montera TOUT SEUL, promis mousse !";
-        status("🏴‍☠️ Le port exige le pavillon avant d'embarquer — hisse-le dans la barre d'adresse, l'équipage le fera monter tout seul !");
+        $("micInfo").textContent = "🏴‍☠️ Le Micro refuse de monter à bord — le port boude le Pavillon « " + pav + " » ! On ne supplie jamais : barre d'adresse → icône 🎙 → le pavillon sera reconnu → il montera TOUT SEUL, capitaine !";
+        status("🏴‍☠️ Le port boude notre pavillon — Crochet peut bien attendre ! Barre d'adresse → 🎙 et le Micro va monter tout seul, comme Jack Sparrow débarque : sans demander.");
         watchMicPerm();
         openReconst();
       } else status("❌ Micro refusé ou indisponible : " + err.message);
@@ -2795,7 +2798,7 @@
     const data = new Float32Array(micAN.fftSize);
     $("btnMic").textContent = "⏹ Couper le micro";
     $("micInfo").textContent = "🎤 Écoute… chante une note !";
-    status("🏴‍☠️ L'équipage fait chanter le Micro sur la planche — à toi de chanter !");
+    status("🏴‍☠️ Pavillon « " + pav + " » reconnu — l'équipage fait chanter le Micro sur la planche, à toi de chanter !");
     openCall();
     stopButin();
     callButin = null;
