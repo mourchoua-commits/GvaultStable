@@ -71,7 +71,7 @@
 <body>
 <header>
   <h1>🎵 ROUTE <span class="rainbow">STUDIO</span></h1>
-  <span class="tag">fais ton son 🎧 — clique la grille, règle chaque note, lâche toi</span>
+  <span class="tag">fais ton son 🎧 — 28 sons : instruments, batterie, pneus, braises… règle chaque note, lâche toi</span>
   <div class="transport">
     <button id="btnPlay">▶️ GO</button>
     <button id="btnStop">⏹ STOP</button>
@@ -141,15 +141,33 @@
     blues:       { label:"Blues",     semis:[0,3,5,6,7,10] }
   };
   const INSTRUMENTS = [
-    { id:"piano", label:"🎹 Piano" },
-    { id:"synth", label:"🌊 Synthé" },
-    { id:"chip",  label:"👾 8-bit" },
-    { id:"bell",  label:"🔔 Cloches" },
-    { id:"organ", label:"🎼 Orgue" },
-    { id:"strings", label:"🎻 Cordes" },
-    { id:"pluck", label:"🪕 Pluck" },
-    { id:"b808", label:"💣 808" },
-    { id:"drums", label:"🥁 Batterie" }
+    { id:"piano", label:"🎹 Piano", cat:"mel" },
+    { id:"synth", label:"🌊 Synthé", cat:"mel" },
+    { id:"chip",  label:"👾 8-bit", cat:"mel" },
+    { id:"bell",  label:"🔔 Cloches", cat:"mel" },
+    { id:"organ", label:"🎼 Orgue", cat:"mel" },
+    { id:"strings", label:"🎻 Cordes", cat:"mel" },
+    { id:"pluck", label:"🪕 Pluck", cat:"mel" },
+    { id:"b808", label:"💣 808", cat:"mel" },
+    { id:"guitar", label:"🎸 Guitare", cat:"mel" },
+    { id:"flute", label:"🫈 Flûte", cat:"mel" },
+    { id:"trumpet", label:"🎺 Trompette", cat:"mel" },
+    { id:"marimba", label:"🪵 Marimba", cat:"mel" },
+    { id:"vibra", label:"✨ Vibraphone", cat:"mel" },
+    { id:"choir", label:"👨‍🎤 Chœur", cat:"mel" },
+    { id:"sitar", label:"🧘 Sitar", cat:"mel" },
+    { id:"bass", label:"🎛️ Basse ronde", cat:"mel" },
+    { id:"mbox", label:"🎁 Boîte à musique", cat:"mel" },
+    { id:"accord", label:"🪗 Accordéon", cat:"mel" },
+    { id:"drums", label:"🥁 Batterie", cat:"mel" },
+    { id:"screech", label:"📞 Pneu qui dérape", cat:"sfx" },
+    { id:"ember", label:"🔥 Braise qui s'éteint", cat:"sfx" },
+    { id:"rain", label:"🌧 Pluie", cat:"sfx" },
+    { id:"wind", label:"🌬️ Vent", cat:"sfx" },
+    { id:"laser", label:"⚡ Laser", cat:"sfx" },
+    { id:"heart", label:"💓 Battement de cœur", cat:"sfx" },
+    { id:"vinyl", label:"📻 Vinyle qui craque", cat:"sfx" },
+    { id:"heli", label:"🚁 Hélico", cat:"sfx" }
   ];
   const DRUM_ROWS = ["🥁 Kick","🪘 Snare","🎩 Charley","👏 Clap"];
   const TRACK_COLORS = ["#ffd76a","#6ee7ff","#ff7eb6","#8effa0","#c99cff","#ffa06e","#f2f2f2"];
@@ -202,6 +220,14 @@
     return ctx.__noise;
   }
   function cutoffHz(v) { return 300 * Math.pow(40, v); }
+  function noiseSrc(ctx, t, dur) {
+    const n = ctx.createBufferSource();
+    n.buffer = noiseBuf(ctx);
+    n.loop = true;
+    n.start(t);
+    n.stop(t + dur);
+    return n;
+  }
 
   function buildLiveChain(t) {
     removeLiveChain(t);
@@ -311,6 +337,230 @@
       nodes.push(o);
       g.gain.setValueAtTime(vel * 0.55, t);
       g.gain.exponentialRampToValueAtTime(0.0001, t + Math.max(0.45, durSec));
+    } else if (inst === "guitar") {
+      nodes = [osc("sawtooth", freq, -5), osc("square", freq * 2.01)];
+      g.gain.setValueAtTime(0, t);
+      g.gain.linearRampToValueAtTime(vel * 0.26, t + 0.006);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + Math.max(0.5, durSec * 1.2));
+      nodes.forEach(o => o.stop(t + Math.max(0.55, durSec * 1.3)));
+    } else if (inst === "flute") {
+      const n = noiseSrc(ctx, t, durSec + 0.1);
+      const nf = ctx.createBiquadFilter();
+      nf.type = "bandpass"; nf.frequency.value = freq * 2; nf.Q.value = 3;
+      const ng = ctx.createGain(); ng.gain.value = vel * 0.05;
+      n.connect(nf).connect(ng).connect(g);
+      nodes = [osc("sine", freq), n];
+      g.gain.setValueAtTime(0, t);
+      g.gain.linearRampToValueAtTime(vel * 0.28, t + 0.06);
+      g.gain.setValueAtTime(vel * 0.28, t + durSec * 0.85);
+      g.gain.linearRampToValueAtTime(0.0001, t + durSec + 0.05);
+    } else if (inst === "trumpet") {
+      const o = ctx.createOscillator();
+      o.type = "sawtooth";
+      o.frequency.setValueAtTime(freq * 0.6, t);
+      o.frequency.exponentialRampToValueAtTime(freq, t + 0.05);
+      o.connect(g);
+      o.start(t);
+      o.stop(t + durSec + 0.1);
+      nodes = [o, osc("square", freq * 2, 8)];
+      g.gain.setValueAtTime(0, t);
+      g.gain.linearRampToValueAtTime(vel * 0.16, t + 0.03);
+      g.gain.setValueAtTime(vel * 0.16, t + durSec * 0.85);
+      g.gain.linearRampToValueAtTime(0.0001, t + durSec + 0.08);
+      nodes.forEach(x => x.stop(t + durSec + 0.12));
+    } else if (inst === "marimba") {
+      nodes = [osc("sine", freq), osc("sine", freq * 4)];
+      g.gain.setValueAtTime(vel * 0.35, t);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + 0.5);
+      nodes.forEach(o => o.stop(t + 0.55));
+    } else if (inst === "vibra") {
+      nodes = [osc("sine", freq), osc("sine", freq * 4, 3)];
+      const trem = ctx.createOscillator();
+      trem.frequency.value = 5.5;
+      const tg = ctx.createGain(); tg.gain.value = vel * 0.08;
+      trem.connect(tg).connect(g.gain);
+      trem.start(t); trem.stop(t + 1.9);
+      nodes.push(trem);
+      g.gain.setValueAtTime(vel * 0.22, t);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + 1.8);
+      nodes.forEach(o => o.stop(t + 1.9));
+    } else if (inst === "choir") {
+      nodes = [osc("sawtooth", freq, -10), osc("sawtooth", freq, 10), osc("sine", freq * 2)];
+      g.gain.setValueAtTime(0, t);
+      g.gain.linearRampToValueAtTime(vel * 0.12, t + 0.15);
+      g.gain.setValueAtTime(vel * 0.12, t + durSec * 0.8);
+      g.gain.linearRampToValueAtTime(0.0001, t + durSec + 0.3);
+      nodes.forEach(o => o.stop(t + durSec + 0.35));
+    } else if (inst === "sitar") {
+      const o = ctx.createOscillator();
+      o.type = "sawtooth";
+      o.frequency.setValueAtTime(freq * 1.5, t);
+      o.frequency.exponentialRampToValueAtTime(freq, t + 0.03);
+      o.connect(g);
+      o.start(t);
+      o.stop(t + 1.3);
+      nodes = [o, osc("square", freq * 2, 12)];
+      g.gain.setValueAtTime(vel * 0.22, t);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + 1.2);
+      nodes.forEach(x => x.stop(t + 1.3));
+    } else if (inst === "bass") {
+      nodes = [osc("sine", freq * 0.5), osc("triangle", freq * 0.5, 5)];
+      g.gain.setValueAtTime(0, t);
+      g.gain.linearRampToValueAtTime(vel * 0.5, t + 0.012);
+      g.gain.setValueAtTime(vel * 0.5, t + Math.max(0.02, durSec - 0.05));
+      g.gain.linearRampToValueAtTime(0.0001, t + durSec + 0.03);
+      nodes.forEach(o => o.stop(t + durSec + 0.08));
+    } else if (inst === "mbox") {
+      nodes = [osc("sine", freq * 2), osc("sine", freq * 6, 2)];
+      g.gain.setValueAtTime(vel * 0.25, t);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + 0.9);
+      nodes.forEach(o => o.stop(t + 1));
+    } else if (inst === "accord") {
+      nodes = [osc("sawtooth", freq, -12), osc("sawtooth", freq, 12), osc("square", freq * 2, 4)];
+      g.gain.setValueAtTime(0, t);
+      g.gain.linearRampToValueAtTime(vel * 0.13, t + 0.05);
+      g.gain.setValueAtTime(vel * 0.13, t + durSec * 0.85);
+      g.gain.linearRampToValueAtTime(0.0001, t + durSec + 0.08);
+      nodes.forEach(o => o.stop(t + durSec + 0.12));
+    } else if (inst === "screech") {
+      const n = noiseSrc(ctx, t, durSec + 0.05);
+      const f = ctx.createBiquadFilter();
+      f.type = "bandpass"; f.Q.value = 15;
+      const base = Math.min(4000, Math.max(400, freq * 2));
+      f.frequency.setValueAtTime(base, t);
+      f.frequency.linearRampToValueAtTime(base * 1.4, t + durSec * 0.3);
+      f.frequency.linearRampToValueAtTime(base * 0.9, t + durSec);
+      const lfo = ctx.createOscillator(); lfo.frequency.value = 8;
+      const lg = ctx.createGain(); lg.gain.value = base * 0.15;
+      lfo.connect(lg).connect(f.frequency);
+      lfo.start(t); lfo.stop(t + durSec + 0.05);
+      n.connect(f).connect(g);
+      nodes.push(n, lfo);
+      g.gain.setValueAtTime(0, t);
+      g.gain.linearRampToValueAtTime(vel * 0.5, t + 0.03);
+      g.gain.setValueAtTime(vel * 0.5, t + durSec * 0.85);
+      g.gain.linearRampToValueAtTime(0.0001, t + durSec);
+    } else if (inst === "ember") {
+      const bright = Math.min(8000, Math.max(1500, freq * 4));
+      const n = noiseSrc(ctx, t, durSec + 0.1);
+      const f = ctx.createBiquadFilter();
+      f.type = "bandpass"; f.frequency.value = bright; f.Q.value = 2;
+      const ng = ctx.createGain(); ng.gain.value = vel * 0.12;
+      n.connect(f).connect(ng).connect(g);
+      nodes.push(n);
+      let ct = t, gap = 0.05;
+      while (ct < t + durSec) {
+        if (Math.random() < 0.8) {
+          const p = ctx.createBufferSource();
+          p.buffer = noiseBuf(ctx);
+          const pf = ctx.createBiquadFilter();
+          pf.type = "bandpass";
+          pf.frequency.value = bright * (0.7 + Math.random() * 0.8);
+          pf.Q.value = 8;
+          const pg = ctx.createGain();
+          pg.gain.setValueAtTime(vel * 0.5, ct);
+          pg.gain.exponentialRampToValueAtTime(0.0001, ct + 0.04);
+          p.connect(pf).connect(pg).connect(g);
+          p.start(ct, Math.random() * 0.5, 0.05);
+          nodes.push(p);
+        }
+        ct += gap;
+        gap *= 1.15;
+      }
+      g.gain.setValueAtTime(1, t);
+    } else if (inst === "rain") {
+      const n = noiseSrc(ctx, t, durSec + 0.1);
+      const hp = ctx.createBiquadFilter();
+      hp.type = "highpass"; hp.frequency.value = 2500;
+      const lp = ctx.createBiquadFilter();
+      lp.type = "lowpass"; lp.frequency.value = 7000;
+      n.connect(hp).connect(lp).connect(g);
+      nodes.push(n);
+      g.gain.setValueAtTime(0, t);
+      g.gain.linearRampToValueAtTime(vel * 0.3, t + 0.15);
+      g.gain.setValueAtTime(vel * 0.3, t + durSec * 0.8);
+      g.gain.linearRampToValueAtTime(0.0001, t + durSec);
+    } else if (inst === "wind") {
+      const n = noiseSrc(ctx, t, durSec + 0.1);
+      const f = ctx.createBiquadFilter();
+      f.type = "bandpass"; f.Q.value = 1.5;
+      const base = Math.min(1000, Math.max(200, freq * 2));
+      f.frequency.setValueAtTime(base, t);
+      const lfo = ctx.createOscillator(); lfo.frequency.value = 0.4;
+      const lg = ctx.createGain(); lg.gain.value = base * 0.6;
+      lfo.connect(lg).connect(f.frequency);
+      lfo.start(t); lfo.stop(t + durSec + 0.1);
+      n.connect(f).connect(g);
+      nodes.push(n, lfo);
+      g.gain.setValueAtTime(0, t);
+      g.gain.linearRampToValueAtTime(vel * 0.4, t + 0.25);
+      g.gain.setValueAtTime(vel * 0.4, t + durSec * 0.75);
+      g.gain.linearRampToValueAtTime(0.0001, t + durSec);
+    } else if (inst === "laser") {
+      const o = ctx.createOscillator();
+      o.type = "square";
+      o.frequency.setValueAtTime(Math.min(8000, freq * 8), t);
+      o.frequency.exponentialRampToValueAtTime(Math.max(80, freq * 0.5), t + Math.min(0.4, durSec));
+      o.connect(g);
+      o.start(t);
+      o.stop(t + Math.min(0.45, durSec) + 0.05);
+      nodes.push(o);
+      g.gain.setValueAtTime(vel * 0.25, t);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + Math.min(0.45, durSec));
+    } else if (inst === "heart") {
+      const thump = (tt, a) => {
+        const o = ctx.createOscillator();
+        o.type = "sine";
+        o.frequency.setValueAtTime(70, tt);
+        o.frequency.exponentialRampToValueAtTime(38, tt + 0.1);
+        const tg = ctx.createGain();
+        tg.gain.setValueAtTime(a, tt);
+        tg.gain.exponentialRampToValueAtTime(0.0001, tt + 0.14);
+        o.connect(tg).connect(g);
+        o.start(tt); o.stop(tt + 0.16);
+        nodes.push(o);
+      };
+      thump(t, vel * 0.9);
+      thump(t + 0.18, vel * 0.6);
+      g.gain.setValueAtTime(1, t);
+    } else if (inst === "vinyl") {
+      const n = noiseSrc(ctx, t, durSec + 0.05);
+      const hp = ctx.createBiquadFilter();
+      hp.type = "highpass"; hp.frequency.value = 4000;
+      const ng = ctx.createGain(); ng.gain.value = vel * 0.05;
+      n.connect(hp).connect(ng).connect(g);
+      nodes.push(n);
+      const pops = Math.round(durSec * 12);
+      for (let i = 0; i < pops; i++) {
+        const p = ctx.createBufferSource();
+        p.buffer = noiseBuf(ctx);
+        const pg = ctx.createGain();
+        const ct = t + Math.random() * durSec;
+        pg.gain.setValueAtTime(vel * (0.2 + Math.random() * 0.3), ct);
+        pg.gain.exponentialRampToValueAtTime(0.0001, ct + 0.01);
+        p.connect(pg).connect(g);
+        p.start(ct, Math.random() * 0.5, 0.015);
+        nodes.push(p);
+      }
+      g.gain.setValueAtTime(1, t);
+    } else if (inst === "heli") {
+      const n = noiseSrc(ctx, t, durSec + 0.05);
+      const lp = ctx.createBiquadFilter();
+      lp.type = "lowpass"; lp.frequency.value = 600;
+      const am = ctx.createGain();
+      am.gain.setValueAtTime(vel * 0.35, t);
+      const lfo = ctx.createOscillator();
+      lfo.type = "square";
+      lfo.frequency.value = Math.max(8, Math.min(30, freq / 12));
+      const lg = ctx.createGain(); lg.gain.value = vel * 0.3;
+      lfo.connect(lg).connect(am.gain);
+      lfo.start(t); lfo.stop(t + durSec + 0.05);
+      n.connect(lp).connect(am).connect(g);
+      nodes.push(n, lfo);
+      g.gain.setValueAtTime(0, t);
+      g.gain.linearRampToValueAtTime(1, t + 0.1);
+      g.gain.setValueAtTime(1, t + durSec * 0.8);
+      g.gain.linearRampToValueAtTime(0.0001, t + durSec);
     }
   }
 
@@ -463,12 +713,18 @@
         if (n) { t.name = n.slice(0, 24); renderTrackList(); save(); }
       });
       const sel = document.createElement("select");
-      for (const ins of INSTRUMENTS) {
-        const o = document.createElement("option");
-        o.value = ins.id;
-        o.textContent = ins.label;
-        if (ins.id === t.instrument) o.selected = true;
-        sel.appendChild(o);
+      for (const [cat, glabel] of [["mel", "🎸 Instruments"], ["sfx", "💥 Bruits & FX"]]) {
+        const og = document.createElement("optgroup");
+        og.label = glabel;
+        for (const ins of INSTRUMENTS) {
+          if (ins.cat !== cat) continue;
+          const o = document.createElement("option");
+          o.value = ins.id;
+          o.textContent = ins.label;
+          if (ins.id === t.instrument) o.selected = true;
+          sel.appendChild(o);
+        }
+        sel.appendChild(og);
       }
       if (t.instrument === "sample") {
         const o = document.createElement("option");
