@@ -313,7 +313,7 @@
       <span id="mixHex">Touche 2 couleurs en même temps pour le mélange…</span>
       <button id="mixUse">🪣 Utiliser le mélange</button>
     </div>
-    <div style="margin-top:12px;font-size:12px;color:var(--muted)">💡 La grille vit : chaque nouvelle couleur ajoute sa rangée — claire ✨, normale, foncée 🌙, <b>négatif</b> 🔄, <b>rotation +69°</b> 🌀 (cumulative, et elle <b>revient au clair</b> à la fin de la boucle 360° !) et <b>réinversée</b> ♾️ ! Les couleurs s'influencent à <b>valeur équivalente</b> ⚖️ (celle que tu presses est influencée en retour, alterné avec le négatif) → teintes et notes dérivent sans jamais se salir ! Un clic sélectionne la couleur partout dans 🎨 Couleurs.</div>
+    <div style="margin-top:12px;font-size:12px;color:var(--muted)">💡 La grille vit : chaque nouvelle couleur ajoute sa rangée — claire ✨, normale, foncée 🌙, <b>négatif</b> 🔄, <b>rotation +69°</b> 🌀 (cumulative, et elle <b>revient au clair</b> à la fin de la boucle 360° !) et <b>réinversée</b> ♾️ ! Les couleurs s'influencent à <b>valeur équivalente</b> ⚖️ (teinte seule, saturation protégée → jamais de gris taupe !) et des <b>anomalies</b> surgissent : opposé exact ⚡ ou couleur-fréquence 📡 (celle de SA note !). Un clic sélectionne la couleur partout dans 🎨 Couleurs.</div>
     <div style="margin-top:10px;font-size:12px;color:var(--muted)">🎨 Sélecteur personnalisé</div>
     <div class="cg" id="padPrecGrid" style="margin-top:8px"></div>
     <label style="display:flex;gap:5px;align-items:center;margin-top:10px;font-size:12px;color:var(--muted)"><input id="padInv" type="checkbox"> 🔄 inversée</label>
@@ -1543,6 +1543,7 @@
   const padGrid = $("padGrid");
   let padColors = HUES.map(h => hslToHex(h, 80, 60));
   let padFlip = false;
+  let padAnom = 0;
   const padSpin = new Map();
   function rememberColor(col) {
     if (!col || !/^#[0-9a-fA-F]{6}$/.test(col)) return;
@@ -1550,13 +1551,21 @@
     if (padColors[0] === col) return;
     padFlip = !padFlip;
     const inf = padFlip ? col : invertHex(col);
-    const blend = (a, b, t) => {
-      const x = hexToRgb(a), y = hexToRgb(b);
-      return rgbToHex(x[0] * (1 - t) + y[0] * t, x[1] * (1 - t) + y[1] * t, x[2] * (1 - t) + y[2] * t);
+    const driftHue = (a, b, t) => {
+      const A = hexToHsl(a), B = hexToHsl(b);
+      const d = ((B[0] - A[0] + 540) % 360) - 180;
+      return hslToHex((A[0] + d * t + 360) % 360, Math.max(A[1], 55), A[2]);
     };
     const others = padColors.filter(c => c !== col);
-    if (others.length) col = blend(col, mixHex(others), 0.15);
-    padColors = others.map(c => blend(c, inf, 0.15));
+    if (others.length) col = driftHue(col, mixHex(others), 0.15);
+    padColors = others.map(c => driftHue(c, inf, 0.15));
+    padAnom++;
+    if (padColors.length && padAnom % 3 === 0) {
+      const i = Math.floor(Math.random() * padColors.length);
+      const A = hexToHsl(padColors[i]);
+      const ah = padAnom % 6 === 0 ? (A[0] + 180) % 360 : (colFreqMidi(padColors[i]) * 30) % 360;
+      padColors[i] = hslToHex(ah, 100, 55);
+    }
     padColors.unshift(col);
     if (padColors.length > 12) padColors.length = 12;
     buildPadGrid();
