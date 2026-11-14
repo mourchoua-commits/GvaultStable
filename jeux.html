@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🎮 Mes Jeux — Gvault</title>
+<style>
+  *{box-sizing:border-box}
+  html,body{margin:0;min-height:100%;color:#f5efff;font-family:"Segoe UI",system-ui,sans-serif;
+    background:radial-gradient(circle at 15% -10%,#3b2a6e 0%,transparent 45%),radial-gradient(circle at 95% 10%,#7a3b5e 0%,transparent 40%),linear-gradient(180deg,#1a1033,#0c0722);
+    background-attachment:fixed}
+  .wrap{max-width:760px;margin:0 auto;padding:40px 20px}
+  h1{font-size:34px;margin:0 0 4px;letter-spacing:1px}
+  h1 .rainbow{background:linear-gradient(90deg,#ffd76a,#ff7eb6,#6ee7ff);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .sub{color:#a99cc9;margin:0 0 34px;font-size:15px}
+  .card{display:flex;gap:18px;align-items:center;border:1px solid rgba(255,255,255,0.14);border-radius:20px;
+    padding:20px;margin-bottom:18px;background:rgba(255,255,255,0.06);text-decoration:none;color:#f5efff;
+    transition:transform .15s,box-shadow .2s,background .2s}
+  .card:hover{transform:translateY(-3px);background:rgba(255,255,255,0.1);box-shadow:0 12px 40px rgba(0,0,0,0.4)}
+  .emoji{font-size:44px;flex:none}
+  .card h2{margin:0 0 6px;font-size:20px}
+  .card p{margin:0;color:#a99cc9;font-size:14px;line-height:1.5}
+  .card .go{margin-left:auto;flex:none;border:1px solid rgba(255,255,255,0.2);border-radius:999px;padding:8px 18px;
+    font-weight:bold;font-size:14px;background:rgba(255,255,255,0.08)}
+  .card.miroir .go{background:linear-gradient(90deg,#2c3f74,#7a5a8a)}
+  .card.studio .go{background:linear-gradient(90deg,#a76a3a,#c9543f)}
+  .gazette{border:1px dashed rgba(255,215,106,0.45);border-radius:20px;padding:18px 20px;margin-bottom:18px;background:rgba(255,215,106,0.06)}
+  .gazette h3{margin:0 0 10px;font-size:16px;color:#ffd76a}
+  .gazette ul{margin:0;padding-left:20px;color:#a99cc9;font-size:14px;line-height:1.6}
+  .gazette b{color:#f5efff}
+  .tip{margin-top:30px;color:#a99cc9;font-size:13px;border-top:1px solid rgba(255,255,255,0.1);padding-top:16px;line-height:1.6}
+  .tip b{color:#ffd76a}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>🎮 MES <span class="rainbow">JEUX</span></h1>
+  <p class="sub">Toutes mes créations au même endroit — clique, joue, et garde en local 🧡</p>
+
+  <a class="card miroir" href="route-miroir.html">
+    <span class="emoji">🪞🚗</span>
+    <span>
+      <h2>Route Miroir</h2>
+      <p>Traverse les voitures au crépuscule 🌗 Cycle jour/nuit, sons, 3 vies, record sauvegardé — et la route reflète tout comme un miroir mouillé.</p>
+    </span>
+    <span class="go">▶️ JOUER</span>
+  </a>
+
+  <a class="card studio" href="route-studio.html">
+    <span class="emoji">🎵🎛️</span>
+    <span>
+      <h2>Route Studio</h2>
+      <p>Le studio musical fun : pose tes notes sur la grille, règle chaque note (hauteur, longueur, volume), 28 sons : 19 instruments (orgue 🎼, sitar 🧘, 808 💣…) + des bruits jouables (pneu qui dérape 🛞, braise qui s'éteint 🔥, pluie, hélico…), outils de dessin (gomme 🧽, pot 🪣, estompe 🫳, palette hexa 🎨), Magic System 🪐 (simulateur d'écosystème : mélange eau, lave, feu, plantes… et écoute ton monde !), dessinateur grande grille 🎨 (chaque couleur = SA note, lumière ÷ 2⁴⁰), grille instant qui joue au clic 🎹, pads de vibrations 📳 avec médley 🎶 (chaque pulsation change d'instrument !), micro auto-tune 🎤 (chante, c’est accordé à ta gamme !) avec choix du micro 🎛, l’équipage choisit SON pavillon 🏴‍☠️ (Crâne rieur, Enfants Perdus, Kraken chantant…) et le hisse SANS demander — le port s’incline ou boude, mais le Micro monte à bord tout seul 🏴‍☠️ ; VISIONNEUSE DE COULEURS 🎨 (l’ancienne fenêtre d’appel est devenue un PUR écran de couleurs : la couleur perçue en direct — ta voix + le fond sonore — le pavillon avec SA teinte, l’égaliseur 🎛 et le hublot 🎤 qui pulsent avec le son, en 4 THÈMES Pirate 🌊 / Pixel 👾 / Cosmique 🌌 / Matrix 🟩 mémorisés, pilule ➖ pour la ranger sans l’éteindre) dans un POSTE SUBMERSIBLE 🦿 dessiné comme si Luffy venait de rencontrer son armateur et construisait un avion qui vole SOUS l’eau ✈️🌊 (coque abyssale à double liseré laiton, ping sonar, bulles qui remontent, lumière caustique) ; MAINTENIR POUR ENREGISTRER 🎙️ (LE seul chemin du butin : un GROS bouton dans la fenêtre micro refaite de A à Z — trois sections empilées proprement, zéro chevauchement — tu maintiens, ça enregistre, et si tu cliques vite le bouton RESTE PRESSÉ tout seul (verrou 🔒, reclique pour récupérer) ; même sans micro, l’ambiance du navire s’enregistre, et la visionneuse peint les couleurs en direct sans conflit ; PENDANT le maintien c'est un PRÉLÈVEMENT 🫷 : le son de l'entrant est aspiré vers l'intérieur et la FRAGRANCE colorimétrique 🧪 se fabrique en direct — gouttes qui s'accumulent dans le flacon, couleur observable qui se rafraîchit et se réchauffe tant qu'on ne lâche pas, et les infos des terminaux participants ⚓ (micro choisi, reconstitution du navire…) s'affichent dans la visionneuse et voyagent avec le butin ; tu relâches → le butin part au coffre teinté de la couleur du relâché, co-détenu À PAR ÉGAL avec le port — même hauteur, pas une taxe — et chaque butin qui rapporte te verse ta part égale des recettes 🪙 ; 🎵 Écoute auto-tune à part pour chanter juste sans enregistrer) ; RECONSTITUTION 🛳️ si le port boude : la vie à bord continue (vagues, mouettes, grincements, cloche) et un maintien capture l’ambiance en butin ; le COFFRE AU BUTIN 🎁 garde TOUS tes chants capturés (▶️ play, 🔁 boucle, ➕ piste sur chacun !) et le Micro reste à bord, reposé, avec son micro préféré en mémoire pour la prochaine session, palette magique XXL (24 couleurs !) avec ↩ Retour qui récupère le motif d'avant et pads carrés ou ronds ⬜⚪, fenêtre 🪞 Écho qui se met à jour toute seule selon tes choix (piste, pinceau, micro, boucles — sans rien sélectionner), agents magiciens ✨ qui regardent et créent tout seuls (Coloriste 🎨 glisse des nuances, Harmonique 🎶 souffle des harmonies, Gardien 🌙 tinte dans le silence — bouton ✨ Magie) et qui ANNONCENT leur magie juste avant de la faire 🔮 (comme la colonne dorée qui montre le PROCHAIN pas et le flash du micro avant chaque note chantée), enregistreur de session ⏺, boucles 🔁 dans les fenêtres (ça tourne pendant qu'on crée !), palette magique vivante 🎨 (chaque couleur ajoutée génère sa rangée de nuances : négatif 🔄, rotation +69° cumulative 🌀 (chaque appui tourne de 69° de plus, retour au clair à la fin de la boucle 360° !), réinversée ♾️… et les couleurs s'influencent à valeur équivalente ⚖️ (teinte, saturation et luminosité dérivent librement → le taupe revient avec les couleurs douces, et les anomalies le réveillent : opposé exact ⚡ ou couleur-fréquence 📡) !, un clic sélectionne la couleur partout dans Couleurs !), création de pistes depuis les fenêtres avec capture 📝, instrument propre par fenêtre 🎹 et bouton ➡️ pour l'installer sur la piste, 3 sélecteurs de couleurs en grille précise (dont inversée) 🎨, MONDE VIVANT 🧬 dans la grille (style Solar Opposites : chaque note produit un petit organisme qui grandit, gigote et s'illumine quand le GO le joue — bouton 🧬 Vie pour l'allumer/éteindre), mini Route Miroir intégré 🚗, agents organisateurs 🪄 (chaque fenêtre ouverte est placée sans recouvrir, selon ce que tu fais + bouton 🪄 qui range tout + repli ▾ pour garder les fenêtres ouvertes en une ligne), importe tes propres sons en WAV/MP3 🎛️, et exporte ton morceau en WAV 💾</p>
+    </span>
+    <span class="go">▶️ JOUER</span>
+  </a>
+
+    <div class="gazette">
+    <h3>📰 Gazette du port — nouveautés du jour sur Route Studio</h3>
+    <ul>
+      <li>🫷 <b>Prélèvement vivant</b> : pendant le maintien du Micro, le son de l’entrant est aspiré vers l’intérieur — la fragrance colorimétrique 🧪 se fabrique en direct (gouttes dans le flacon, couleur qui se rafraîchit et se réchauffe tant qu’on ne lâche pas) et les terminaux participants ⚓ s’affichent dans la visionneuse et voyagent avec le butin.</li>
+      <li>🛁 <b>Zéro téléchargement surprise</b> : le bouton ⏺ devient « Session studio » — à l’arrêt, la session part au coffre au butin au lieu d’ouvrir une demande de sauvegarde.</li>
+      <li>🎁 <b>Butins de session</b> : les sessions capturées deviennent des butins jouables, bouclables et plaçables dans la grille.</li>
+      <li>🎤 <b>Fenêtre micro refaite de A à Z</b> : trois sections zéro chevauchement, GROS bouton qui reste pressé tout seul (verrou 🔒), 🎵 Écoute auto-tune séparée pour chanter juste sans enregistrer.</li>
+      <li>🪩 <b>La Passerelle</b> : maintiens le Micro 3 secondes → une porte vers le navigateur se déploie (état du port en direct : https, permissions, terminal préféré) et « Aborder le port » relance la demande du navigateur — on frappe, on ne force jamais !</li>
+      <li>🗄️ <b>Le coffre fort</b> : chaque prélèvement est entreposé DANS le navigateur (IndexedDB) — ferme le studio, reviens demain : ▶️ tu relis tes prélèvements, 🗑️ tu jettes ceux que tu veux !</li>
+      <li>🎧 <b>Prélèvements MIXTES</b> : le maintien capture l'extérieur (micro) ET l'intérieur (studio : butins qui tournent, GO…) en un seul prélèvement, et chaque butin du Coffre au butin a son bouton 🗄️ Entreposer pour migrer au coffre fort !</li>
+      <li>🔗 <b>Les deux coffres sont frères</b> : ↩️ Rapporter ramène un prélèvement du coffre fort vers le Coffre au butin (play, boucle, sample, grille), chaque butin porte sa pastille de fragrance 🎨, chaque coffre affiche le compte de l'autre et ouvre son frère d'un clic !</li>
+      <li>🛰️ <b>Fenêtre NASA</b> : la sonde Routestudio-1 transforme la couleur entendue en espace profond — nébuleuses, 130 étoiles, planète à anneaux et comètes en direct, télémétrie HUD (teinte, Hz, niveau) !</li>
+      <li>🪝 <b>Slide d'abordage</b> : glisse la poulie 🪝 jusqu'au bout dans la fenêtre micro et le Micro monte à bord — relâche avant la fin, la poulie repart élastiquement, on ne force JAMAIS le port !</li>
+      <li>🔮 <b>Avant-sachants</b> : les sabirs de l’équipage annoncent chaque événement JUSTE AVANT qu’il arrive — Passerelle à 3 s, naissance du butin à la relâche, GO de la grille, armement des boucles, placement des agents : rien ne surprend plus personne !</li>
+      <li>🌍 <b>Interconnexion totale</b> : chaque fenêtre mène maintenant aux autres — micro ↔ Passerelle ↔ sachants ↔ sonde NASA ↔ coffres frères, et le triangle créatif Couleurs ↔ Dessinateur ↔ Palette ↔ Magic System ; les compteurs croisés se rafraîchissent à chaque ouverture, plus aucune île isolée !</li>
+      <li>🌍 <b>Le monde participe à la couleur</b> : dès que le Magic System s’anime, ses matières (eau 💧, lave 🌋, feu 🔥, plantes 🌱…) teintent la couleur perçue de la visionneuse ET de la sonde NASA — peins de l’eau, l’espace vire au bleu ; la télémétrie affiche « monde fusionné » !</li>
+      <li>🧹 <b>Jardinage & Mode Jardin</b> : chasse aux insectes dans le studio (le tick du Magic System fuyait — corrigé !), bouton 🧹 Jardinage qui dresse le rapport complet (fenêtres, boucles, butins, prélèvements, monde vivant, et même les légumes 🥕 ramassés sur la Route Miroir), et le jeu Route Miroir gagne son Mode Jardin : légumes 🥕 (+5), insectes 🐛 (+3) et pépites 💎 (+20) à ramasser sur la route, ils se reflètent dans le miroir et la récolte est persistante !</li>
+    </ul>
+  </div>
+
+  <div class="tip">
+    💡 <b>Astuce hors-ligne</b> : ouvre un jeu puis <b>Ctrl+S</b> pour enregistrer le fichier — il se lance en double-clic, même sans internet.<br>
+    ➕ De nouvelles créations arrivent ici automatiquement à chaque demande.
+  </div>
+</div>
+</body>
+</html>
