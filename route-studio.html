@@ -194,6 +194,11 @@
   #btnListen.on{background:linear-gradient(180deg,#8a6d1d,#5c4a13);color:#ffe9a8}
   .micTip{font-size:12px;color:#7fa8c0;line-height:1.5}
   #micWin,#butinWin{background:linear-gradient(180deg,#062033 0%,#0a2f45 55%,#051626 100%);border-color:#c9a44a;box-shadow:0 12px 40px rgba(0,0,0,0.65),inset 0 0 0 1px rgba(255,215,106,0.12),inset 0 14px 30px rgba(0,0,0,0.35)}
+  #gateWin{left:16px;right:auto;bottom:64px;width:340px;background:linear-gradient(180deg,#0a1f2e,#071522);border-color:#8fb8d0}
+  #gateState{font-size:13px;color:#d6f4ff;line-height:1.6;white-space:pre-line}
+  #gateBtn{width:100%;padding:10px;border-radius:12px;border:1px solid rgba(143,184,208,0.6);background:linear-gradient(180deg,#155c74,#0c3a4c);color:#d6f4ff;font-weight:bold;cursor:pointer}
+  #gateBtn:hover{filter:brightness(1.25)}
+  #gateTip{font-size:11px;color:#8fb8d0;line-height:1.5}
   #micWin .fwinHead,#butinWin .fwinHead{border-bottom:1px solid rgba(201,164,74,0.5);color:#ffd76a;background:linear-gradient(180deg,rgba(201,164,74,0.14),transparent)}
   #micWin .winRow,#butinWin .winRow{color:#9fc3d8}
   #micWin select{background:rgba(2,12,22,0.75);border-color:rgba(201,164,74,0.5);color:#ffd76a}
@@ -352,6 +357,14 @@
     <div class="winRow" id="echoLoops">🔁 …</div>
     <div class="winRow" id="echoMagic">✨ …</div>
     <div class="winRow" id="echoStatus">💬 …</div>
+  </div>
+</div>
+<div id="gateWin" class="fwindow">
+  <div class="fwinHead"><span>🪩 La Passerelle — porte vers le navigateur</span><button class="fwclose" data-close="gateWin">✖</button></div>
+  <div class="fwinBody">
+    <div id="gateState">⚓ Le port observe…</div>
+    <button id="gateBtn">🪩 Aborder le port — demander au navigateur</button>
+    <div id="gateTip">La Passerelle se déploie toute seule quand tu maintiens le Micro 3 secondes. On ne force JAMAIS le port : on frappe à la porte, lui décide.</div>
   </div>
 </div>
 <div id="micWin" class="fwindow">
@@ -1637,7 +1650,8 @@
     micWin: { emoji: "\ud83c\udfa4", name: "Tuneur", w: 470, h: 560, say: "poste micro en place \u2014 maintiens le gros bouton, la visionneuse peint les couleurs !" },
     echoWin: { emoji: "\ud83e\ude9e", name: "\u00c9cho", w: 340, h: 320, say: "fen\u00eatre \u00e9cho en poste \u2014 elle se met \u00e0 jour toute seule selon tes choix !" },
     butinWin: { emoji: "\ud83c\udf81", name: "Pillard", w: 420, h: 400, say: "coffre au butin ouvert — \u00e9coute, boucle, pose en sample !" },
-    miniGame: { emoji: "\ud83d\ude97", name: "Miroir", w: 370, h: 300, corner: true, say: "route en miroir gar\u00e9e dans le coin \u2014 roule !" }
+    miniGame: { emoji: "\ud83d\ude97", name: "Miroir", w: 370, h: 300, corner: true, say: "route en miroir gar\u00e9e dans le coin \u2014 roule !" },
+    gateWin: { emoji: "\ud83e\udea9", name: "Passerelle", w: 340, h: 260, say: "passerelle pos\u00e9e \u2014 le port est observ\u00e9 en direct !" }
   };
   function openWins() {
     return [...document.querySelectorAll(".fwindow")].filter(w => w.classList.contains("open"));
@@ -2581,6 +2595,7 @@
     } catch (e) { holdRec = null; }
   }
   async function finishHold() {
+    if (gateTO) { clearTimeout(gateTO); gateTO = null; }
     $("btnMic").classList.remove("held");
     $("btnMic").classList.remove("latched");
     $("btnMic").textContent = "🎤 Maintenir pour enregistrer";
@@ -2627,6 +2642,8 @@
     }
     holdActive = true;
     holdT0 = Date.now();
+    if (gateTO) clearTimeout(gateTO);
+    gateTO = setTimeout(openGate, 3000);
     $("btnMic").classList.add("held");
     $("btnMic").textContent = "🎤 Ça enregistre… relâche pour le butin !";
     if (typeof navigator.vibrate === "function") navigator.vibrate(15);
@@ -2649,6 +2666,47 @@
   }
   $("btnMic").addEventListener("pointerup", releaseMic);
   $("btnMic").addEventListener("pointercancel", releaseMic);
+  let gateInt = null, gateTO = null;
+  function gatePerm(cb) {
+    try {
+      if (navigator.permissions && navigator.permissions.query) {
+        const r = navigator.permissions.query({ name: "microphone" });
+        if (r && typeof r.then === "function") r.then(p => cb(p && p.state)).catch(() => cb("inconnu"));
+        else cb(r && r.state);
+      } else cb("inconnu");
+    } catch (e) { cb("inconnu"); }
+  }
+  function gateRefresh() {
+    const w = $("gateWin");
+    if (!w || !w.classList.contains("open")) { if (gateInt) { clearInterval(gateInt); gateInt = null; } return; }
+    const g = $("gateState");
+    if (!g) return;
+    const https = window.isSecureContext === false
+      ? "\ud83c\udf0a Calme plat : pas de https \u2014 le port reste \u00e0 quai (ouvre la version raw.githack !)"
+      : "\ud83d\udd12 Quai s\u00fbr (https) \u2014 la passerelle peut \u00eatre pos\u00e9e";
+    gatePerm(st => {
+      let mot;
+      if (st === "granted") mot = "\u2693 Pavillon d\u00e9j\u00e0 reconnu par le port \u2014 le Micro montera sans question !";
+      else if (st === "denied") mot = "\ud83d\udea4 Le port boude notre pavillon \u2014 barre d'adresse \u2192 ic\u00f4ne \ud83c\udf99 \u2192 remets le pavillon et le Micro montera tout seul !";
+      else if (st === "prompt") mot = "\ud83d\udcab Le port attend de nous voir \u2014 clique \u00ab Aborder le port \u00bb : la question du navigateur s'ouvrira !";
+      else mot = "\ud83c\udf7f Le port garde ses jumelles \u2014 clique \u00ab Aborder le port \u00bb pour te pr\u00e9senter !";
+      g.textContent = https + "\n" + mot + "\n\ud83c\udf9b\ufe0f Terminal pr\u00e9f\u00e9r\u00e9 : " + ($("micDevSel").value ? "m\u00e9moris\u00e9 (rsMicDev)" : "au choix du port") + "\n\u2693 " + termInfo();
+    });
+  }
+  function openGate() {
+    const w = $("gateWin");
+    if (!w || w.classList.contains("open")) { gateRefresh(); return; }
+    w.classList.add("open");
+    agentWake("gateWin", "\u00e9tat du port en direct \u2014 \u00ab Aborder \u00bb pour frapper \u00e0 la porte, jamais la d\u00e9foncer !");
+    gateRefresh();
+    if (gateInt) clearInterval(gateInt);
+    gateInt = setInterval(gateRefresh, 1000);
+  }
+  $("gateBtn").addEventListener("click", async () => {
+    status("\ud83e\udea8 On frappe \u00e0 la porte du port \u2014 au navigateur de dire oui ou non, on ne force JAMAIS !");
+    await openMic();
+    gateRefresh();
+  });
   $("micDevSel").addEventListener("change", async () => {
     try { localStorage.setItem("rsMicDev", $("micDevSel").value); } catch (e) {}
     if (!micStream) return;
