@@ -206,6 +206,10 @@
   #micWin #btnListen:hover,#micWin #btnButinOpen:hover{filter:brightness(1.2)}
   #micWin #btnButinOpen{border-radius:12px;border-color:rgba(255,215,106,0.5)}
   #micWin #butinCount{color:#8fb8d0}
+  #nasaWin{width:460px;background:linear-gradient(180deg,#01030a,#050a1c);border-color:#6ee7ff}
+  #nasaCanvas{width:100%;border-radius:10px;border:1px solid rgba(110,231,255,0.35);background:#01030a;display:block}
+  #nasaTel{font-size:11px;color:#8fe3ff;font-family:'Courier New',monospace;margin-top:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  #nasaTip{font-size:11px;color:#8fb8d0;line-height:1.5;margin-top:4px}
   #prlevWin{left:16px;right:auto;bottom:64px;width:400px;background:linear-gradient(180deg,#241a08,#0f0a04);border-color:#c9a44a}
   #prelevList{display:flex;flex-direction:column;gap:6px;max-height:260px;overflow:auto}
   .prelevRow{display:flex;align-items:center;gap:8px;font-size:12px;color:#ffe9a8;background:rgba(0,0,0,0.3);border:1px solid rgba(255,215,106,0.25);border-radius:10px;padding:6px 8px}
@@ -316,6 +320,7 @@
   <button id="btnInst">🎹 Grille instant</button>
   <button id="btnVib">📳 Vibrations</button>
   <button id="btnMini">🚗 Mini jeu</button>
+  <button id="btnNasa">🛰️ NASA</button>
   <button id="btnOrganize">🪄 Organiser</button>
   <a class="hublink" href="jeux.html">🎮 Mes jeux</a>
   <span id="status"></span>
@@ -364,6 +369,14 @@
     <div class="winRow" id="echoLoops">🔁 …</div>
     <div class="winRow" id="echoMagic">✨ …</div>
     <div class="winRow" id="echoStatus">💬 …</div>
+  </div>
+</div>
+<div id="nasaWin" class="fwindow">
+  <div class="fwinHead"><span>🛰️ NASA — sonde Routestudio-1</span><button class="fwclose" data-close="nasaWin">✖</button></div>
+  <div class="fwinBody">
+    <canvas id="nasaCanvas" width="430" height="250"></canvas>
+    <div id="nasaTel">🛰️ SONDE ROUTESTUDIO-1 · en veille…</div>
+    <div id="nasaTip">La sonde transforme la COULEUR ENTENDUE en espace profond : nébuleuses, étoiles, planète à anneaux et comètes suivent ta voix et le studio en direct.</div>
   </div>
 </div>
 <div id="prlevWin" class="fwindow">
@@ -1669,7 +1682,8 @@
     butinWin: { emoji: "\ud83c\udf81", name: "Pillard", w: 420, h: 400, say: "coffre au butin ouvert — \u00e9coute, boucle, pose en sample !" },
     miniGame: { emoji: "\ud83d\ude97", name: "Miroir", w: 370, h: 300, corner: true, say: "route en miroir gar\u00e9e dans le coin \u2014 roule !" },
     gateWin: { emoji: "\ud83e\udea9", name: "Passerelle", w: 340, h: 260, say: "passerelle pos\u00e9e \u2014 le port est observ\u00e9 en direct !" },
-    prlevWin: { emoji: "\ud83d\uddc4\ufe0f", name: "Gardien", w: 400, h: 380, say: "coffre fort gard\u00e9 \u2014 tes pr\u00e9l\u00e8vements dorment en s\u00e9curit\u00e9, relisibles demain !" }
+    prlevWin: { emoji: "\ud83d\uddc4\ufe0f", name: "Gardien", w: 400, h: 380, say: "coffre fort gard\u00e9 \u2014 tes pr\u00e9l\u00e8vements dorment en s\u00e9curit\u00e9, relisibles demain !" },
+    nasaWin: { emoji: "\ud83d\udef0\ufe0f", name: "Sondeur", w: 460, h: 430, say: "sonde en orbite \u2014 l'espace entier suit la couleur entendue !" }
   };
   function openWins() {
     return [...document.querySelectorAll(".fwindow")].filter(w => w.classList.contains("open"));
@@ -3014,14 +3028,12 @@ function dockCallWin() {
     } catch (e) { parts.push("\ud83c\udfa7 terminal inconnu"); }
     return parts.join(" \u00b7 ");
   }
-  function updateCallColor() {
-    const el = $("callColor"), nm = $("callColorName");
-    if (!el) return;
-    let hue = 210, sat = 20, lit = 28, lvl = 0.2;
+  function perceivedCol() {
+    let hue = 210, sat = 20, lit = 28, lvl = 0.2, hz = 0;
     try {
       if (!micStream || !micAN) {
-        if (!reconstTimer) return;
-        hue = (pavHue($("pavSel").value || "Crâne rieur") + (Date.now() / 120) % 40) % 360;
+        if (!reconstTimer) return { off: true, hue, sat, lit, lvl, hz };
+        hue = (pavHue($("pavSel").value || "Cr\u00e2ne rieur") + (Date.now() / 120) % 40) % 360;
         sat = 55; lit = 34 + 8 * Math.sin(Date.now() / 600);
         lvl = 0.35 + 0.25 * Math.abs(Math.sin(Date.now() / 500));
       } else {
@@ -3032,6 +3044,7 @@ function dockCallWin() {
       for (let i = 1; i < n; i++) { sum += lootFD[i]; if (lootFD[i] > domV) { domV = lootFD[i]; dom = i; } }
       if (sum > n * 2) {
         const f = dom * AC.sampleRate / (micAN.fftSize || 1024);
+        hz = Math.round(f);
         hue = Math.max(0, Math.min(330, Math.log2(Math.max(40, f) / 80) / 4.64 * 300));
         const avg = sum / (n * 255);
         lvl = Math.min(1, avg * 4);
@@ -3045,6 +3058,14 @@ function dockCallWin() {
       }
       }
     } catch (e) {}
+    return { off: false, hue, sat, lit, lvl, hz };
+  }
+  function updateCallColor() {
+    const el = $("callColor"), nm = $("callColorName");
+    if (!el) return;
+    const pc = perceivedCol();
+    if (pc.off) return;
+    const hue = pc.hue, sat = pc.sat, lit = pc.lit, lvl = pc.lvl;
     const col = "hsl(" + Math.round(hue) + "," + Math.max(12, Math.min(90, sat)) + "%," + Math.max(15, Math.min(75, lit)) + "%)";
     el.style.background = col;
     el.style.boxShadow = "0 0 18px " + col;
@@ -3244,6 +3265,75 @@ function dockCallWin() {
     $("butinWin").classList.add("open");
     renderButins();
     agentWake("butinWin", "coffre au butin ouvert depuis le coffre fort \u2014 les deux coffres sont fr\u00e8res, m\u00eame ergonomie !");
+  });
+  let nasaRaf = null, nasaStars = null, nasaComets = [], nasaLastComet = 0;
+  function nasaLoop() {
+    const win = $("nasaWin");
+    if (!win || !win.classList.contains("open")) { nasaRaf = null; return; }
+    const cv = $("nasaCanvas"), ctx = cv.getContext("2d");
+    const W = cv.width, H = cv.height, now = Date.now();
+    const pc = perceivedCol();
+    let hue = pc.hue, sat = pc.sat, lit = pc.lit, lvl = pc.lvl;
+    if (pc.off) { hue = (30 + (now / 300) % 60) % 360; sat = 22; lit = 26; lvl = 0.15; }
+    if (holdActive && fragWarm) { hue = fragWarm.h; sat = fragWarm.s; lit = fragWarm.l; }
+    ctx.fillStyle = "rgba(1,3,10,0.35)"; ctx.fillRect(0, 0, W, H);
+    for (let k = 0; k < 3; k++) {
+      const nh = ((hue + k * 45 - 40) % 360 + 360) % 360;
+      const cx = W * (0.25 + 0.28 * k) + Math.sin(now / (2600 + k * 900)) * 34;
+      const cy = H * (0.4 + 0.18 * Math.sin(now / (3100 + k * 700) + k));
+      const r = 70 + k * 26 + lvl * 60;
+      const gr = ctx.createRadialGradient(cx, cy, 0, cx, cy, r);
+      gr.addColorStop(0, "hsla(" + nh + "," + Math.min(90, sat + 20) + "%," + Math.min(60, lit + 16) + "%," + (0.16 + lvl * 0.22) + ")");
+      gr.addColorStop(1, "hsla(" + nh + ",70%,40%,0)");
+      ctx.fillStyle = gr;
+      ctx.beginPath(); ctx.arc(cx, cy, r, 0, 7); ctx.fill();
+    }
+    if (!nasaStars) { nasaStars = []; for (let s = 0; s < 130; s++) nasaStars.push({ x: Math.random() * W, y: Math.random() * H, r: Math.random() * 1.4 + 0.4, p: Math.random() * 7, v: 0.5 + Math.random() * 2 }); }
+    for (const st of nasaStars) {
+      const tw = 0.35 + 0.65 * Math.abs(Math.sin(now / 1000 * st.v + st.p));
+      ctx.fillStyle = "hsla(" + hue + ",30%," + (70 + lvl * 25) + "%," + (tw * (0.35 + lvl * 0.65)) + ")";
+      ctx.beginPath(); ctx.arc(st.x, st.y, st.r + lvl * 0.8, 0, 7); ctx.fill();
+    }
+    const px = W * 0.78, py = H * 0.62, pr = 24 + lvl * 12;
+    const oh = ((hue + 180) % 360 + 360) % 360;
+    ctx.save();
+    ctx.translate(px, py); ctx.rotate(-0.45);
+    ctx.strokeStyle = "hsla(" + oh + "," + Math.min(90, sat + 15) + "%,65%,0.75)"; ctx.lineWidth = 4 + lvl * 3;
+    ctx.beginPath(); ctx.ellipse(0, 0, pr * 1.9, pr * 0.55, 0, 0, 7); ctx.stroke();
+    ctx.restore();
+    const pg = ctx.createRadialGradient(px - pr * 0.4, py - pr * 0.4, pr * 0.2, px, py, pr);
+    pg.addColorStop(0, "hsl(" + hue + "," + Math.min(85, sat + 10) + "%," + Math.min(72, lit + 22) + "%)");
+    pg.addColorStop(1, "hsl(" + hue + "," + sat + "%," + Math.max(8, lit - 16) + "%)");
+    ctx.fillStyle = pg;
+    ctx.beginPath(); ctx.arc(px, py, pr, 0, 7); ctx.fill();
+    const ma = now / 1400;
+    ctx.fillStyle = "hsla(" + oh + ",40%,80%,0.9)";
+    ctx.beginPath(); ctx.arc(px + Math.cos(ma) * pr * 2.6, py + Math.sin(ma) * pr * 1.1, 3.4 + lvl * 2, 0, 7); ctx.fill();
+    if (now - nasaLastComet > Math.max(900, 4200 - lvl * 2200)) { nasaLastComet = now; nasaComets.push({ x: Math.random() * W * 0.7, y: -14, vx: 1.6 + Math.random() * 1.6, vy: 2 + lvl * 3 }); }
+    nasaComets = nasaComets.filter(c => c.y < H + 24);
+    for (const c of nasaComets) {
+      c.x += c.vx; c.y += c.vy;
+      ctx.strokeStyle = "hsla(" + ((hue + 60) % 360) + ",80%,75%,0.85)"; ctx.lineWidth = 1.6;
+      ctx.beginPath(); ctx.moveTo(c.x, c.y); ctx.lineTo(c.x - c.vx * 9, c.y - c.vy * 9); ctx.stroke();
+    }
+    ctx.strokeStyle = "hsla(" + hue + ",60%,70%,0.35)"; ctx.lineWidth = 1;
+    ctx.strokeRect(W * 0.5 - 16, H * 0.5 - 16, 32, 32);
+    ctx.beginPath(); ctx.moveTo(W * 0.5 - 26, H * 0.5); ctx.lineTo(W * 0.5 + 26, H * 0.5); ctx.moveTo(W * 0.5, H * 0.5 - 26); ctx.lineTo(W * 0.5, H * 0.5 + 26); ctx.stroke();
+    $("nasaTel").textContent = "\ud83d\udef0 SONDE ROUTESTUDIO-1 \u00b7 teinte " + Math.round(hue) + "\u00b0" + (pc.hz ? " \u00b7 " + pc.hz + " Hz" : "") + " \u00b7 niveau " + Math.round(lvl * 100) + "% \u00b7 cible : " + hueName(hue) + (holdActive && fragWarm ? " \u00b7 pr\u00e9l\u00e8vement vivant en cours" : (pc.off ? " \u00b7 veille (pas de son)" : ""));
+    nasaRaf = requestAnimationFrame(nasaLoop);
+  }
+  $("btnNasa").addEventListener("click", () => {
+    const win = $("nasaWin");
+    if (win.classList.contains("open")) {
+      win.classList.remove("open");
+      status("\ud83d\udef0\ufe0f Sonde Routestudio-1 en veille \u2014 l'espace se replie, rappelle-la quand tu veux !");
+    } else {
+      nasaStars = null; nasaComets = [];
+      win.classList.add("open");
+      agentWake("nasaWin", "sonde en orbite \u2014 l'espace entier suit la couleur entendue !");
+      if (!nasaRaf) nasaRaf = requestAnimationFrame(nasaLoop);
+      status("\ud83d\udef0\ufe0f Sonde Routestudio-1 d\u00e9ploy\u00e9e \u2014 parle, joue, maintiens le Micro : l'espace \u00e9coute !");
+    }
   });
   $("btnCallMini").addEventListener("click", e => {
     e.stopPropagation();
