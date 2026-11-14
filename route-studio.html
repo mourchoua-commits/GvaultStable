@@ -206,6 +206,11 @@
   #micWin #btnListen:hover,#micWin #btnButinOpen:hover{filter:brightness(1.2)}
   #micWin #btnButinOpen{border-radius:12px;border-color:rgba(255,215,106,0.5)}
   #micWin #butinCount{color:#8fb8d0}
+  #micSlide{position:relative;height:44px;border-radius:22px;border:1px solid rgba(201,164,74,0.5);background:rgba(2,12,22,0.75);overflow:hidden;touch-action:none;user-select:none;-webkit-user-select:none;cursor:grab}
+  #micSlideFill{position:absolute;left:0;top:0;bottom:0;width:0;background:linear-gradient(90deg,rgba(255,215,106,0.2),rgba(255,215,106,0.55))}
+  #micSlideLab{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:12px;color:#9fc3d8;pointer-events:none;letter-spacing:1px}
+  #micSlideKnob{position:absolute;left:4px;top:4px;width:36px;height:36px;border-radius:50%;background:linear-gradient(180deg,#ffd76a,#b8860b);display:flex;align-items:center;justify-content:center;font-size:17px;box-shadow:0 2px 8px rgba(0,0,0,0.55);transition:left 0.25s;cursor:grab}
+  #micSlideKnob.drag{transition:none;cursor:grabbing}
   #nasaWin{width:460px;background:linear-gradient(180deg,#01030a,#050a1c);border-color:#6ee7ff}
   #nasaCanvas{width:100%;border-radius:10px;border:1px solid rgba(110,231,255,0.35);background:#01030a;display:block}
   #nasaTel{font-size:11px;color:#8fe3ff;font-family:'Courier New',monospace;margin-top:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -409,6 +414,11 @@
       <div class="micSecT">🎤 Le Micro</div>
       <button id="btnMic" title="Maintiens appuyé (ou clique vite : il reste pressé tout seul) — ça enregistre ; relâche ou reclique : le butin part au coffre avec sa couleur !">🎤 Maintenir pour enregistrer</button>
       <button id="btnListen" title="Active le micro juste pour écouter : l'auto-tune accorde ta voix, sans enregistrer">🎵 Écoute auto-tune</button>
+      <div id="micSlide" title="Glisse la poulie jusqu'à bout : le Micro monte à bord (on frappe à la porte du port, on ne la force JAMAIS)">
+        <div id="micSlideFill"></div>
+        <span id="micSlideLab">🪝 Glisse pour aborder le Micro →</span>
+        <span id="micSlideKnob">🪝</span>
+      </div>
       <div id="micInfo">Micro éteint</div>
     </div>
     <div class="micSec">
@@ -2714,6 +2724,42 @@
   }
   $("btnMic").addEventListener("pointerup", releaseMic);
   $("btnMic").addEventListener("pointercancel", releaseMic);
+  let slideDrag = null;
+  function slideReset() {
+    $("micSlideKnob").classList.remove("drag");
+    $("micSlideKnob").style.left = "4px";
+    $("micSlideFill").style.width = "0";
+  }
+  function slideProgress(ev) {
+    const r = $("micSlide").getBoundingClientRect();
+    const max = Math.max(1, r.width - 44);
+    const x = Math.min(max, Math.max(0, ev.clientX - r.left - 22));
+    $("micSlideKnob").style.left = (4 + x) + "px";
+    $("micSlideFill").style.width = (x + 22) + "px";
+    return x / max;
+  }
+  $("micSlideKnob").addEventListener("pointerdown", ev => {
+    ev.preventDefault();
+    slideDrag = { id: ev.pointerId, done: false };
+    try { $("micSlideKnob").setPointerCapture(ev.pointerId); } catch (e) {}
+    $("micSlideKnob").classList.add("drag");
+    status("\U0001FA9D Poulie en main \u2014 glisse jusqu'au bout pour faire monter le Micro \u00e0 bord !");
+  });
+  $("micSlideKnob").addEventListener("pointermove", ev => {
+    if (!slideDrag || ev.pointerId !== slideDrag.id) return;
+    if (slideProgress(ev) >= 1) slideDrag.done = true;
+  });
+  $("micSlideKnob").addEventListener("pointerup", ev => {
+    if (!slideDrag || ev.pointerId !== slideDrag.id) return;
+    const done = slideDrag.done;
+    slideDrag = null;
+    slideReset();
+    if (done) {
+      status("\U0001FA9D Poulie au bout \u2014 on frappe \u00e0 la porte du port pour le Micro (jamais forc\u00e9) !");
+      openMic();
+    }
+  });
+  $("micSlideKnob").addEventListener("pointercancel", () => { slideDrag = null; slideReset(); });
   let gateInt = null, gateTO = null;
   function gatePerm(cb) {
     try {
