@@ -126,21 +126,32 @@
   .preSay{animation:preSayK .8s ease-in-out infinite;color:#ffd76a}
   #callWin{position:fixed;right:16px;bottom:16px;display:none;z-index:9999;pointer-events:none}
   #callWin.open{display:flex}
-  #callCard{pointer-events:auto;width:min(340px,90vw);max-height:calc(100vh - 32px);overflow-x:hidden;overflow-y:auto;border-radius:22px;padding:22px 20px;text-align:center;position:relative;background:linear-gradient(180deg,#12325a 0%,#1b4a72 55%,#0e2c4a 100%);border:1px solid rgba(110,231,255,0.35);box-shadow:0 18px 50px rgba(0,0,0,0.55),0 0 0 1px rgba(0,0,0,0.3)}
-  #callCard::before,#callCard::after{content:"";position:absolute;left:-20%;right:-20%;height:70px;bottom:-12px;background:radial-gradient(circle at 10px -6px,transparent 14px,rgba(110,231,255,0.28) 15px) repeat-x;background-size:36px 36px;animation:waveMove 7s linear infinite;pointer-events:none}
+  #callCard{pointer-events:auto;width:min(350px,90vw);max-height:calc(100vh - 32px);overflow-x:hidden;overflow-y:auto;border-radius:26px;padding:24px 20px 20px;text-align:center;position:relative;background:radial-gradient(ellipse at 50% -18%,rgba(110,231,255,0.16),transparent 55%),linear-gradient(180deg,#071e30 0%,#0b3350 42%,#06283e 72%,#03101c 100%);border:1px solid rgba(201,164,74,0.55);box-shadow:0 18px 50px rgba(0,0,0,0.65),inset 0 0 0 3px rgba(5,18,30,0.9),inset 0 0 0 4px rgba(201,164,74,0.35),inset 0 18px 40px rgba(0,0,0,0.35)}
+  #callBubbles{position:absolute;inset:0;pointer-events:none;overflow:hidden;border-radius:26px;z-index:1}
+  #callBubbles span{position:absolute;bottom:-14px;width:10px;height:10px;border-radius:50%;background:radial-gradient(circle at 35% 30%,rgba(255,255,255,0.75),rgba(110,231,255,0.25) 60%,transparent);animation:bubbleUp 5.5s linear infinite}
+  #callBubbles span:nth-child(1){left:10%;animation-delay:0s}
+  #callBubbles span:nth-child(2){left:28%;animation-delay:1.4s;width:7px;height:7px}
+  #callBubbles span:nth-child(3){left:47%;animation-delay:2.6s}
+  #callBubbles span:nth-child(4){left:66%;animation-delay:0.8s;width:8px;height:8px}
+  #callBubbles span:nth-child(5){left:84%;animation-delay:3.4s;width:12px;height:12px}
+  @keyframes bubbleUp{0%{transform:translateY(0) scale(0.7);opacity:0}12%{opacity:0.85}100%{transform:translateY(-430px) scale(1.25);opacity:0}}
+  #callCard::before,#callCard::after{content:"";position:absolute;left:-20%;right:-20%;height:70px;bottom:-12px;background:radial-gradient(circle at 10px -6px,transparent 14px,rgba(110,231,255,0.22) 15px) repeat-x;background-size:36px 36px;animation:waveMove 7s linear infinite;pointer-events:none}
   #callCard::after{bottom:-26px;opacity:.5;animation-duration:11s}
   @keyframes waveMove{to{transform:translateX(36px)}}
-  #callCrew{font-size:22px;letter-spacing:8px;animation:crewBob 2.4s ease-in-out infinite}
+  #callCrew{font-size:22px;letter-spacing:8px;animation:crewBob 2.4s ease-in-out infinite;position:relative;z-index:2}
   @keyframes crewBob{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
-  #callAvatar{width:84px;height:84px;margin:14px auto 0;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:40px;background:linear-gradient(160deg,#6ee7ff,#ff7eb6);animation:plankRock 2.2s ease-in-out infinite;position:relative;z-index:2}
+  #callAvatar{width:86px;height:86px;margin:14px auto 0;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:40px;background:radial-gradient(circle at 32% 28%,#bfefff,#2b8fc9 55%,#0d3a5c);border:4px solid #c9a44a;box-shadow:0 0 0 3px #5c4a13,inset 0 4px 12px rgba(255,255,255,0.35),inset 0 -6px 14px rgba(0,0,0,0.4);animation:plankRock 2.2s ease-in-out infinite;position:relative;z-index:2}
+  #callAvatar::after{content:"";position:absolute;inset:-12px;border-radius:50%;border:2px solid rgba(110,231,255,0.5);animation:sonarPing 2.6s ease-out infinite;pointer-events:none}
+  @keyframes sonarPing{0%{transform:scale(0.75);opacity:0.9}100%{transform:scale(1.5);opacity:0}}
   @keyframes plankRock{0%,100%{transform:rotate(-6deg) translateY(0)}50%{transform:rotate(6deg) translateY(-3px)}}
-  #callPlank{width:150px;height:14px;margin:2px auto 8px;border-radius:4px;background:linear-gradient(180deg,#a3743c,#7a5426);box-shadow:0 3px 0 #5c3d18;transform:rotate(-4deg)}
-  #callName{font-weight:bold;font-size:18px;position:relative;z-index:2}
-  #callTimer{color:#a9c9dd;font-size:14px;margin-top:4px;font-variant-numeric:tabular-nums;position:relative;z-index:2}
-  #callNote{margin-top:14px;font-size:20px;min-height:28px;color:#ffd76a;position:relative;z-index:2}
-  #btnCallEnd{margin-top:18px;width:100%;padding:13px;border-radius:999px;border:none;background:linear-gradient(90deg,#c9543f,#a7372a);color:#fff;font-weight:bold;font-size:15px;cursor:pointer;position:relative;z-index:2}
-  #btnCallMini{position:absolute;top:10px;right:12px;z-index:3;background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.25);color:#fff;border-radius:8px;padding:2px 9px;cursor:pointer;font-size:14px}
-  #callThemeSel{position:absolute;top:10px;left:12px;z-index:3;background:rgba(0,0,0,0.35);color:#fff;border:1px solid rgba(255,255,255,0.25);border-radius:8px;padding:3px 6px;font-size:12px;cursor:pointer}
+  #callPlank{width:150px;height:14px;margin:2px auto 8px;border-radius:4px;background:linear-gradient(180deg,#a3743c,#7a5426);box-shadow:0 3px 0 #5c3d18,0 6px 10px rgba(0,0,0,0.4);transform:rotate(-4deg);position:relative;z-index:2}
+  #callName{font-weight:bold;font-size:18px;color:#ffd76a;text-shadow:0 2px 8px rgba(0,0,0,0.5);position:relative;z-index:2}
+  #callTimer{color:#8fe3c0;font-size:14px;margin-top:4px;font-variant-numeric:tabular-nums;letter-spacing:1px;position:relative;z-index:2}
+  #callNote{margin-top:14px;font-size:19px;min-height:28px;color:#ffe9a8;text-shadow:0 0 12px rgba(255,215,106,0.35);position:relative;z-index:2}
+  #btnCallEnd{margin-top:18px;width:100%;padding:12px;border-radius:12px;border:1px solid rgba(255,120,110,0.55);background:linear-gradient(180deg,#7a2f26,#4c1c16);color:#ffd9d4;font-weight:bold;font-size:14px;cursor:pointer;position:relative;z-index:2}
+  #btnCallEnd:hover{filter:brightness(1.18)}
+  #btnCallMini{position:absolute;top:10px;right:12px;z-index:3;background:rgba(3,16,28,0.65);border:1px solid rgba(201,164,74,0.5);color:#ffd76a;border-radius:8px;padding:2px 9px;cursor:pointer;font-size:14px}
+  #callThemeSel{position:absolute;top:10px;left:12px;z-index:3;background:rgba(3,16,28,0.65);color:#ffd76a;border:1px solid rgba(201,164,74,0.5);border-radius:8px;padding:3px 6px;font-size:12px;cursor:pointer}
   #callWin.theme-pixel #callCard{border-radius:0;border:3px solid #6fe26f;font-family:'Courier New',monospace}
   #callWin.theme-pixel #callAvatar,#callWin.theme-pixel #callPavFlag,#callWin.theme-pixel #callColor{border-radius:0}
   #callWin.theme-cosmic #callCard{background:radial-gradient(circle at 25% 15%,#33206e 0%,#140a33 45%,#070312 100%);border-color:rgba(190,150,255,0.55)}
@@ -153,27 +164,37 @@
   #callWin.mini{pointer-events:none;padding:0}
   #callWin.mini #callCard{pointer-events:auto;width:auto;padding:10px 14px;display:flex;gap:10px;align-items:center;cursor:pointer;border-radius:999px}
   #callWin.mini #callCrew,#callWin.mini #callPlank,#callWin.mini #callName,#callWin.mini #btnCallMini{display:none}
-  #callWin.mini #callAvatar{width:34px;height:34px;margin:0;font-size:18px}
+  #callWin.mini #callAvatar{width:34px;height:34px;margin:0;font-size:18px;border-width:2px;box-shadow:0 0 0 2px #5c4a13}
+  #callWin.mini #callAvatar::after{display:none}
   #callWin.mini #callPlank{display:none}
   #callWin.mini #callTimer{margin:0;font-size:12px}
   #callWin.mini #callNote{margin:0;font-size:14px;min-height:0}
   #callWin.mini #btnCallEnd{margin:0;width:auto;padding:7px 12px;font-size:12px}
-  #btnCallHelp,#btnCallSample{display:none;margin-top:10px;width:100%;padding:10px;border-radius:999px;border:1px solid rgba(255,255,255,0.3);color:#fff;font-weight:bold;font-size:13px;cursor:pointer;position:relative;z-index:2}
+  #btnCallHelp,#btnCallSample{display:none;margin-top:10px;width:100%;padding:10px;border-radius:12px;border:1px solid rgba(255,255,255,0.3);color:#fff;font-weight:bold;font-size:13px;cursor:pointer;position:relative;z-index:2}
   #callWin.reconst #btnCallHelp,#callWin.reconst #btnCallSample{display:block}
-  #btnCallHelp{background:linear-gradient(90deg,#2a7a4f,#1d5c3a)}
+  #btnCallHelp{background:linear-gradient(180deg,#1d5c3a,#123a26);border-color:rgba(120,255,170,0.4)}
   #callPavRow{display:none;align-items:center;justify-content:center;gap:10px;margin-top:10px;position:relative;z-index:2}
   #callWin.open #callPavRow{display:flex}
-  #callPavFlag{width:46px;height:34px;border-radius:6px;border:1px solid rgba(255,255,255,0.5);background:#1a2233;transition:background 0.2s,box-shadow 0.2s}
-  #callPavName{font-size:13px;color:#fff;font-weight:bold}
+  #callPavFlag{width:46px;height:34px;border-radius:6px;border:1px solid rgba(255,215,106,0.6);background:#1a2233;transition:background 0.2s,box-shadow 0.2s}
+  #callPavName{font-size:13px;color:#ffe9a8;font-weight:bold}
   #callColorRow{display:none;align-items:center;justify-content:center;gap:10px;margin-top:10px;position:relative;z-index:2}
   #callWin.open #callColorRow{display:flex}
-  #callColor{width:46px;height:46px;border-radius:50%;border:2px solid rgba(255,255,255,0.5);background:#1a2233;transition:background 0.15s,box-shadow 0.15s}
-  #callColorName{font-size:13px;color:#fff;font-weight:bold}
-  #btnCallLoot{display:none;margin-top:10px;width:100%;padding:10px;border-radius:999px;border:1px solid rgba(255,255,255,0.3);color:#fff;font-weight:bold;font-size:13px;cursor:pointer;position:relative;z-index:2;background:linear-gradient(90deg,#8a6d1d,#5c4a13)}
+  #callColor{width:46px;height:46px;border-radius:50%;border:2px solid rgba(255,215,106,0.6);background:#1a2233;transition:background 0.15s,box-shadow 0.15s}
+  #callColorName{font-size:13px;color:#ffe9a8;font-weight:bold}
+  #btnCallLoot{display:none;margin-top:10px;width:100%;padding:10px;border-radius:12px;border:1px solid rgba(255,215,106,0.5);color:#ffe9a8;font-weight:bold;font-size:13px;cursor:pointer;position:relative;z-index:2;background:linear-gradient(180deg,#8a6d1d,#5c4a13)}
   #callWin.open:not(.reconst) #btnCallLoot{display:block}
-  #btnCallSample{background:linear-gradient(90deg,#8a5cc9,#5c3a9e)}
-  #btnHoldRec{width:100%;margin-top:8px;padding:12px;border-radius:999px;border:1px solid rgba(110,231,255,0.4);background:linear-gradient(90deg,#1d5c7a,#123a52);color:#fff;font-weight:bold;font-size:13px;cursor:pointer;user-select:none;-webkit-user-select:none;touch-action:none;transition:transform 0.08s,filter 0.08s}
-  #btnHoldRec:active,#btnHoldRec.held{transform:scale(0.95) translateY(2px);filter:brightness(1.3);box-shadow:0 0 16px rgba(110,231,255,0.5)}
+  #btnCallSample{background:linear-gradient(180deg,#4c3a7a,#2e2152)}
+  #btnHoldRec{width:100%;margin-top:8px;padding:12px;border-radius:12px;border:1px solid rgba(110,231,255,0.45);background:linear-gradient(180deg,#155c74,#0c3a4c);color:#d6f4ff;font-weight:bold;font-size:13px;cursor:pointer;user-select:none;-webkit-user-select:none;touch-action:none;transition:transform 0.08s,filter 0.08s}
+  #btnHoldRec:active,#btnHoldRec.held{transform:scale(0.95) translateY(2px);filter:brightness(1.3);box-shadow:0 0 18px rgba(110,231,255,0.55)}
+  #micWin,#butinWin{background:linear-gradient(180deg,#062033 0%,#0a2f45 55%,#051626 100%);border-color:#c9a44a;box-shadow:0 12px 40px rgba(0,0,0,0.65),inset 0 0 0 1px rgba(255,215,106,0.12),inset 0 14px 30px rgba(0,0,0,0.35)}
+  #micWin .fwinHead,#butinWin .fwinHead{border-bottom:1px solid rgba(201,164,74,0.5);color:#ffd76a;background:linear-gradient(180deg,rgba(201,164,74,0.14),transparent)}
+  #micWin .winRow,#butinWin .winRow{color:#9fc3d8}
+  #micWin select{background:rgba(2,12,22,0.75);border-color:rgba(201,164,74,0.5);color:#ffd76a}
+  #micWin #btnMic{width:100%;margin-top:8px;padding:11px;border-radius:12px;border:1px solid rgba(255,215,106,0.55);background:linear-gradient(180deg,#8a6d1d,#5c4a13);color:#ffe9a8;font-weight:bold;cursor:pointer}
+  #micWin #btnMic:hover,#micWin #btnHoldRec:hover,#micWin #btnButinOpen:hover{filter:brightness(1.2)}
+  #micInfo{font-size:13px;color:#9fe8c8;background:rgba(2,14,24,0.6);border:1px solid rgba(110,231,255,0.25);border-radius:10px;padding:8px 10px}
+  #micWin #btnButinOpen{border-radius:12px;border-color:rgba(255,215,106,0.5)}
+  #micWin #butinCount{color:#8fb8d0}
   .pad,.csw{transition:transform .12s,filter .12s}
   .pad:hover,.csw:hover{filter:brightness(1.3);transform:scale(1.07)}
   #notePanel{border:1px solid var(--gold);border-radius:14px;padding:10px 14px;background:var(--panel);
@@ -338,7 +359,7 @@
     <div class="winRow">🏴‍☠️ Pavillon : <select id="pavSel" title="L'équipage choisit SON pavillon — on ne demande jamais, on débarque !"><option>Crâne rieur</option><option>Sabre d'abordage</option><option>Vague noire</option><option>Enfants Perdus</option><option>Cœur de Marée</option><option>Kraken chantant</option></select></div>
     <button id="btnMic">🎤 Activer le micro</button>
     <button id="btnHoldRec" title="Maintiens appuyé : le Micro enregistre ; relâche : le butin est co-détenu à par égal avec le port !">🎙️ Maintenir pour enregistrer</button>
-    <div id="micInfo" style="margin-top:10px;font-size:13px;color:var(--muted)">Micro éteint</div>
+    <div id="micInfo" style="margin-top:10px">Micro éteint</div>
     <div style="font-size:12px;color:var(--gold);margin:12px 0 6px">🎁 Le butin</div>
     <div id="butinRow" class="winRow" style="display:none;margin:0 0 8px;gap:8px;align-items:center;flex-wrap:wrap">
       <span id="butinInfo">🎁 Butin prêt !</span>
@@ -355,6 +376,7 @@
 </div>
 <div id="callWin">
   <div id="callCard">
+    <div id="callBubbles"><span></span><span></span><span></span><span></span><span></span></div>
     <button id="btnCallMini" title="Réduire l'appel — l'équipage continue de chanter pendant que tu crées !">➖</button>
     <select id="callThemeSel" title="Thème de l'appel"><option value="pirate">🌊 Pirate</option><option value="pixel">👾 Pixel</option><option value="cosmic">🌌 Cosmique</option><option value="matrix">🟩 Matrix</option></select>
     <div id="callCrew">🏴‍☠️ 🦜 ⚓️ 🗺️ 🧭</div>
