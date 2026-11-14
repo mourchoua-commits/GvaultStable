@@ -170,6 +170,17 @@
   #callWin.open #callColorRow{display:flex}
   #callColor{width:46px;height:46px;border-radius:50%;border:2px solid rgba(255,215,106,0.6);background:#1a2233;transition:background 0.15s,box-shadow 0.15s}
   #callColorName{font-size:13px;color:#ffe9a8;font-weight:bold}
+  #callFragRow{display:none;align-items:center;justify-content:center;gap:8px;margin-top:8px;position:relative;z-index:2}
+  #callWin.open #callFragRow{display:flex}
+  #callFragTrail{display:flex;gap:2px;align-items:center;height:22px;min-width:0;max-width:200px;overflow:hidden;padding:2px 4px;border-radius:9px;border:1px dashed rgba(255,215,106,0.4);background:rgba(0,0,0,0.25)}
+  #callFragTrail i{width:7px;height:14px;border-radius:3px;flex:none}
+  #callFragName{font-size:12px;color:#ffe9a8;font-weight:bold}
+  #callTerm{display:none;font-size:11px;color:#8fb8d0;text-align:center;margin-top:4px;position:relative;z-index:2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:96%}
+  #callWin.open #callTerm{display:block}
+  #callWin.mini #callFragRow,#callWin.mini #callTerm{display:none}
+  #callWin.holding #callAvatar{animation:intake 0.9s ease-in-out infinite}
+  #callWin.holding #callColor{border-style:dashed;animation:intake 1.2s ease-in-out infinite}
+  @keyframes intake{0%,100%{transform:scale(1)}50%{transform:scale(0.88)}}
   #micWin .fwinBody{display:flex;flex-direction:column;gap:14px}
   .micSec{display:flex;flex-direction:column;gap:8px}
   .micSecT{font-size:12px;font-weight:bold;color:#ffd76a;letter-spacing:1px;border-bottom:1px dashed rgba(201,164,74,0.35);padding-bottom:4px}
@@ -386,6 +397,8 @@
     <div id="callAvatar">🎤</div>
     <div id="callPavRow"><div id="callPavFlag"></div><div id="callPavName">Pavillon…</div></div>
     <div id="callColorRow"><div id="callColor"></div><div id="callColorName">🎨 couleur perçue…</div></div>
+    <div id="callFragRow"><div id="callFragTrail"></div><div id="callFragName">🧪 fragrance…</div></div>
+    <div id="callTerm">⚓ terminaux…</div>
     <div id="callEq"></div>
   </div>
 </div>
@@ -2555,6 +2568,9 @@
   function startHoldRec() {
     holdChunks = [];
     holdRec = null;
+    fragTrail = []; fragWarm = null; fragT0 = Date.now(); fragTerm = termInfo();
+    const cw0 = $("callWin");
+    if (cw0) cw0.classList.add("holding");
     try {
       const stream = micStream || reconstStream;
       if (stream && window.MediaRecorder) {
@@ -2584,6 +2600,8 @@
       $("micInfo").textContent = "Micro éteint";
     }
     closeCall();
+    const cwX = $("callWin");
+    if (cwX) cwX.classList.remove("holding");
     if (holdChunks.length) {
       const blob = new Blob(holdChunks);
       holdChunks = [];
@@ -2596,7 +2614,7 @@
         butins.push({ name: "Butin « " + nameC + " » " + butinSeq, buffer: buf });
         renderButins();
         $("butinRow").style.display = "flex";
-        $("butinInfo").textContent = "🎁 Butin « " + nameC + " » : " + Math.max(1, Math.round(buf.duration)) + "s — la couleur du relâché est au coffre !";
+        $("butinInfo").textContent = "\ud83c\udf81 Butin \u00ab " + nameC + " \u00bb : " + Math.max(1, Math.round(buf.duration)) + "s \u2014 fragrance \u00ab " + nameC + " \u00bb au coffre \u2014 pr\u00e9lev\u00e9 via " + fragTerm + " !";
         status("🤝 Butin récupéré au relâché — à toi et au port, à la même hauteur : co-propriété à par égal, pas une taxe !");
       } catch (e) { status("❌ Le butin n'a pas pu être décodé — retente un maintien !"); }
     } else status("Rien enregistré cette fois — maintiens le bouton plus longtemps !");
@@ -2858,10 +2876,29 @@ function dockCallWin() {
     if (nm) nm.textContent = "Pavillon « " + name + " » — " + hueName(h);
   }
   let lootFD = null, lootColorName = "";
+  let fragTrail = [], fragWarm = null, fragT0 = 0, fragTerm = "";
   function hueName(h) {
     const names = [[15, "Rouge cardinal"], [45, "Or de doubloon"], [75, "Verte marée"], [150, "Émeraude"], [210, "Azur hauturier"], [270, "Indigo nuit"], [330, "Pourpre corsaire"], [361, "Rose flibuste"]];
     for (const p of names) if (h < p[0]) return p[1];
     return "Rose flibuste";
+  }
+  function termInfo() {
+    const parts = [];
+    try {
+      if (micStream) {
+        parts.push("\ud83c\udf99\ufe0f Micro");
+        const sel = $("micDevSel");
+        if (sel && sel.selectedOptions && sel.selectedOptions[0] && sel.selectedOptions[0].textContent) parts.push(sel.selectedOptions[0].textContent);
+        const tr = micStream.getTracks()[0];
+        const st = tr && tr.getSettings ? tr.getSettings() : null;
+        if (st) {
+          if (st.sampleRate) parts.push(Math.round(st.sampleRate / 1000) + " kHz");
+          if (st.channelCount) parts.push(st.channelCount === 1 ? "mono" : st.channelCount + " canaux");
+        }
+      } else if (reconstTimer || reconstStream) parts.push("\ud83c\udf0a Reconstitution du navire (bus interne)");
+      else parts.push("\ud83c\udfa7 Sortie studio");
+    } catch (e) { parts.push("\ud83c\udfa7 terminal inconnu"); }
+    return parts.join(" \u00b7 ");
   }
   function updateCallColor() {
     const el = $("callColor"), nm = $("callColorName");
@@ -2899,6 +2936,34 @@ function dockCallWin() {
     el.style.boxShadow = "0 0 18px " + col;
     lootColorName = hueName(hue);
     if (nm) nm.textContent = "🎨 " + lootColorName;
+    if (holdActive) {
+      if (!fragT0) fragT0 = Date.now();
+      fragTrail.push(col);
+      if (fragTrail.length > 18) fragTrail.shift();
+      if (!fragWarm) fragWarm = { h: hue, s: Math.max(30, sat), l: lit };
+      else {
+        const dh = ((hue - fragWarm.h + 540) % 360) - 180;
+        fragWarm.h = (fragWarm.h + dh * 0.3 + 360) % 360;
+        fragWarm.s = Math.min(92, fragWarm.s + 2 + lvl * 3);
+        fragWarm.l = fragWarm.l * 0.8 + lit * 0.2;
+      }
+      const wcol = "hsl(" + Math.round(fragWarm.h) + "," + Math.round(fragWarm.s) + "%," + Math.round(fragWarm.l) + "%)";
+      el.style.background = wcol;
+      el.style.boxShadow = "0 0 " + Math.round(18 + fragWarm.s / 4) + "px " + wcol;
+      lootColorName = hueName(fragWarm.h);
+      if (nm) nm.textContent = "\ud83e\uddea " + lootColorName + " \u2014 pr\u00e9l\u00e8vement !";
+      const cwv = $("callWin");
+      if (cwv) cwv.classList.add("holding");
+      const tr2 = $("callFragTrail");
+      if (tr2) {
+        tr2.innerHTML = "";
+        fragTrail.forEach(c => { const s2 = document.createElement("i"); s2.style.background = c; tr2.appendChild(s2); });
+      }
+      const fn2 = $("callFragName");
+      if (fn2) fn2.textContent = "\ud83e\uddea Fragrance \u00ab " + lootColorName + " \u00bb \u00b7 " + fragTrail.length + " gouttes \u00b7 " + Math.round((Date.now() - fragT0) / 1000) + "s";
+      const ct2 = $("callTerm");
+      if (ct2) ct2.textContent = "\u2693 " + termInfo();
+    }
     const av = $("callAvatar");
     if (av) {
       av.style.filter = "brightness(" + (1 + lvl * 0.6).toFixed(2) + ")";
