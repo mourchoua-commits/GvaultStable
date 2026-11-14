@@ -170,15 +170,24 @@
   #callWin.open #callColorRow{display:flex}
   #callColor{width:46px;height:46px;border-radius:50%;border:2px solid rgba(255,215,106,0.6);background:#1a2233;transition:background 0.15s,box-shadow 0.15s}
   #callColorName{font-size:13px;color:#ffe9a8;font-weight:bold}
-  #btnHoldRec{width:100%;margin-top:8px;padding:12px;border-radius:12px;border:1px solid rgba(110,231,255,0.45);background:linear-gradient(180deg,#155c74,#0c3a4c);color:#d6f4ff;font-weight:bold;font-size:13px;cursor:pointer;user-select:none;-webkit-user-select:none;touch-action:none;transition:transform 0.08s,filter 0.08s}
-  #btnHoldRec:active,#btnHoldRec.held{transform:scale(0.95) translateY(2px);filter:brightness(1.3);box-shadow:0 0 18px rgba(110,231,255,0.55)}
+  #micWin .fwinBody{display:flex;flex-direction:column;gap:14px}
+  .micSec{display:flex;flex-direction:column;gap:8px}
+  .micSecT{font-size:12px;font-weight:bold;color:#ffd76a;letter-spacing:1px;border-bottom:1px dashed rgba(201,164,74,0.35);padding-bottom:4px}
+  #micWin .winRow{margin:0;gap:8px}
+  #micWin .winRow select{flex:1;min-width:0;max-width:none}
+  .micLab{flex:none;min-width:64px;color:#8fb8d0}
+  #btnMic{width:100%;min-height:58px;padding:14px;border-radius:14px;border:1px solid rgba(110,231,255,0.5);background:linear-gradient(180deg,#155c74,#0c3a4c);color:#d6f4ff;font-weight:bold;font-size:15px;cursor:pointer;user-select:none;-webkit-user-select:none;touch-action:none;transition:transform 0.08s,filter 0.08s,box-shadow 0.08s}
+  #btnMic:active,#btnMic.held{transform:scale(0.96);filter:brightness(1.35);box-shadow:0 0 22px rgba(110,231,255,0.6),inset 0 3px 8px rgba(0,0,0,0.5);border-color:#8fe3c0;color:#fff}
+  #btnMic.latched{background:linear-gradient(180deg,#7a1f2c,#4c1016);border-color:#ff8a8a;box-shadow:0 0 22px rgba(255,90,90,0.5)}
+  #btnListen{width:100%;padding:9px;border-radius:12px;border:1px solid rgba(255,215,106,0.45);background:rgba(2,12,22,0.5);color:#ffd76a;font-weight:bold;font-size:13px;cursor:pointer}
+  #btnListen.on{background:linear-gradient(180deg,#8a6d1d,#5c4a13);color:#ffe9a8}
+  .micTip{font-size:12px;color:#7fa8c0;line-height:1.5}
   #micWin,#butinWin{background:linear-gradient(180deg,#062033 0%,#0a2f45 55%,#051626 100%);border-color:#c9a44a;box-shadow:0 12px 40px rgba(0,0,0,0.65),inset 0 0 0 1px rgba(255,215,106,0.12),inset 0 14px 30px rgba(0,0,0,0.35)}
   #micWin .fwinHead,#butinWin .fwinHead{border-bottom:1px solid rgba(201,164,74,0.5);color:#ffd76a;background:linear-gradient(180deg,rgba(201,164,74,0.14),transparent)}
   #micWin .winRow,#butinWin .winRow{color:#9fc3d8}
   #micWin select{background:rgba(2,12,22,0.75);border-color:rgba(201,164,74,0.5);color:#ffd76a}
-  #micWin #btnMic{width:100%;margin-top:8px;padding:11px;border-radius:12px;border:1px solid rgba(255,215,106,0.55);background:linear-gradient(180deg,#8a6d1d,#5c4a13);color:#ffe9a8;font-weight:bold;cursor:pointer}
-  #micWin #btnMic:hover,#micWin #btnHoldRec:hover,#micWin #btnButinOpen:hover{filter:brightness(1.2)}
   #micInfo{font-size:13px;color:#9fe8c8;background:rgba(2,14,24,0.6);border:1px solid rgba(110,231,255,0.25);border-radius:10px;padding:8px 10px}
+  #micWin #btnListen:hover,#micWin #btnButinOpen:hover{filter:brightness(1.2)}
   #micWin #btnButinOpen{border-radius:12px;border-color:rgba(255,215,106,0.5)}
   #micWin #butinCount{color:#8fb8d0}
   .pad,.csw{transition:transform .12s,filter .12s}
@@ -335,30 +344,38 @@
   </div>
 </div>
 <div id="micWin" class="fwindow">
-  <div class="fwinHead"><span>🎤 Micro auto-tune — bordée &amp; butin</span><button class="fwclose" data-close="micWin">✖</button></div>
+  <div class="fwinHead"><span>🎤 Le poste micro — bordée &amp; butin</span><button class="fwclose" data-close="micWin">✖</button></div>
   <div class="fwinBody">
-    <div style="font-size:12px;color:var(--gold);margin-bottom:6px">⚓ La bordée</div>
-    <div class="winRow">Piste : <select id="micTrackSel"></select> 🎹 <select id="micInstSel" title="Instrument propre de cette fenêtre · ➡️ pour le mettre sur la piste"></select> <button id="micToTrack" title="Mettre l'instrument de cette fenêtre sur la piste sélectionnée">➡️</button>
-      <label style="display:flex;gap:5px;align-items:center"><input id="micCap" type="checkbox"> 📝 capturer</label>
+    <div class="micSec">
+      <div class="micSecT">⚙️ Réglages</div>
+      <div class="winRow"><span class="micLab">Piste</span><select id="micTrackSel"></select></div>
+      <div class="winRow"><span class="micLab">Instrument</span><select id="micInstSel" title="Instrument propre de cette fenêtre · ➡️ pour le mettre sur la piste"></select><button id="micToTrack" title="Mettre l'instrument de cette fenêtre sur la piste sélectionnée">➡️</button><label style="display:flex;gap:5px;align-items:center;flex:none"><input id="micCap" type="checkbox"> 📝 capturer</label></div>
+      <div class="winRow"><span class="micLab">Micro</span><select id="micDevSel" title="Choisis le micro que tu veux !"></select></div>
+      <div class="winRow"><span class="micLab">Pavillon</span><select id="pavSel" title="L'équipage choisit SON pavillon — on ne demande jamais, on débarque !"><option>Crâne rieur</option><option>Sabre d'abordage</option><option>Vague noire</option><option>Enfants Perdus</option><option>Cœur de Marée</option><option>Kraken chantant</option></select></div>
     </div>
-    <div class="winRow">🎤 Micro : <select id="micDevSel" title="Choisis le micro que tu veux !"></select></div>
-    <div class="winRow">🏴‍☠️ Pavillon : <select id="pavSel" title="L'équipage choisit SON pavillon — on ne demande jamais, on débarque !"><option>Crâne rieur</option><option>Sabre d'abordage</option><option>Vague noire</option><option>Enfants Perdus</option><option>Cœur de Marée</option><option>Kraken chantant</option></select></div>
-    <button id="btnMic">🎤 Activer le micro</button>
-    <button id="btnHoldRec" title="Maintiens appuyé : le Micro enregistre ; relâche : le butin est co-détenu à par égal avec le port !">🎙️ Maintenir pour enregistrer</button>
-    <div id="micInfo" style="margin-top:10px">Micro éteint</div>
-    <div style="font-size:12px;color:var(--gold);margin:12px 0 6px">🎁 Le butin</div>
-    <div id="butinRow" class="winRow" style="display:none;margin:0 0 8px;gap:8px;align-items:center;flex-wrap:wrap">
-      <span id="butinInfo">🎁 Butin prêt !</span>
-      <button id="btnButinPlay">▶️ Écouter</button>
-      <button id="btnButinLoop">🔁 Boucle</button>
-      <button id="btnButinSample">➕ Sample sur la piste</button>
+    <div class="micSec">
+      <div class="micSecT">🎤 Le Micro</div>
+      <button id="btnMic" title="Maintiens appuyé (ou clique vite : il reste pressé tout seul) — ça enregistre ; relâche ou reclique : le butin part au coffre avec sa couleur !">🎤 Maintenir pour enregistrer</button>
+      <button id="btnListen" title="Active le micro juste pour écouter : l'auto-tune accorde ta voix, sans enregistrer">🎵 Écoute auto-tune</button>
+      <div id="micInfo">Micro éteint</div>
     </div>
-    <div class="winRow" style="gap:8px;align-items:center">
-      <button id="btnButinOpen">🎁 Coffre au butin</button>
-      <span id="butinCount" style="font-size:12px;color:var(--muted)">coffre vide — aborde le Micro !</span>
+    <div class="micSec">
+      <div class="micSecT">🎁 Le butin</div>
+      <div id="butinRow" class="winRow" style="display:none;margin:0;gap:8px;align-items:center;flex-wrap:wrap">
+        <span id="butinInfo">🎁 Butin prêt !</span>
+        <button id="btnButinPlay">▶️ Écouter</button>
+        <button id="btnButinLoop">🔁 Boucle</button>
+        <button id="btnButinSample">➕ Sample sur la piste</button>
+      </div>
+      <div class="winRow" style="margin:0;gap:8px;align-items:center">
+        <button id="btnButinOpen">🎁 Coffre au butin</button>
+        <span id="butinCount" style="font-size:12px;color:#8fb8d0">coffre vide — maintiens le Micro !</span>
+      </div>
+      <div class="micTip">💡 Maintiens le GROS bouton (ou clique vite : il reste pressé tout seul) — ça enregistre et la visionneuse peint les couleurs en direct ; relâche ou reclique → le butin part au coffre, teinté de la couleur du moment, co-détenu à par égal avec le port. 🎵 Écoute = l'auto-tune accorde ta voix sans enregistrer.</div>
     </div>
-    <div style="margin-top:8px;font-size:12px;color:var(--muted)">💡 Chante une note : elle est détectée, corrigée sur ta gamme et jouée avec l'instrument de la piste choisie — 🔒 Refusé ? On ne supplie jamais : barre d'adresse → 🎙 → le pavillon sera reconnu, le Micro montera tout seul ! ➖ dans l'appel = appel réduit, tu continues à créer pendant la bordée !</div>
   </div>
+</div>
+</div>
 </div>
 <div id="callWin">
   <div id="callCard">
@@ -1604,7 +1621,7 @@
     colorWin: { emoji: "\ud83c\udfa8", name: "Colorix", w: 400, h: 430, say: "s\u00e9lecteur pr\u00e9cis d\u00e9ploy\u00e9 \u2014 la couleur exacte existe !" },
     instGrid: { emoji: "\ud83c\udfb9", name: "Instanto", w: 430, h: 370, say: "grille instant arm\u00e9e \u2014 clique, \u00e7a joue !" },
     vibGrid: { emoji: "\ud83d\udcf3", name: "Vibra", w: 390, h: 350, say: "pads calibr\u00e9s \u2014 touche-les !" },
-    micWin: { emoji: "\ud83c\udfa4", name: "Tuneur", w: 470, h: 480, say: "micro en \u00e9coute \u2014 chante juste, et r\u00e9duis l'appel pour cr\u00e9er en m\u00eame temps !" },
+    micWin: { emoji: "\ud83c\udfa4", name: "Tuneur", w: 470, h: 560, say: "poste micro en place \u2014 maintiens le gros bouton, la visionneuse peint les couleurs !" },
     echoWin: { emoji: "\ud83e\ude9e", name: "\u00c9cho", w: 340, h: 320, say: "fen\u00eatre \u00e9cho en poste \u2014 elle se met \u00e0 jour toute seule selon tes choix !" },
     butinWin: { emoji: "\ud83c\udf81", name: "Pillard", w: 420, h: 400, say: "coffre au butin ouvert — \u00e9coute, boucle, pose en sample !" },
     miniGame: { emoji: "\ud83d\ude97", name: "Miroir", w: 370, h: 300, corner: true, say: "route en miroir gar\u00e9e dans le coin \u2014 roule !" }
@@ -1630,7 +1647,15 @@
     const maxH = Math.min(role.h || 360, vh - 90);
     w.style.right = "auto";
     w.style.bottom = "auto";
-    const others = openWins().filter(o => o !== w).map(o => o.getBoundingClientRect());
+    const others = openWins().filter(o => o !== w).map(o => {
+      const r = o.getBoundingClientRect();
+      return { left: r.left, top: r.top, right: r.right !== undefined ? r.right : r.left + (r.width || 0), bottom: r.bottom !== undefined ? r.bottom : r.top + (r.height || 0) };
+    });
+    const cw = $("callWin");
+    if (cw && cw.classList.contains("open")) {
+      const r = cw.getBoundingClientRect();
+      others.push({ left: r.left, top: r.top, right: r.right !== undefined ? r.right : r.left + (r.width || 0), bottom: r.bottom !== undefined ? r.bottom : r.top + (r.height || 0) });
+    }
     function scan(winW, winH) {
       const step = 36;
       let best = null, bestScore = Infinity;
@@ -2505,21 +2530,28 @@
     }
   });
   $("micTrackSel").addEventListener("change", () => trackSelChange("micTrackSel"));
-  $("btnMic").addEventListener("click", async () => {
+  $("btnListen").addEventListener("click", async () => {
     if (micStream) {
       micStream.getTracks().forEach(tr => tr.stop());
       micStream = null;
       clearInterval(micTimer);
       micTimer = null;
-      $("btnMic").textContent = "🎤 Activer le micro";
+      $("btnListen").classList.remove("on");
+      $("btnListen").textContent = "🎵 Écoute auto-tune";
       $("micInfo").textContent = "Micro éteint";
-      status("🎤 Micro coupé");
+      status("🎤 Micro coupé — la visionneuse se replie");
       closeCall();
       return;
     }
+    $("btnListen").classList.add("on");
+    $("btnListen").textContent = "⏹ Couper l'écoute";
     await openMic();
+    if (!micStream) {
+      $("btnListen").classList.remove("on");
+      $("btnListen").textContent = "🎵 Écoute auto-tune";
+    }
   });
-  let holdActive = false;
+  let holdActive = false, holdT0 = 0;
   function startHoldRec() {
     holdChunks = [];
     holdRec = null;
@@ -2533,8 +2565,9 @@
     } catch (e) { holdRec = null; }
   }
   async function finishHold() {
-    $("btnHoldRec").classList.remove("held");
-    $("btnHoldRec").textContent = "🎤 Maintenir pour enregistrer";
+    $("btnMic").classList.remove("held");
+    $("btnMic").classList.remove("latched");
+    $("btnMic").textContent = "🎤 Maintenir pour enregistrer";
     if (typeof navigator.vibrate === "function") navigator.vibrate(10);
     const rec = holdRec;
     holdRec = null;
@@ -2546,7 +2579,8 @@
       micStream = null;
       clearInterval(micTimer);
       micTimer = null;
-      $("btnMic").textContent = "🎤 Activer le micro";
+      $("btnListen").classList.remove("on");
+      $("btnListen").textContent = "🎵 Écoute auto-tune";
       $("micInfo").textContent = "Micro éteint";
     }
     closeCall();
@@ -2567,21 +2601,36 @@
       } catch (e) { status("❌ Le butin n'a pas pu être décodé — retente un maintien !"); }
     } else status("Rien enregistré cette fois — maintiens le bouton plus longtemps !");
   }
-  function releaseHold() { if (!holdActive) return; holdActive = false; finishHold(); }
-  $("btnHoldRec").addEventListener("pointerdown", async () => {
-    if (holdActive) return;
+  $("btnMic").addEventListener("pointerdown", async () => {
+    if (holdActive) {
+      holdActive = false;
+      await finishHold();
+      return;
+    }
     holdActive = true;
-    $("btnHoldRec").classList.add("held");
-    $("btnHoldRec").textContent = "🎤 Ça enregistre… relâche pour le butin !";
+    holdT0 = Date.now();
+    $("btnMic").classList.add("held");
+    $("btnMic").textContent = "🎤 Ça enregistre… relâche pour le butin !";
     if (typeof navigator.vibrate === "function") navigator.vibrate(15);
     if (!micStream) await openMic();
     if (!holdActive) { await finishHold(); return; }
     startHoldRec();
-    status("🎤 Tu maintiens — enregistrement en cours ; relâche pour récupérer le butin avec la couleur du moment !");
+    status("🎤 Tu maintiens — enregistrement en cours ; relâche (ou reclique) pour récupérer le butin avec la couleur du moment !");
   });
-  $("btnHoldRec").addEventListener("pointerup", releaseHold);
-  $("btnHoldRec").addEventListener("pointerleave", releaseHold);
-  $("btnHoldRec").addEventListener("pointercancel", releaseHold);
+  function releaseMic() {
+    if (!holdActive) return;
+    if (holdT0 && Date.now() - holdT0 < 400) {
+      holdT0 = 0;
+      $("btnMic").classList.add("latched");
+      $("btnMic").textContent = "🔴 Verrouillé pressé — reclique pour récupérer le butin !";
+      status("🔒 Le Micro reste pressé tout seul — il continue d'enregistrer ; reclique pour récupérer le butin !");
+      return;
+    }
+    holdActive = false;
+    finishHold();
+  }
+  $("btnMic").addEventListener("pointerup", releaseMic);
+  $("btnMic").addEventListener("pointercancel", releaseMic);
   $("micDevSel").addEventListener("change", async () => {
     try { localStorage.setItem("rsMicDev", $("micDevSel").value); } catch (e) {}
     if (!micStream) return;
@@ -2606,6 +2655,23 @@
       };
     } catch (e) { micPermWatch = false; }
   }
+function dockCallWin() {
+    const cw = $("callWin");
+    if (!cw) return;
+    cw.style.bottom = "16px";
+    const vw = window.innerWidth, vh = window.innerHeight;
+    if (!vw || !vh) return;
+    const cwW = Math.min(350, vw * 0.9);
+    const cwLeft = vw - 16 - cwW;
+    for (const o of openWins()) {
+      const r = o.getBoundingClientRect();
+      const right = r.right !== undefined ? r.right : r.left + (r.width || 0);
+      if (right > cwLeft && r.top > vh * 0.3) {
+        cw.style.bottom = Math.min(vh - 120, Math.max(16, vh - r.top + 12)) + "px";
+        break;
+      }
+    }
+  }
   function openCall() {
     $("callWin").classList.remove("mini");
     $("callWin").classList.remove("reconst");
@@ -2613,6 +2679,7 @@
     stopReconstAmbience();
     showPav();
     $("callName").textContent = "🎨 Visionneuse de couleurs";
+    dockCallWin();
   }
   function closeCall() {
     $("callWin").classList.remove("open");
@@ -2685,6 +2752,7 @@
     $("callWin").classList.add("open");
     $("callWin").classList.add("reconst");
     $("callName").textContent = "🛳️ Reconstitution — couleurs du pavillon";
+    dockCallWin();
     showPav();
     startReconstAmbience();
   }
@@ -2706,14 +2774,14 @@
     const list = $("butinList");
     if (!list) return;
     const cnt = $("butinCount");
-    if (cnt) cnt.textContent = butins.length ? butins.length + " butin(s) au coffre" : "coffre vide — aborde le Micro !";
+    if (cnt) cnt.textContent = butins.length ? butins.length + " butin(s) au coffre" : "coffre vide — maintiens le Micro !";
     const lp = $("lootPay");
     if (lp) lp.textContent = "🪙 Recettes des butins : " + lootRecipe + " — ta part à par égal : " + lootPart + " (l\'autre moitié au port — pas une taxe, une co-propriété !)";
     list.innerHTML = "";
     if (!butins.length) {
       const empty = document.createElement("div");
       empty.style.cssText = "font-size:13px;color:var(--muted);padding:6px 0";
-      empty.textContent = " Coffre vide — aborde le Micro et fais-le chanter !";
+      empty.textContent = " Coffre vide — maintiens le Micro et fais-le chanter !";
       list.appendChild(empty);
       return;
     }
@@ -2935,7 +3003,8 @@
     micAN.fftSize = 1024;
     src.connect(micAN);
     const data = new Float32Array(micAN.fftSize);
-    $("btnMic").textContent = "⏹ Couper le micro";
+    $("btnListen").classList.add("on");
+    $("btnListen").textContent = "⏹ Couper l'écoute";
     $("micInfo").textContent = "🎤 Écoute… chante une note !";
     status("Pavillon « " + pav + " » reconnu — Micro connecté, à toi de chanter !");
     openCall();
