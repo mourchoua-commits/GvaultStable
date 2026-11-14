@@ -30,13 +30,14 @@
   aside{width:250px;min-width:230px;display:flex;flex-direction:column;gap:10px}
   aside h2{font-size:15px;margin:0 0 2px;color:var(--muted);letter-spacing:1px}
   #trackList{display:flex;flex-direction:column;gap:8px}
-  .track{border:1px solid var(--line);border-radius:14px;padding:8px 10px;background:var(--panel);cursor:pointer}
-  .track.sel{border-color:var(--gold);box-shadow:0 0 12px rgba(255,215,106,0.25)}
+  .track{border:1px solid var(--line);border-radius:14px;padding:10px 12px;background:var(--panel);cursor:pointer;transition:border-color .1s,box-shadow .1s,background .1s}
+  .track:hover{border-color:rgba(255,255,255,0.35)}
+  .track.sel{border-color:var(--gold);box-shadow:0 0 14px rgba(255,215,106,0.35);background:rgba(255,215,106,0.06)}
   .track .row1{display:flex;align-items:center;gap:8px}
-  .track .dot{width:12px;height:12px;border-radius:50%;flex:none}
-  .track .name{flex:1;font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .track .dot{width:14px;height:14px;border-radius:50%;flex:none}
+  .track .name{flex:1;font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-height:24px;display:flex;align-items:center}
   .track select{max-width:110px;background:#241a44;color:var(--text);border:1px solid var(--line);border-radius:8px;padding:3px 4px;font-size:12px}
-  .track .mini{padding:2px 7px;font-size:12px;border-radius:8px}
+  .track .mini{padding:4px 9px;font-size:13px;border-radius:9px}
   #fxPanel{border:1px solid var(--line);border-radius:14px;padding:10px;background:var(--panel);display:flex;flex-direction:column;gap:6px;font-size:13px}
   #fxPanel label{display:flex;align-items:center;gap:8px;color:var(--muted)}
   #fxPanel label span{width:52px}
@@ -232,6 +233,10 @@
   <div class="fwinBody">
     <div class="winRow">Piste : <select id="padTrackSel"></select>
       <label style="display:flex;gap:5px;align-items:center"><input id="padCap" type="checkbox" checked> 📝 capturer dans la piste</label>
+    </div>
+    <div class="winRow">🎨 Pinceau : <span id="padBrush" style="width:16px;height:16px;border-radius:50%;border:2px solid rgba(255,255,255,0.4);background:#888;display:inline-block;flex:none"></span>
+      <span id="padMiniGrid" style="display:flex;gap:3px;flex-wrap:wrap"></span>
+      <button id="padMoreCol" style="font-size:11px;padding:3px 8px">+ précis</button>
     </div>
     <div id="padGrid"></div>
     <div id="mixRow">
@@ -838,12 +843,14 @@
       const name = document.createElement("span");
       name.className = "name";
       name.textContent = t.name;
-      name.title = "Clique pour renommer";
-      name.addEventListener("click", e => {
-        e.stopPropagation();
-        const n = prompt("Nom de la piste :", t.name);
-        if (n) { t.name = n.slice(0, 24); renderTrackList(); save(); }
-      });
+      name.title = "Clique = sélectionner · double-clic ou ✏️ = renommer";
+      name.addEventListener("click", e => { e.stopPropagation(); selectTrack(i); });
+      name.addEventListener("dblclick", e => { e.stopPropagation(); renameTrack(i, t); });
+      const ren = document.createElement("button");
+      ren.className = "mini";
+      ren.textContent = "✏️";
+      ren.title = "Renommer la piste";
+      ren.addEventListener("click", e => { e.stopPropagation(); renameTrack(i, t); });
       const sel = document.createElement("select");
       for (const [cat, glabel] of [["mel", "🎸 Instruments"], ["sfx", "💥 Bruits & FX"]]) {
         const og = document.createElement("optgroup");
@@ -891,7 +898,7 @@
           save();
         }
       });
-      r1.append(dot, name, sel, mute, del);
+      r1.append(dot, name, sel, ren, mute, del);
       div.appendChild(r1);
       div.addEventListener("click", () => selectTrack(i));
       list.appendChild(div);
@@ -1049,6 +1056,8 @@
     renderPalette();
     $("colPick").value = col || "#ffffff";
     $("colHex").value = col || "";
+    const pb = $("padBrush");
+    if (pb) pb.style.background = col || "#888";
   }
   function applyBrushToSel() {
     if (selNote) { if (brushCol) selNote.col = brushCol; else delete selNote.col; renderNotes(); }
@@ -1379,6 +1388,27 @@
     const open = $("magicPad").classList.toggle("open");
     if (open) status("🌈 Touche une couleur ou dessine — ça se note dans la piste choisie !");
   });
+
+  const padMini = $("padMiniGrid");
+  for (const l of [55, 35]) for (let h = 0; h < 12; h++) {
+    const hex = hslToHex(h * 30, 80, l);
+    const b = document.createElement("button");
+    b.style.cssText = "width:16px;height:16px;border-radius:4px;border:1px solid rgba(255,255,255,0.25);cursor:pointer;padding:0";
+    b.style.background = hex;
+    b.title = hex;
+    b.addEventListener("click", () => setBrush(hex));
+    padMini.appendChild(b);
+  }
+  for (let i = 0; i <= 4; i++) {
+    const hex = rgbToHex(i * 63.75, i * 63.75, i * 63.75);
+    const b = document.createElement("button");
+    b.style.cssText = "width:16px;height:16px;border-radius:4px;border:1px solid rgba(255,255,255,0.25);cursor:pointer;padding:0";
+    b.style.background = hex;
+    b.title = hex;
+    b.addEventListener("click", () => setBrush(hex));
+    padMini.appendChild(b);
+  }
+  $("padMoreCol").addEventListener("click", () => openColorWin("brush", false));
 
   const dp = $("drawPad"), dctx = dp.getContext("2d");
   const CELL = 8;
