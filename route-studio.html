@@ -208,6 +208,7 @@
   <label class="filebtn">🎛️ Importer un son (WAV/MP3)<input id="fileAudio" type="file" accept="audio/*" hidden></label>
   <label class="filebtn">📂 Importer<input id="fileJson" type="file" accept=".json,application/json" hidden></label>
   <button id="btnMicOpen">🎤 Micro</button>
+  <button id="btnEchoOpen">🪞 Écho</button>
   <button id="btnMagic">🌈 Palette magique</button>
   <button id="btnMagicSys">🪐 Magic System</button>
   <button id="btnDraw">🎨 Dessinateur</button>
@@ -250,6 +251,17 @@
     </div>
     <div class="cg" id="cgHost"></div>
     <input class="chex" id="cgHex" placeholder="#code hexa précis (ex : #ff7e7e)">
+  </div>
+</div>
+<div id="echoWin" class="fwindow">
+  <div class="fwinHead"><span>🪞 Écho — tout ce que tu fais, reflété</span><button class="fwclose" data-close="echoWin">✖</button></div>
+  <div class="fwinBody">
+    <div class="winRow" id="echoTrack">🎼 …</div>
+    <div class="winRow" id="echoBrush">🎨 …</div>
+    <div class="winRow" id="echoNote">🎚️ …</div>
+    <div class="winRow" id="echoMic">🎤 …</div>
+    <div class="winRow" id="echoLoops">🔁 …</div>
+    <div class="winRow" id="echoStatus">💬 …</div>
   </div>
 </div>
 <div id="micWin" class="fwindow">
@@ -1136,6 +1148,7 @@
     if (pb) pb.style.background = col || "#888";
     document.querySelectorAll(".csw").forEach(b => b.classList.toggle("csel", !!col && b.title === col));
     if (typeof rememberColor === "function") rememberColor(col);
+    refreshEcho();
   }
   function applyBrushToSel() {
     if (selNote) { if (brushCol) selNote.col = brushCol; else delete selNote.col; renderNotes(); }
@@ -1430,6 +1443,7 @@
     instGrid: { emoji: "\ud83c\udfb9", name: "Instanto", w: 430, h: 370, say: "grille instant arm\u00e9e \u2014 clique, \u00e7a joue !" },
     vibGrid: { emoji: "\ud83d\udcf3", name: "Vibra", w: 390, h: 350, say: "pads calibr\u00e9s \u2014 touche-les !" },
     micWin: { emoji: "\ud83c\udfa4", name: "Tuneur", w: 400, h: 310, say: "micro en \u00e9coute \u2014 chante juste !" },
+    echoWin: { emoji: "\ud83e\ude9e", name: "\u00c9cho", w: 340, h: 320, say: "fen\u00eatre \u00e9cho en poste \u2014 elle se met \u00e0 jour toute seule selon tes choix !" },
     miniGame: { emoji: "\ud83d\ude97", name: "Miroir", w: 370, h: 300, corner: true, say: "route en miroir gar\u00e9e dans le coin \u2014 roule !" }
   };
   function openWins() {
@@ -2356,6 +2370,25 @@
     }, 90);
   });
 
+  function refreshEcho() {
+    const w = $("echoWin");
+    if (!w || !w.classList.contains("open")) return;
+    const t = tracks[selTrack];
+    $("echoTrack").textContent = "🎼 Piste : " + t.name + " · " + instLabelOf(t) + (t.muted ? " · muette" : "");
+    $("echoBrush").textContent = "🎨 Pinceau : " + (brushCol || "aucun — touche la palette magique !");
+    $("echoNote").textContent = "🎚️ Tempo : " + $("tempo").value + (freeMode ? " · 🎲 mode libre" : " · gamme accordée") + (selNote != null ? " · 🎵 note sélectionnée" : "");
+    $("echoMic").textContent = micStream ? "🎤 " + $("micInfo").textContent : "🎤 Micro éteint";
+    $("echoLoops").textContent = "🔁 Monde : " + (worldLoop ? "ON" : "off") + " · Dessin : " + (drawLoop ? "ON" : "off");
+    $("echoStatus").textContent = "💬 " + $("status").textContent;
+  }
+  setInterval(refreshEcho, 400);
+  $("btnEchoOpen").addEventListener("click", () => {
+    syncWinSels();
+    const open = $("echoWin").classList.toggle("open");
+    if (open) agentWake("echoWin", "fenêtre écho en poste — elle se met à jour toute seule selon tes choix !");
+    refreshEcho();
+  });
+
   function autoCorrelate(buf, sampleRate) {
     let SIZE = buf.length, rms = 0;
     for (let i = 0; i < SIZE; i++) { const v = buf[i]; rms += v * v; }
@@ -2432,6 +2465,7 @@
     $("fxVol").value = Math.round(t.fx.vol * 100);
     $("fxEcho").value = Math.round(t.fx.echo * 100);
     $("fxCut").value = Math.round(t.fx.cut * 100);
+    refreshEcho();
   }
 
   $("btnAddTrack").addEventListener("click", () => addTrack("piano"));
@@ -2600,7 +2634,7 @@
     }
   });
 
-  function status(msg) { $("status").textContent = msg; }
+  function status(msg) { $("status").textContent = msg; refreshEcho(); }
 
   function encodeWav(buffer) {
     const nc = buffer.numberOfChannels, sr = buffer.sampleRate, len = buffer.length;
