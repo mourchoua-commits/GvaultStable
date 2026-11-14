@@ -66,7 +66,9 @@
   #colHex{width:80px;background:rgba(0,0,0,0.3);border:1px solid var(--line);border-radius:8px;color:var(--gold);padding:4px 6px;font-size:12px}
   .fwindow{position:fixed;right:16px;bottom:64px;width:380px;max-width:calc(100vw - 32px);min-width:260px;min-height:150px;
     background:var(--panel);border:1px solid var(--gold);border-radius:14px;z-index:60;display:none;
-    box-shadow:0 12px 40px rgba(0,0,0,0.6);resize:both;overflow:hidden}
+    box-shadow:0 12px 40px rgba(0,0,0,0.6);overflow:hidden}
+  .fwgrip{position:absolute;right:2px;bottom:2px;width:26px;height:26px;display:flex;align-items:center;justify-content:center;
+    color:var(--gold);cursor:nwse-resize;font-size:16px;touch-action:none;z-index:5;background:rgba(0,0,0,0.3);border-radius:8px}
   .fwindow.open{display:flex;flex-direction:column}
   .fwinHead{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 12px;border-bottom:1px solid var(--line);font-size:13px;color:var(--gold)}
   .fwclose{background:none;border:none;color:var(--muted);cursor:pointer;font-size:14px}
@@ -83,6 +85,12 @@
   #drawPad{width:100%;border:1px solid var(--line);border-radius:10px;background:rgba(0,0,0,0.35);cursor:crosshair;touch-action:none;margin-top:12px;display:block}
   #drawRow{display:flex;gap:8px;align-items:center;margin-top:10px;flex-wrap:wrap;font-size:13px;color:var(--muted)}
   .fwinHead{cursor:move;user-select:none}
+  #instCells{display:grid;grid-template-columns:repeat(12,1fr);gap:4px}
+  .icell{aspect-ratio:1;border-radius:8px;border:1px solid rgba(255,255,255,0.15);cursor:pointer;padding:0;min-width:0;transition:transform .08s,box-shadow .08s}
+  .icell.on{transform:scale(1.15);box-shadow:0 0 12px rgba(255,255,255,0.85)}
+  #vibPads{display:grid;grid-template-columns:repeat(8,1fr);gap:6px}
+  .vpad{aspect-ratio:1;border-radius:10px;border:1px solid rgba(255,255,255,0.2);cursor:pointer;padding:0;font-size:10px;color:rgba(0,0,0,0.65);font-weight:700;min-width:0;transition:transform .1s,box-shadow .1s}
+  .vpad.on{transform:scale(1.1);box-shadow:0 0 14px rgba(255,255,255,0.85)}
   #playhead{position:absolute;top:0;bottom:0;width:2px;background:rgba(255,255,255,0.85);box-shadow:0 0 8px rgba(255,255,255,0.8);pointer-events:none;display:none}
   #notePanel{border:1px solid var(--gold);border-radius:14px;padding:10px 14px;background:var(--panel);
     display:flex;gap:14px;align-items:center;flex-wrap:wrap;font-size:13px}
@@ -164,10 +172,26 @@
   <label class="filebtn">🎛️ Importer un son (WAV/MP3)<input id="fileAudio" type="file" accept="audio/*" hidden></label>
   <label class="filebtn">📂 Importer<input id="fileJson" type="file" accept=".json,application/json" hidden></label>
   <button id="btnMagic">🌈 Palette magique</button>
+  <button id="btnInst">🎹 Grille instant</button>
+  <button id="btnVib">📳 Vibrations</button>
   <button id="btnMini">🚗 Mini jeu</button>
   <a class="hublink" href="jeux.html">🎮 Mes jeux</a>
   <span id="status"></span>
 </footer>
+<div id="instGrid" class="fwindow">
+  <div class="fwinHead"><span>🎹 Grille instant — clique, ça joue tout de suite (pas besoin de GO)</span><button class="fwclose" data-close="instGrid">✖</button></div>
+  <div class="fwinBody">
+    <div id="instCells"></div>
+    <div style="margin-top:8px;font-size:12px;color:var(--muted)">💡 Glisse sur les cases pour arpéger — chaque ligne = une note, chaque hauteur a SA couleur</div>
+  </div>
+</div>
+<div id="vibGrid" class="fwindow">
+  <div class="fwinHead"><span>📳 Vibrations — touche les pads</span><button class="fwclose" data-close="vibGrid">✖</button></div>
+  <div class="fwinBody">
+    <div id="vibPads"></div>
+    <div id="vibNote" style="margin-top:8px;font-size:12px;color:var(--muted)"></div>
+  </div>
+</div>
 <div id="miniGame" class="fwindow">
   <div class="fwinHead"><span>🚗 Route Miroir — mini fenêtre (tire le bord pour redimensionner)</span><button class="fwclose" data-close="miniGame">✖</button></div>
   <div class="fwinBody"></div>
@@ -1146,6 +1170,23 @@
       w.style.bottom = "auto";
     });
     head.addEventListener("pointerup", () => { wdrag = null; });
+    const grip = document.createElement("div");
+    grip.className = "fwgrip";
+    grip.textContent = "⤘";
+    w.appendChild(grip);
+    let rs = null;
+    grip.addEventListener("pointerdown", e => {
+      e.stopPropagation();
+      const r = w.getBoundingClientRect();
+      rs = { x: e.clientX, y: e.clientY, w: r.width, h: r.height };
+      grip.setPointerCapture(e.pointerId);
+    });
+    grip.addEventListener("pointermove", e => {
+      if (!rs) return;
+      w.style.width = clamp(rs.w + e.clientX - rs.x, 260, window.innerWidth - 20) + "px";
+      w.style.height = clamp(rs.h + e.clientY - rs.y, 150, window.innerHeight - 20) + "px";
+    });
+    grip.addEventListener("pointerup", () => { rs = null; });
   });
 
   const HUES = [0, 30, 60, 90, 120, 150, 180, 210, 240, 270, 300, 330];
@@ -1319,12 +1360,90 @@
     else if (p > 1.05) sweep = null;
   })();
 
+  function instMidi(r) { return tracks[selTrack] ? rowToMidi(tracks[selTrack], r) : 60; }
+  function buildInstGrid() {
+    const g = $("instCells");
+    g.innerHTML = "";
+    for (let r = melRows() - 1; r >= 0; r--) {
+      for (let c = 0; c < 12; c++) {
+        const b = document.createElement("button");
+        b.className = "icell";
+        b.style.background = "hsl(" + clamp((instMidi(r) - 48) * 8, 0, 330) + ",75%,55%)";
+        b.dataset.row = r;
+        g.appendChild(b);
+      }
+    }
+  }
+  let instDragging = false, instLastRow = null;
+  function instHit(e) {
+    const el = document.elementFromPoint(e.clientX, e.clientY);
+    const cell = el && el.closest ? el.closest(".icell") : null;
+    if (!cell) return;
+    const r = Number(cell.dataset.row);
+    if (r !== instLastRow) {
+      padVoice(AC.currentTime, instMidi(r), 0.4);
+      if (typeof navigator.vibrate === "function") navigator.vibrate(12);
+      instLastRow = r;
+    }
+    cell.classList.add("on");
+    setTimeout(() => cell.classList.remove("on"), 180);
+  }
+  $("instCells").addEventListener("pointerdown", e => {
+    e.preventDefault();
+    ensureAudio();
+    instDragging = true;
+    instLastRow = null;
+    instHit(e);
+  });
+  $("instCells").addEventListener("pointermove", e => { if (instDragging) instHit(e); });
+  window.addEventListener("pointerup", () => { instDragging = false; instLastRow = null; });
+  $("btnInst").addEventListener("click", () => {
+    buildInstGrid();
+    const open = $("instGrid").classList.toggle("open");
+    if (open) status("🎹 Clique ou glisse sur les cases : ça joue instantanément, pas besoin de GO !");
+  });
+
+  const VIB_ROWS = [
+    { name: "Long", hue: 0, pattern: ms => [ms * 4] },
+    { name: "Double", hue: 120, pattern: ms => [ms, 60, ms] },
+    { name: "Triple", hue: 200, pattern: ms => [ms, 50, ms, 50, ms] },
+    { name: "Roulement", hue: 280, pattern: ms => { const p = []; for (let i = 0; i < 6; i++) p.push(Math.round(ms / 2), 30); return p; } }
+  ];
+  const vibPads = $("vibPads");
+  VIB_ROWS.forEach((rowDef, ri) => {
+    for (let c = 0; c < 8; c++) {
+      const b = document.createElement("button");
+      b.className = "vpad";
+      b.style.background = "hsl(" + rowDef.hue + ",70%," + (60 - c * 3) + "%)";
+      b.textContent = rowDef.name;
+      b.addEventListener("pointerdown", e => {
+        e.preventDefault();
+        ensureAudio();
+        const ms = Math.round(90 * Math.pow(0.85, c));
+        if (typeof navigator.vibrate === "function") navigator.vibrate(rowDef.pattern(ms));
+        padVoice(AC.currentTime, instMidi(ri), 0.25);
+        b.classList.add("on");
+        setTimeout(() => b.classList.remove("on"), 200);
+      });
+      vibPads.appendChild(b);
+    }
+  });
+  $("btnVib").addEventListener("click", () => {
+    const ok = typeof navigator.vibrate === "function";
+    $("vibNote").textContent = ok
+      ? "💡 Chaque ligne = un motif (Long, Double, Triple, Roulement), plus à droite = plus rapide. Teste sur mobile !"
+      : "⚠️ Ton navigateur ne supporte pas les vibrations (surtout Android sur mobile) — les pads jouent quand même le son.";
+    const open = $("vibGrid").classList.toggle("open");
+    if (open) status("📳 Touche un pad : motif de vibration + son !");
+  });
+
   function selectTrack(i) {
     selTrack = i;
     selNote = null;
     $("notePanel").classList.add("hidden");
     renderTrackList();
     renderRoll();
+    if ($("instGrid").classList.contains("open")) buildInstGrid();
     const t = tracks[i];
     $("fxVol").value = Math.round(t.fx.vol * 100);
     $("fxEcho").value = Math.round(t.fx.echo * 100);
