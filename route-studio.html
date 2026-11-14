@@ -99,7 +99,8 @@
   #mixSwatch{width:26px;height:26px;border-radius:50%;border:2px solid rgba(255,255,255,0.3);background:#222;flex:none}
   #mixUse{display:none}
   #mixUse.show{display:inline-block}
-  #drawPad{width:100%;border:1px solid var(--line);border-radius:10px;background:rgba(0,0,0,0.35);cursor:crosshair;touch-action:none;margin-top:12px;display:block}
+  #drawWin{width:680px}
+  #drawPad{width:100%;height:auto;border:1px solid var(--line);border-radius:10px;background:rgba(0,0,0,0.35);cursor:crosshair;touch-action:none;margin-top:12px;display:block}
   #drawRow{display:flex;gap:10px;align-items:center;margin-top:12px;flex-wrap:wrap;font-size:13px;color:var(--muted)}
   .fwinHead{cursor:move;user-select:none}
   #instCells{display:grid;grid-template-columns:repeat(12,1fr);gap:4px}
@@ -201,6 +202,7 @@
   <button id="btnMicOpen">🎤 Micro</button>
   <button id="btnMagic">🌈 Palette magique</button>
   <button id="btnPadGrid">🌈 Grille magique</button>
+  <button id="btnDraw">🎨 Dessinateur</button>
   <button id="btnInst">🎹 Grille instant</button>
   <button id="btnVib">📳 Vibrations</button>
   <button id="btnMini">🚗 Mini jeu</button>
@@ -255,6 +257,19 @@
   <div class="fwinHead"><span>🚗 Route Miroir — mini fenêtre (tire le bord pour redimensionner)</span><button class="fwclose" data-close="miniGame">✖</button></div>
   <div class="fwinBody"></div>
 </div>
+<div id="drawWin" class="fwindow">
+  <div class="fwinHead"><span>🎨 Dessinateur — chaque couleur = SA note 🎵</span><button class="fwclose" data-close="drawWin">✖</button></div>
+  <div class="fwinBody">
+    <div id="drawRow">
+      <button id="btnPlayDraw">▶️ Jouer le dessin</button>
+      <button id="btnClearDraw">🗑️ Effacer</button>
+      <label style="display:flex;gap:5px;align-items:center"><input id="liveDraw" type="checkbox" checked> jouer en dessinant</label>
+      <label style="display:flex;gap:5px;align-items:center"><input id="drawCap" type="checkbox" checked> 📝 capturer</label>
+    </div>
+    <canvas id="drawPad" width="640" height="400"></canvas>
+    <div style="margin-top:8px;font-size:12px;color:var(--muted)">💡 Grande grille 80×50 ! Chaque couleur = SA note : fréquence de la lumière ÷ 2⁴⁰ (40 octaves !). Rouge ≈ 423 Hz → violet ≈ 717 Hz, les rapports physiques sont gardés. Gauche = début. Agrandis la fenêtre avec ⤘ !</div>
+  </div>
+</div>
 <div id="padWin" class="fwindow">
   <div class="fwinHead"><span>🌈 Grille magique — touche les couleurs 🎵</span><button class="fwclose" data-close="padWin">✖</button></div>
   <div class="fwinBody">
@@ -270,7 +285,7 @@
   </div>
 </div>
 <div id="magicPad" class="fwindow">
-  <div class="fwinHead"><span>🌈 Palette magique — dessine tes notes 🎨</span><button class="fwclose" data-close="magicPad">✖</button></div>
+  <div class="fwinHead"><span>🌈 Palette magique — pinceau & couleurs 🎨</span><button class="fwclose" data-close="magicPad">✖</button></div>
   <div class="fwinBody">
     <div class="winRow">🎨 Pinceau : <span id="padBrush" style="width:16px;height:16px;border-radius:50%;border:2px solid rgba(255,255,255,0.4);background:#888;display:inline-block;flex:none"></span>
       <span id="padMiniGrid" style="display:flex;gap:3px;flex-wrap:wrap"></span>
@@ -280,14 +295,6 @@
     <div class="cg" id="padPrecGrid" style="margin-top:8px"></div>
     <label style="display:flex;gap:5px;align-items:center;margin-top:10px;font-size:12px;color:var(--muted)"><input id="padInv" type="checkbox"> 🔄 inversée</label>
     <input class="chex" id="padPrecHex" placeholder="#code hexa précis (ex : #ff7e7e)">
-    <div id="drawRow">
-      <button id="btnPlayDraw">▶️ Jouer le dessin</button>
-      <button id="btnClearDraw">🗑️ Effacer</button>
-      <label style="display:flex;gap:5px;align-items:center"><input id="liveDraw" type="checkbox" checked> jouer en dessinant</label>
-      <label style="display:flex;gap:5px;align-items:center"><input id="drawCap" type="checkbox" checked> 📝 capturer</label>
-    </div>
-    <canvas id="drawPad" width="640" height="400"></canvas>
-    <div style="margin-top:8px;font-size:12px;color:var(--muted)">💡 Dessine ! Chaque couleur = SA note : fréquence de la lumière ÷ 2⁴⁰ (40 octaves !). Rouge ≈ 423 Hz, violet ≈ 717 Hz — les rapports physiques sont gardés. Gauche = début.</div>
   </div>
 </div>
 <script>
@@ -1432,12 +1439,16 @@
   });
   $("btnMagic").addEventListener("click", () => {
     const open = $("magicPad").classList.toggle("open");
-    if (open) status("🎨 Choisis tes couleurs et dessine — la grande grille est dans sa fenêtre 🌈 !");
+    if (open) status("🎨 Pinceau et sélecteur ici — la grande grille 🌈 et le dessinateur 🖼️ ont leurs fenêtres !");
   });
   $("btnPadGrid").addEventListener("click", () => {
     fillTrackSel("padTrackSel");
     const open = $("padWin").classList.toggle("open");
     if (open) status("🌈 Touche les couleurs — clair = aigu, foncé = grave ! Deux en même temps = mélange.");
+  });
+  $("btnDraw").addEventListener("click", () => {
+    const open = $("drawWin").classList.toggle("open");
+    if (open) status("🎨 Dessine ! Chaque couleur = SA note (lumière ÷ 2⁴⁰). ▶️ pour balayer ton dessin !");
   });
 
   const padMini = $("padMiniGrid");
@@ -1595,7 +1606,7 @@
     const RW = dp.width / CELL, rows = dp.height / CELL;
     const total = 16 * stepDur();
     const cols = new Map();
-    for (const [k] of drawn) {
+    for (const [k, col] of drawn) {
       const [cx, cy] = k.split(",").map(Number);
       if (!cols.has(cx)) cols.set(cx, []);
       cols.get(cx).push([cy, col]);
