@@ -2635,8 +2635,8 @@
       micTimer = null;
       $("btnMic").textContent = "🎤 Activer le micro";
       $("micInfo").textContent = "Micro éteint";
-      closeCall();
     }
+    closeCall();
     await harvestButin();
     if (!callButin) status("🛏️ Le Micro rejoint l'équipage pour la prochaine session — micro coupé !");
   });
@@ -2678,11 +2678,8 @@
   });
   async function openMic() {
     if (window.isSecureContext === false) {
-      $("micInfo").textContent = "🔒 Le micro exige une page https — ouvre la version en ligne sur raw.githack.com (le fichier local en double-clic ne peut pas l'avoir) !";
-      status("🔒 Micro indisponible hors https — ouvre la version en ligne !");
-      openCall(true);
-      $("callNote").textContent = "🌊 Calme plat — le Micro exige une page https : ouvre la version en ligne !";
-      $("callTimer").textContent = "hors ligne";
+      $("micInfo").textContent = "🌊 Calme plat — le Micro exige une page https : ouvre la version en ligne sur raw.githack.com (le fichier local en double-clic ne peut pas l'avoir) !";
+      status("🌊 Calme plat — Micro indisponible hors https : ouvre la version en ligne !");
       return;
     }
     try {
@@ -2690,12 +2687,9 @@
       micStream = await navigator.mediaDevices.getUserMedia(dev ? { audio: { deviceId: { exact: dev } } } : { audio: true });
     } catch (err) {
       if (err && (err.name === "NotAllowedError" || err.name === "SecurityError")) {
-        $("micInfo").textContent = "🔒 Micro refusé par le navigateur ! Barre d'adresse → icône 🔒/🎛 → Micro : Autoriser → puis le micro se relancera TOUT SEUL !";
+        $("micInfo").textContent = "🔒 Le Micro refuse de monter à bord ! Barre d'adresse → icône 🔒/🎙 → Micro : Autoriser → il montera TOUT SEUL !";
         status("🔒 Micro bloqué — autorise-le dans la barre d'adresse, je le relance automatiquement après !");
         watchMicPerm();
-        openCall(true);
-        $("callNote").textContent = "🔒 Le Micro refuse de monter à bord ! Barre d'adresse → Micro : Autoriser !";
-        $("callTimer").textContent = "en attente d'autorisation…";
       } else status("❌ Micro refusé ou indisponible : " + err.message);
       return;
     }
