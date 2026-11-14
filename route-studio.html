@@ -172,6 +172,8 @@
   #btnCallLoot{display:none;margin-top:10px;width:100%;padding:10px;border-radius:999px;border:1px solid rgba(255,255,255,0.3);color:#fff;font-weight:bold;font-size:13px;cursor:pointer;position:relative;z-index:2;background:linear-gradient(90deg,#8a6d1d,#5c4a13)}
   #callWin.open:not(.reconst) #btnCallLoot{display:block}
   #btnCallSample{background:linear-gradient(90deg,#8a5cc9,#5c3a9e)}
+  #btnHoldRec{width:100%;margin-top:8px;padding:12px;border-radius:999px;border:1px solid rgba(110,231,255,0.4);background:linear-gradient(90deg,#1d5c7a,#123a52);color:#fff;font-weight:bold;font-size:13px;cursor:pointer;user-select:none;-webkit-user-select:none;touch-action:none;transition:transform 0.08s,filter 0.08s}
+  #btnHoldRec:active,#btnHoldRec.held{transform:scale(0.95) translateY(2px);filter:brightness(1.3);box-shadow:0 0 16px rgba(110,231,255,0.5)}
   .pad,.csw{transition:transform .12s,filter .12s}
   .pad:hover,.csw:hover{filter:brightness(1.3);transform:scale(1.07)}
   #notePanel{border:1px solid var(--gold);border-radius:14px;padding:10px 14px;background:var(--panel);
@@ -335,6 +337,7 @@
     <div class="winRow">🎤 Micro : <select id="micDevSel" title="Choisis le micro que tu veux !"></select></div>
     <div class="winRow">🏴‍☠️ Pavillon : <select id="pavSel" title="L'équipage choisit SON pavillon — on ne demande jamais, on débarque !"><option>Crâne rieur</option><option>Sabre d'abordage</option><option>Vague noire</option><option>Enfants Perdus</option><option>Cœur de Marée</option><option>Kraken chantant</option></select></div>
     <button id="btnMic">🎤 Activer le micro</button>
+    <button id="btnHoldRec" title="Maintiens appuyé : le Micro enregistre ; relâche : le butin est co-détenu à par égal avec le port !">🎙️ Maintenir pour enregistrer</button>
     <div id="micInfo" style="margin-top:10px;font-size:13px;color:var(--muted)">Micro éteint</div>
     <div style="font-size:12px;color:var(--gold);margin:12px 0 6px">🎁 Le butin</div>
     <div id="butinRow" class="winRow" style="display:none;margin:0 0 8px;gap:8px;align-items:center;flex-wrap:wrap">
@@ -373,6 +376,7 @@
   <div class="fwinHead"><span>🎁 Coffre au butin — tous les chants capturés</span><button class="fwclose" data-close="butinWin">✖</button></div>
   <div class="fwinBody">
     <div id="butinList"></div>
+    <div id="lootPay" style="margin-top:8px;font-size:12px;color:var(--gold)"></div>
     <div style="margin-top:8px;font-size:12px;color:var(--muted)">💡 ➕ pose le chant comme sample sur la piste sélectionnée — tes notes de la grille le joueront ! (les butins vivent pendant la session)</div>
   </div>
 </div>
@@ -2486,7 +2490,7 @@
 
   let micStream = null, micAN = null, micTimer = null, micLastMidi = null, micPreT = 0;
   let callRec = null, callChunks = [], callButin = null, butinLoop = false, butinSrc = null;
-  let butins = [], butinSeq = 0, butinPlay = null;
+  let butins = [], butinSeq = 0, butinPlay = null, lootRecipe = 0, lootPart = 0;
   $("btnMicOpen").addEventListener("click", () => {
     syncWinSels();
     const open = $("micWin").classList.toggle("open");
@@ -2516,6 +2520,37 @@
     }
     await openMic();
   });
+  let holdActive = false;
+  async function finishHold() {
+    $("btnHoldRec").classList.remove("held");
+    $("btnHoldRec").textContent = "🎙️ Maintenir pour enregistrer";
+    if (typeof navigator.vibrate === "function") navigator.vibrate(10);
+    if (!micStream) { status("Le Micro n'a pas embarqué — rien à partager cette fois, hisse le pavillon d'abord !"); return; }
+    micStream.getTracks().forEach(tr => tr.stop());
+    micStream = null;
+    clearInterval(micTimer);
+    micTimer = null;
+    $("btnMic").textContent = "🎤 Activer le micro";
+    $("micInfo").textContent = "Micro éteint";
+    closeCall();
+    await harvestButin();
+    if (callButin) status("🤝 Butin récupéré au relâché — à toi et au port, à la même hauteur : co-propriété à par égal, pas une taxe !");
+    else status("Rien enregistré cette fois — maintiens le bouton plus longtemps !");
+  }
+  function releaseHold() { if (!holdActive) return; holdActive = false; finishHold(); }
+  $("btnHoldRec").addEventListener("pointerdown", async () => {
+    if (holdActive) return;
+    holdActive = true;
+    $("btnHoldRec").classList.add("held");
+    $("btnHoldRec").textContent = "🎙️ Ça enregistre… relâche pour partager le butin !";
+    if (typeof navigator.vibrate === "function") navigator.vibrate(15);
+    if (!micStream) await openMic();
+    if (!holdActive) { await finishHold(); return; }
+    status("🎙️ Tu maintiens le Micro — enregistrement en cours ; relâche pour récupérer le butin, co-détenu à par égal avec le port !");
+  });
+  $("btnHoldRec").addEventListener("pointerup", releaseHold);
+  $("btnHoldRec").addEventListener("pointerleave", releaseHold);
+  $("btnHoldRec").addEventListener("pointercancel", releaseHold);
   $("micDevSel").addEventListener("change", async () => {
     try { localStorage.setItem("rsMicDev", $("micDevSel").value); } catch (e) {}
     if (!micStream) return;
@@ -2661,6 +2696,8 @@
     if (!list) return;
     const cnt = $("butinCount");
     if (cnt) cnt.textContent = butins.length ? butins.length + " butin(s) au coffre" : "coffre vide — aborde le Micro !";
+    const lp = $("lootPay");
+    if (lp) lp.textContent = "🪙 Recettes des butins : " + lootRecipe + " — ta part à par égal : " + lootPart + " (l\'autre moitié au port — pas une taxe, une co-propriété !)";
     list.innerHTML = "";
     if (!butins.length) {
       const empty = document.createElement("div");
@@ -2710,8 +2747,10 @@
     src.start();
     butinSrc = src;
     butinPlay = { idx, loop };
+    lootRecipe += 2;
+    lootPart += 1;
     renderButins();
-    status(loop ? "🔁 « " + b.name + " » tourne en boucle !" : "▶️ Lecture de « " + b.name + " » !");
+    status((loop ? "🔁 « " + b.name + " » tourne en boucle" : "▶️ Lecture de « " + b.name + " »") + " — recette +2 🪙, ta part à par égal : +1 !");
   }
   function addButinToTrack(buffer, name) {
     if (!buffer) return;
@@ -2886,7 +2925,10 @@
     src.connect(master);
     src.start();
     butinSrc = src;
-    status(butinLoop ? "🔁 Le butin tourne en boucle !" : "▶️ Lecture du butin !");
+    lootRecipe += 2;
+    lootPart += 1;
+    renderButins();
+    status((butinLoop ? "🔁 Le butin tourne en boucle" : "▶️ Lecture du butin") + " — recette +2 🪙, ta part à par égal : +1 !");
   });
   $("btnButinLoop").addEventListener("click", () => {
     butinLoop = !butinLoop;
