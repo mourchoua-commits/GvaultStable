@@ -367,6 +367,7 @@
     </div>
     <div class="cg" id="cgHost"></div>
     <input class="chex" id="cgHex" placeholder="#code hexa précis (ex : #ff7e7e)">
+    <div class="winRow" style="margin-top:6px;gap:8px"><button id="colLinkDraw">🖼️ Dessinateur</button><button id="colLinkPad">🌈 Palette magique</button></div>
   </div>
 </div>
 <div id="echoWin" class="fwindow">
@@ -378,6 +379,7 @@
     <div class="winRow" id="echoMic">🎤 …</div>
     <div class="winRow" id="echoLoops">🔁 …</div>
     <div class="winRow" id="echoMagic">✨ …</div>
+    <div class="winRow" style="margin-top:6px;gap:8px"><button id="echoLinkMic">🎤 Micro</button><button id="echoLinkAvant">🔮 Sachants</button></div>
     <div class="winRow" id="echoStatus">💬 …</div>
   </div>
 </div>
@@ -386,13 +388,14 @@
   <div class="fwinBody">
     <canvas id="nasaCanvas" width="430" height="250"></canvas>
     <div id="nasaTel">🛰️ SONDE ROUTESTUDIO-1 · en veille…</div>
+    <div class="winRow" style="margin-top:6px;gap:8px"><button id="nasaLinkAvant">🔮 Sachants</button><button id="nasaLinkFort">🗄️ Coffre fort</button></div>
     <div id="nasaTip">La sonde transforme la COULEUR ENTENDUE en espace profond : nébuleuses, étoiles, planète à anneaux et comètes suivent ta voix et le studio en direct.</div>
   </div>
 </div>
 <div id="prlevWin" class="fwindow">
   <div class="fwinHead"><span>🗄️ Le coffre fort — prélèvements entreposés</span><button class="fwclose" data-close="prlevWin">✖</button></div>
   <div class="fwinBody">
-    <div class="winRow" style="margin:0 0 8px"><button id="btnButinLink">🎁 Coffre au butin</button><span id="prelevButinCount" style="font-size:12px;color:#8fb8d0"></span></div>
+    <div class="winRow" style="margin:0 0 8px"><button id="btnButinLink">🎁 Coffre au butin</button><button id="prlevLinkMic">🎤 Micro</button><button id="prlevLinkGate">🪝 Passerelle</button><span id="prelevButinCount" style="font-size:12px;color:#8fb8d0"></span></div>
     <div id="prelevList"></div>
     <div id="prelevTip">Chaque prélèvement MIXTE (extérieur + intérieur, maintien du Micro) est entreposé DANS le navigateur (IndexedDB) — ferme, rouvre, reviens demain : ils sont toujours là, relisibles !</div>
   </div>
@@ -401,6 +404,7 @@
   <div class="fwinHead"><span>🔮 Avant-sachants</span><button class="fwclose" data-close="avantWin">✖</button></div>
   <div class="fwinBody">
     <div id="avantList"></div>
+    <div class="winRow" style="margin-top:6px;gap:8px"><button id="avantLinkNasa">🛰️ NASA</button><button id="avantLinkGate">🪝 Passerelle</button><button id="avantLinkMic">🎤 Micro</button></div>
     <div id="avantTip">Les avant-sachants annoncent chaque événement JUSTE AVANT qu’il arrive : fenêtres, Passerelle, butin, boucles, GO — rien ne surprend l’équipage !</div>
   </div>
 </div>
@@ -409,6 +413,7 @@
   <div class="fwinBody">
     <div id="gateState">⚓ Le port observe…</div>
     <button id="gateBtn">🪩 Aborder le port — demander au navigateur</button>
+    <div class="winRow" style="margin:0;gap:8px;align-items:center"><button id="gateLinkMic">🎤 Poste micro</button><button id="gateLinkAvant">🔮 Sachants</button></div>
     <div id="gateTip">La Passerelle se déploie toute seule quand tu maintiens le Micro 3 secondes. On ne force JAMAIS le port : on frappe à la porte, lui décide.</div>
   </div>
 </div>
@@ -446,6 +451,11 @@
         <button id="btnPrelevOpen">🗄️ Coffre fort</button>
         <span id="butinCount" style="font-size:12px;color:#8fb8d0">coffre vide — maintiens le Micro !</span>
       </div>
+      <div class="winRow" style="margin:0;gap:8px;align-items:center">
+        <button id="micLinkGate">🪝 Passerelle</button>
+        <button id="micLinkAvant">🔮 Sachants</button>
+        <button id="micLinkNasa">🛰️ NASA</button>
+      </div>
       <div class="micTip">💡 Maintiens le GROS bouton (ou clique vite : il reste pressé tout seul) — ça prélève l'extérieur (micro) ET l'intérieur (studio) en un seul prélèvement, et la visionneuse peint les couleurs en direct ; relâche ou reclique → le butin part au coffre, teinté de la couleur du moment, co-détenu à par égal avec le port. 🎵 Écoute = l'auto-tune accorde ta voix sans enregistrer.</div>
     </div>
   </div>
@@ -469,7 +479,7 @@
 <div id="butinWin" class="fwindow">
   <div class="fwinHead"><span>🎁 Coffre au butin — tous les chants capturés</span><button class="fwclose" data-close="butinWin">✖</button></div>
   <div class="fwinBody">
-    <div class="winRow" style="margin:0 0 8px"><button id="btnFortLink">🗄️ Coffre fort</button><span id="butinFortCount" style="font-size:12px;color:#8fb8d0"></span></div>
+    <div class="winRow" style="margin:0 0 8px"><button id="btnFortLink">🗄️ Coffre fort</button><button id="butinLinkMic">🎤 Micro</button><button id="butinLinkNasa">🛰️ NASA</button><span id="butinFortCount" style="font-size:12px;color:#8fb8d0"></span></div>
     <div id="butinList"></div>
     <div id="lootPay" style="margin-top:8px;font-size:12px;color:var(--gold)"></div>
     <div style="margin-top:8px;font-size:12px;color:var(--muted)">💡 ➕ pose le chant comme sample sur la piste sélectionnée — tes notes de la grille le joueront ! (les butins vivent pendant la session)</div>
@@ -490,6 +500,7 @@
       <label style="display:flex;gap:5px;align-items:center"><input id="drawCap" type="checkbox" checked> 📝 capturer</label>
     </div>
     <canvas id="drawPad" width="640" height="400"></canvas>
+    <div class="winRow" style="margin-top:6px;gap:8px"><button id="drawLinkCol">🎨 Couleurs</button><button id="drawLinkPad">🌈 Palette magique</button></div>
     <div style="margin-top:8px;font-size:12px;color:var(--muted)">💡 Grande grille 80×50 ! Chaque couleur = SA note : fréquence de la lumière ÷ 2⁴⁰ (40 octaves !). Rouge ≈ 423 Hz → violet ≈ 717 Hz, les rapports physiques sont gardés. Gauche = début. Agrandis la fenêtre avec ⤘ !</div>
   </div>
 </div>
@@ -506,6 +517,7 @@
       <label style="display:flex;gap:5px;align-items:center"><input id="worldCap" type="checkbox"> 📝 capturer</label>
     </div>
     <canvas id="worldPad" width="576" height="384"></canvas>
+    <div class="winRow" style="margin-top:6px;gap:8px"><button id="sysLinkPad">🌈 Palette magique</button><button id="sysLinkDraw">🖼️ Dessinateur</button></div>
     <div style="margin-top:8px;font-size:12px;color:var(--muted)">💡 Peins ton écosystème : l'eau fait pousser les graines 🌱, le feu brûle plantes et bois 🔥, la lave + eau = pierre 🌋, la vapeur retombe en pluie ☁️. ▶️ transforme ton monde en musique !</div>
   </div>
 </div>
@@ -524,6 +536,7 @@
       <button id="btnPadShape" title="Pads carrés ou ronds">⚪ Rond</button>
     </div>
     <div id="padGrid" class="square"></div>
+    <div class="winRow" style="margin-top:6px;gap:8px"><button id="padLinkCol">🎨 Couleurs</button><button id="padLinkDraw">🖼️ Dessinateur</button><button id="padLinkSys">🌍 Magic System</button></div>
     <div id="mixRow">
       <span id="mixSwatch"></span>
       <span id="mixHex">Touche 2 couleurs en même temps pour le mélange…</span>
@@ -1788,6 +1801,7 @@
     agentPlace(id);
     const ctx = whatDoing();
     status(a.emoji + " Agent " + a.name + " en poste \u2014 " + (msg || a.say) + (ctx ? " (je vois : " + ctx + ")" : ""));
+    refreshCrossCounts();
   }
   function organizeAll() {
     const wins = openWins();
@@ -3411,6 +3425,52 @@ function dockCallWin() {
   $("btnAvant").addEventListener("click", () => {
     $("avantWin").classList.add("open");
     agentWake("avantWin", "les avant-sachants veillent \u2014 chaque \u00e9v\u00e9nement sera annonc\u00e9 avant d\u2019arriver !");
+  });
+  function refreshCrossCounts() {
+    const bf = $("butinFortCount");
+    if (bf) prelevAll().then(n => bf.textContent = n.length + " pr\u00e9l\u00e8vement(s) entrepos\u00e9s au coffre fort");
+    const pb = $("prelevButinCount");
+    if (pb) pb.textContent = butins.length + " butin(s) en session au coffre au butin";
+  }
+  function crossOpen(id, msg) {
+    $(id).classList.add("open");
+    if (id === "prlevWin") renderPrelevs();
+    if (id === "butinWin") renderButins();
+    if (id === "nasaWin" && !nasaRaf) nasaRaf = requestAnimationFrame(nasaLoop);
+    agentWake(id, msg);
+    refreshCrossCounts();
+  }
+  const CROSS = {
+    micLinkGate: ["gateWin", "la Passerelle s\u2019ouvre depuis le poste micro \u2014 le port n\u2019est jamais loin !"],
+    micLinkAvant: ["avantWin", "les avant-sachants arrivent depuis le poste micro \u2014 le futur se raconte !"],
+    micLinkNasa: ["nasaWin", "la sonde s\u2019ouvre depuis le poste micro \u2014 l\u2019espace \u00e9coute ta voix !"],
+    gateLinkMic: ["micWin", "le poste micro s\u2019ouvre depuis la Passerelle \u2014 le Micro t\u2019attend \u00e0 bord !"],
+    gateLinkAvant: ["avantWin", "les avant-sachants arrivent depuis la Passerelle \u2014 m\u00eame le port sait avant !"],
+    prlevLinkMic: ["micWin", "le poste micro s\u2019ouvre depuis le coffre fort \u2014 de nouveaux pr\u00e9l\u00e8vements en vue !"],
+    prlevLinkGate: ["gateWin", "la Passerelle s\u2019ouvre depuis le coffre fort \u2014 les fr\u00e8res veillent l\u2019un sur l\u2019autre !"],
+    butinLinkMic: ["micWin", "le poste micro s\u2019ouvre depuis le coffre au butin \u2014 les fr\u00e8res veillent l\u2019un sur l\u2019autre !"],
+    butinLinkNasa: ["nasaWin", "la sonde s\u2019ouvre depuis le coffre au butin \u2014 chaque butin devient un ciel !"],
+    nasaLinkAvant: ["avantWin", "les avant-sachants s\u2019ouvrent depuis la sonde \u2014 l\u2019espace aussi conna\u00eet le futur !"],
+    nasaLinkFort: ["prlevWin", "le coffre fort s\u2019ouvre depuis la sonde \u2014 les pr\u00e9l\u00e8vements sous les \u00e9toiles !"],
+    avantLinkNasa: ["nasaWin", "la sonde s\u2019ouvre depuis les avant-sachants \u2014 le futur en orbite !"],
+    avantLinkGate: ["gateWin", "la Passerelle s\u2019ouvre depuis les avant-sachants \u2014 le port \u00e9tait pr\u00e9venu !"],
+    avantLinkMic: ["micWin", "le poste micro s\u2019ouvre depuis les avant-sachants \u2014 ta voix \u00e9tait annonc\u00e9e !"],
+    colLinkDraw: ["drawWin", "le dessinateur s\u2019ouvre depuis Couleurs \u2014 chaque couleur devient SA note !"],
+    colLinkPad: ["magicPad", "la palette magique s\u2019ouvre depuis Couleurs \u2014 les teintes vont chanter !"],
+    drawLinkCol: ["colorWin", "la fen\u00eatre Couleurs s\u2019ouvre depuis le dessinateur \u2014 la pr\u00e9cision au service du trait !"],
+    drawLinkPad: ["magicPad", "la palette magique s\u2019ouvre depuis le dessinateur \u2014 deux grilles s\u2019\u0153uvrent ensemble !"],
+    padLinkCol: ["colorWin", "la fen\u00eatre Couleurs s\u2019ouvre depuis la palette magique \u2014 le pr\u00e9cis rejoint le magique !"],
+    padLinkDraw: ["drawWin", "le dessinateur s\u2019ouvre depuis la palette magique \u2014 dessine-moi une note !"],
+    padLinkSys: ["magicSys", "le Magic System s\u2019ouvre depuis la palette magique \u2014 les couleurs deviennent monde !"],
+    sysLinkPad: ["magicPad", "la palette magique s\u2019ouvre depuis le Magic System \u2014 le monde redevient couleurs !"],
+    sysLinkDraw: ["drawWin", "le dessinateur s\u2019ouvre depuis le Magic System \u2014 peins l\u2019\u00e9cosyst\u00e8me en notes !"],
+    echoLinkMic: ["micWin", "le poste micro s\u2019ouvre depuis l\u2019\u00c9cho \u2014 ce qui est refl\u00e9t\u00e9 peut \u00eatre chant\u00e9 !"],
+    echoLinkAvant: ["avantWin", "les avant-sachants s\u2019ouvrent depuis l\u2019\u00c9cho \u2014 le reflet conna\u00eet l\u2019avenir !"]
+  };
+  Object.keys(CROSS).forEach(btn => {
+    const b = $(btn);
+    if (!b) return;
+    b.addEventListener("click", () => crossOpen(CROSS[btn][0], CROSS[btn][1]));
   });
   $("btnCallMini").addEventListener("click", e => {
     e.stopPropagation();
