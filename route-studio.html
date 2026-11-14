@@ -230,6 +230,7 @@
   <div class="fwinBody">
     <div class="winRow">Piste : <select id="vibTrackSel"></select> 🎹 <select id="vibInstSel" title="Instrument de la piste · choisis-en un autre pour ➕ Nouvelle piste"></select></div>
     <div id="vibPads"></div>
+    <label style="display:flex;gap:5px;align-items:center;margin-top:8px;font-size:12px;color:var(--muted)"><input id="vibMedley" type="checkbox"> 🎶 Médley — chaque pulsation change d'instrument !</label>
     <div id="vibNote" style="margin-top:8px;font-size:12px;color:var(--muted)"></div>
   </div>
 </div>
@@ -1421,10 +1422,8 @@
     function scan(winW, winH) {
       const step = 36;
       let best = null, bestScore = Infinity;
-      const yFrom = role.corner ? vh - winH - 16 : 64;
-      const yTo = role.corner ? 64 : vh - winH - 8;
-      const yStep = role.corner ? -step : step;
-      for (let y = yFrom; role.corner ? y >= yTo : y <= yTo; y += yStep) {
+      const yFrom = vh - winH - (role.corner ? 16 : 70);
+      for (let y = yFrom; y >= 64; y -= step) {
         for (let x = vw - winW - 16; x >= 8; x -= step) {
           const r = { left: x, top: y, right: x + winW, bottom: y + winH };
           let score = 0;
@@ -2157,6 +2156,8 @@
     if (open) agentWake("instGrid", "clique ou glisse : ça joue instantanément et se note dans la piste choisie !");
   });
 
+  const MEDLEY_INSTS = ["piano", "bell", "synth", "marimba", "flute", "sitar", "vibra", "accord", "guitar", "strings", "organ", "chip", "mbox", "trumpet", "choir", "bass"];
+  let medleyIdx = 0;
   const VIB_ROWS = [
     { name: "Long", hue: 0, pattern: ms => [ms * 4] },
     { name: "Double", hue: 120, pattern: ms => [ms, 60, ms] },
@@ -2175,7 +2176,18 @@
         ensureAudio();
         const ms = Math.round(90 * Math.pow(0.85, c));
         if (typeof navigator.vibrate === "function") navigator.vibrate(rowDef.pattern(ms));
-        padVoice(AC.currentTime, instMidi(ri), 0.25);
+        if ($("vibMedley") && $("vibMedley").checked) {
+          const p = rowDef.pattern(ms);
+          let tt = 0;
+          for (let i = 0; i < p.length; i += 2) {
+            const g = AC.createGain();
+            g.gain.value = 0.9;
+            g.connect(master);
+            scheduleNote(AC, g, MEDLEY_INSTS[medleyIdx % MEDLEY_INSTS.length], instMidi(ri), AC.currentTime + tt, 0.22, 0.8);
+            medleyIdx++;
+            tt += (p[i] + (p[i + 1] || 0)) / 1000;
+          }
+        } else padVoice(AC.currentTime, instMidi(ri), 0.25);
         b.classList.add("on");
         setTimeout(() => b.classList.remove("on"), 200);
       });
@@ -2186,7 +2198,7 @@
     syncWinSels();
     const ok = typeof navigator.vibrate === "function";
     $("vibNote").textContent = ok
-      ? "💡 Chaque ligne = un motif (Long, Double, Triple, Roulement), plus à droite = plus rapide. Teste sur mobile !"
+      ? "💡 Chaque ligne = un motif (Long, Double, Triple, Roulement), plus à droite = plus rapide. Coche 🎶 Médley : chaque pulsation joue un instrument différent ! Teste sur mobile !"
       : "⚠️ Ton navigateur ne supporte pas les vibrations (surtout Android sur mobile) — les pads jouent quand même le son.";
     const open = $("vibGrid").classList.toggle("open");
     if (open) agentWake("vibGrid", "touche un pad : motif de vibration + son !");
