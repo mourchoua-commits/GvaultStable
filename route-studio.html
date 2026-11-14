@@ -138,41 +138,30 @@
   #callCard::before,#callCard::after{content:"";position:absolute;left:-20%;right:-20%;height:70px;bottom:-12px;background:radial-gradient(circle at 10px -6px,transparent 14px,rgba(110,231,255,0.22) 15px) repeat-x;background-size:36px 36px;animation:waveMove 7s linear infinite;pointer-events:none}
   #callCard::after{bottom:-26px;opacity:.5;animation-duration:11s}
   @keyframes waveMove{to{transform:translateX(36px)}}
-  #callCrew{font-size:22px;letter-spacing:8px;animation:crewBob 2.4s ease-in-out infinite;position:relative;z-index:2}
-  @keyframes crewBob{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
   #callAvatar{width:86px;height:86px;margin:14px auto 0;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:40px;background:radial-gradient(circle at 32% 28%,#bfefff,#2b8fc9 55%,#0d3a5c);border:4px solid #c9a44a;box-shadow:0 0 0 3px #5c4a13,inset 0 4px 12px rgba(255,255,255,0.35),inset 0 -6px 14px rgba(0,0,0,0.4);animation:plankRock 2.2s ease-in-out infinite;position:relative;z-index:2}
   #callAvatar::after{content:"";position:absolute;inset:-12px;border-radius:50%;border:2px solid rgba(110,231,255,0.5);animation:sonarPing 2.6s ease-out infinite;pointer-events:none}
   @keyframes sonarPing{0%{transform:scale(0.75);opacity:0.9}100%{transform:scale(1.5);opacity:0}}
   @keyframes plankRock{0%,100%{transform:rotate(-6deg) translateY(0)}50%{transform:rotate(6deg) translateY(-3px)}}
-  #callPlank{width:150px;height:14px;margin:2px auto 8px;border-radius:4px;background:linear-gradient(180deg,#a3743c,#7a5426);box-shadow:0 3px 0 #5c3d18,0 6px 10px rgba(0,0,0,0.4);transform:rotate(-4deg);position:relative;z-index:2}
   #callName{font-weight:bold;font-size:18px;color:#ffd76a;text-shadow:0 2px 8px rgba(0,0,0,0.5);position:relative;z-index:2}
-  #callTimer{color:#8fe3c0;font-size:14px;margin-top:4px;font-variant-numeric:tabular-nums;letter-spacing:1px;position:relative;z-index:2}
-  #callNote{margin-top:14px;font-size:19px;min-height:28px;color:#ffe9a8;text-shadow:0 0 12px rgba(255,215,106,0.35);position:relative;z-index:2}
-  #btnCallEnd{margin-top:18px;width:100%;padding:12px;border-radius:12px;border:1px solid rgba(255,120,110,0.55);background:linear-gradient(180deg,#7a2f26,#4c1c16);color:#ffd9d4;font-weight:bold;font-size:14px;cursor:pointer;position:relative;z-index:2}
-  #btnCallEnd:hover{filter:brightness(1.18)}
   #btnCallMini{position:absolute;top:10px;right:12px;z-index:3;background:rgba(3,16,28,0.65);border:1px solid rgba(201,164,74,0.5);color:#ffd76a;border-radius:8px;padding:2px 9px;cursor:pointer;font-size:14px}
   #callThemeSel{position:absolute;top:10px;left:12px;z-index:3;background:rgba(3,16,28,0.65);color:#ffd76a;border:1px solid rgba(201,164,74,0.5);border-radius:8px;padding:3px 6px;font-size:12px;cursor:pointer}
   #callWin.theme-pixel #callCard{border-radius:0;border:3px solid #6fe26f;font-family:'Courier New',monospace}
   #callWin.theme-pixel #callAvatar,#callWin.theme-pixel #callPavFlag,#callWin.theme-pixel #callColor{border-radius:0}
   #callWin.theme-cosmic #callCard{background:radial-gradient(circle at 25% 15%,#33206e 0%,#140a33 45%,#070312 100%);border-color:rgba(190,150,255,0.55)}
   #callWin.theme-matrix #callCard{background:linear-gradient(180deg,#021208 0%,#041a0c 60%,#021008 100%);border-color:rgba(60,255,120,0.55)}
-  #callWin.theme-matrix #callName,#callWin.theme-matrix #callNote,#callWin.theme-matrix #callTimer,#callWin.theme-matrix #callPavName,#callWin.theme-matrix #callColorName{color:#54ff8a;text-shadow:0 0 8px rgba(60,255,120,0.55);font-family:'Courier New',monospace}
+  #callWin.theme-matrix #callName,#callWin.theme-matrix #callPavName,#callWin.theme-matrix #callColorName{color:#54ff8a;text-shadow:0 0 8px rgba(60,255,120,0.55);font-family:'Courier New',monospace}
   #callWin.mini #callThemeSel{display:none}
   #callEq{display:none;justify-content:center;align-items:flex-end;gap:3px;height:34px;margin-top:10px;position:relative;z-index:2}
   #callWin.open #callEq{display:flex}
   #callEq span{width:6px;border-radius:2px;transition:height 0.12s}
   #callWin.mini{pointer-events:none;padding:0}
   #callWin.mini #callCard{pointer-events:auto;width:auto;padding:10px 14px;display:flex;gap:10px;align-items:center;cursor:pointer;border-radius:999px}
-  #callWin.mini #callCrew,#callWin.mini #callPlank,#callWin.mini #callName,#callWin.mini #btnCallMini{display:none}
+  #callWin.mini #callName,#callWin.mini #btnCallMini,#callWin.mini #callPavRow,#callWin.mini #callEq{display:none}
   #callWin.mini #callAvatar{width:34px;height:34px;margin:0;font-size:18px;border-width:2px;box-shadow:0 0 0 2px #5c4a13}
   #callWin.mini #callAvatar::after{display:none}
-  #callWin.mini #callPlank{display:none}
-  #callWin.mini #callTimer{margin:0;font-size:12px}
-  #callWin.mini #callNote{margin:0;font-size:14px;min-height:0}
-  #callWin.mini #btnCallEnd{margin:0;width:auto;padding:7px 12px;font-size:12px}
-  #btnCallHelp,#btnCallSample{display:none;margin-top:10px;width:100%;padding:10px;border-radius:12px;border:1px solid rgba(255,255,255,0.3);color:#fff;font-weight:bold;font-size:13px;cursor:pointer;position:relative;z-index:2}
-  #callWin.reconst #btnCallHelp,#callWin.reconst #btnCallSample{display:block}
-  #btnCallHelp{background:linear-gradient(180deg,#1d5c3a,#123a26);border-color:rgba(120,255,170,0.4)}
+  #callWin.mini #callColorRow{display:flex;margin:0;gap:8px}
+  #callWin.mini #callColor{width:26px;height:26px;border-width:1px}
+  #callWin.mini #callColorName{font-size:12px}
   #callPavRow{display:none;align-items:center;justify-content:center;gap:10px;margin-top:10px;position:relative;z-index:2}
   #callWin.open #callPavRow{display:flex}
   #callPavFlag{width:46px;height:34px;border-radius:6px;border:1px solid rgba(255,215,106,0.6);background:#1a2233;transition:background 0.2s,box-shadow 0.2s}
@@ -181,9 +170,6 @@
   #callWin.open #callColorRow{display:flex}
   #callColor{width:46px;height:46px;border-radius:50%;border:2px solid rgba(255,215,106,0.6);background:#1a2233;transition:background 0.15s,box-shadow 0.15s}
   #callColorName{font-size:13px;color:#ffe9a8;font-weight:bold}
-  #btnCallLoot{display:none;margin-top:10px;width:100%;padding:10px;border-radius:12px;border:1px solid rgba(255,215,106,0.5);color:#ffe9a8;font-weight:bold;font-size:13px;cursor:pointer;position:relative;z-index:2;background:linear-gradient(180deg,#8a6d1d,#5c4a13)}
-  #callWin.open:not(.reconst) #btnCallLoot{display:block}
-  #btnCallSample{background:linear-gradient(180deg,#4c3a7a,#2e2152)}
   #btnHoldRec{width:100%;margin-top:8px;padding:12px;border-radius:12px;border:1px solid rgba(110,231,255,0.45);background:linear-gradient(180deg,#155c74,#0c3a4c);color:#d6f4ff;font-weight:bold;font-size:13px;cursor:pointer;user-select:none;-webkit-user-select:none;touch-action:none;transition:transform 0.08s,filter 0.08s}
   #btnHoldRec:active,#btnHoldRec.held{transform:scale(0.95) translateY(2px);filter:brightness(1.3);box-shadow:0 0 18px rgba(110,231,255,0.55)}
   #micWin,#butinWin{background:linear-gradient(180deg,#062033 0%,#0a2f45 55%,#051626 100%);border-color:#c9a44a;box-shadow:0 12px 40px rgba(0,0,0,0.65),inset 0 0 0 1px rgba(255,215,106,0.12),inset 0 14px 30px rgba(0,0,0,0.35)}
@@ -377,21 +363,13 @@
 <div id="callWin">
   <div id="callCard">
     <div id="callBubbles"><span></span><span></span><span></span><span></span><span></span></div>
-    <button id="btnCallMini" title="Réduire l'appel — l'équipage continue de chanter pendant que tu crées !">➖</button>
-    <select id="callThemeSel" title="Thème de l'appel"><option value="pirate">🌊 Pirate</option><option value="pixel">👾 Pixel</option><option value="cosmic">🌌 Cosmique</option><option value="matrix">🟩 Matrix</option></select>
-    <div id="callCrew">🏴‍☠️ 🦜 ⚓️ 🗺️ 🧭</div>
+    <button id="btnCallMini" title="Réduire la visionneuse — les couleurs continuent de vivre pendant que tu crées !">➖</button>
+    <select id="callThemeSel" title="Thème des couleurs"><option value="pirate">🌊 Pirate</option><option value="pixel">👾 Pixel</option><option value="cosmic">🌌 Cosmique</option><option value="matrix">🟩 Matrix</option></select>
+    <div id="callName">🎨 Visionneuse de couleurs</div>
     <div id="callAvatar">🎤</div>
-    <div id="callPlank"></div>
-    <div id="callName">Micro à bord — appel en cours</div>
-    <div id="callTimer">⚓ l'équipage rame vers le Micro…</div>
-    <div id="callNote">…</div>
     <div id="callPavRow"><div id="callPavFlag"></div><div id="callPavName">Pavillon…</div></div>
     <div id="callColorRow"><div id="callColor"></div><div id="callColorName">🎨 couleur perçue…</div></div>
     <div id="callEq"></div>
-    <button id="btnCallLoot" title="Récupère le chant enregistré jusqu'à maintenant, sans terminer l'appel">🪙 Récupérer le butin maintenant</button>
-    <button id="btnCallEnd">Terminer l'appel — le Micro reste à bord</button>
-    <button id="btnCallHelp">⛵ Hisser un pavillon (nouvelle tentative)</button>
-    <button id="btnCallSample">🎁 Prélever l'ambiance en sample</button>
   </div>
 </div>
 <div id="butinWin" class="fwindow">
@@ -2511,7 +2489,7 @@
   });
 
   let micStream = null, micAN = null, micTimer = null, micLastMidi = null, micPreT = 0;
-  let callRec = null, callChunks = [], callButin = null, butinLoop = false, butinSrc = null;
+  let holdRec = null, holdChunks = [], callButin = null, butinLoop = false, butinSrc = null;
   let butins = [], butinSeq = 0, butinPlay = null, lootRecipe = 0, lootPart = 0;
   $("btnMicOpen").addEventListener("click", () => {
     syncWinSels();
@@ -2537,38 +2515,69 @@
       $("micInfo").textContent = "Micro éteint";
       status("🎤 Micro coupé");
       closeCall();
-      harvestButin();
       return;
     }
     await openMic();
   });
   let holdActive = false;
+  function startHoldRec() {
+    holdChunks = [];
+    holdRec = null;
+    try {
+      const stream = micStream || reconstStream;
+      if (stream && window.MediaRecorder) {
+        holdRec = new MediaRecorder(stream);
+        holdRec.ondataavailable = ev => { if (ev.data && ev.data.size) holdChunks.push(ev.data); };
+        holdRec.start();
+      }
+    } catch (e) { holdRec = null; }
+  }
   async function finishHold() {
     $("btnHoldRec").classList.remove("held");
-    $("btnHoldRec").textContent = "🎙️ Maintenir pour enregistrer";
+    $("btnHoldRec").textContent = "🎤 Maintenir pour enregistrer";
     if (typeof navigator.vibrate === "function") navigator.vibrate(10);
-    if (!micStream) { status("Le Micro n'a pas embarqué — rien à partager cette fois, hisse le pavillon d'abord !"); return; }
-    micStream.getTracks().forEach(tr => tr.stop());
-    micStream = null;
-    clearInterval(micTimer);
-    micTimer = null;
-    $("btnMic").textContent = "🎤 Activer le micro";
-    $("micInfo").textContent = "Micro éteint";
+    const rec = holdRec;
+    holdRec = null;
+    if (rec && rec.state !== "inactive") {
+      await new Promise(res => { rec.onstop = () => res(); try { rec.stop(); } catch (e) { res(); } setTimeout(res, 800); });
+    }
+    if (micStream) {
+      micStream.getTracks().forEach(tr => tr.stop());
+      micStream = null;
+      clearInterval(micTimer);
+      micTimer = null;
+      $("btnMic").textContent = "🎤 Activer le micro";
+      $("micInfo").textContent = "Micro éteint";
+    }
     closeCall();
-    await harvestButin();
-    if (callButin) status("🤝 Butin récupéré au relâché — à toi et au port, à la même hauteur : co-propriété à par égal, pas une taxe !");
-    else status("Rien enregistré cette fois — maintiens le bouton plus longtemps !");
+    if (holdChunks.length) {
+      const blob = new Blob(holdChunks);
+      holdChunks = [];
+      try {
+        ensureAudio();
+        const buf = await AC.decodeAudioData(await blob.arrayBuffer());
+        callButin = buf;
+        const nameC = lootColorName || "Butin";
+        butinSeq++;
+        butins.push({ name: "Butin « " + nameC + " » " + butinSeq, buffer: buf });
+        renderButins();
+        $("butinRow").style.display = "flex";
+        $("butinInfo").textContent = "🎁 Butin « " + nameC + " » : " + Math.max(1, Math.round(buf.duration)) + "s — la couleur du relâché est au coffre !";
+        status("🤝 Butin récupéré au relâché — à toi et au port, à la même hauteur : co-propriété à par égal, pas une taxe !");
+      } catch (e) { status("❌ Le butin n'a pas pu être décodé — retente un maintien !"); }
+    } else status("Rien enregistré cette fois — maintiens le bouton plus longtemps !");
   }
   function releaseHold() { if (!holdActive) return; holdActive = false; finishHold(); }
   $("btnHoldRec").addEventListener("pointerdown", async () => {
     if (holdActive) return;
     holdActive = true;
     $("btnHoldRec").classList.add("held");
-    $("btnHoldRec").textContent = "🎙️ Ça enregistre… relâche pour partager le butin !";
+    $("btnHoldRec").textContent = "🎤 Ça enregistre… relâche pour le butin !";
     if (typeof navigator.vibrate === "function") navigator.vibrate(15);
     if (!micStream) await openMic();
     if (!holdActive) { await finishHold(); return; }
-    status("🎙️ Tu maintiens le Micro — enregistrement en cours ; relâche pour récupérer le butin, co-détenu à par égal avec le port !");
+    startHoldRec();
+    status("🎤 Tu maintiens — enregistrement en cours ; relâche pour récupérer le butin avec la couleur du moment !");
   });
   $("btnHoldRec").addEventListener("pointerup", releaseHold);
   $("btnHoldRec").addEventListener("pointerleave", releaseHold);
@@ -2597,30 +2606,20 @@
       };
     } catch (e) { micPermWatch = false; }
   }
-  let callTimerInt = null, callT0 = 0;
-  function openCall(idle) {
+  function openCall() {
     $("callWin").classList.remove("mini");
     $("callWin").classList.remove("reconst");
     $("callWin").classList.add("open");
     stopReconstAmbience();
     showPav();
-    $("callNote").textContent = "🎤 Micro connecté — chante, la note sera accordée à ta gamme.";
-    $("callTimer").textContent = "connexion…";
-    callT0 = Date.now();
-    clearInterval(callTimerInt);
-    callTimerInt = idle ? null : setInterval(() => {
-      const s = Math.floor((Date.now() - callT0) / 1000);
-      $("callTimer").textContent = Math.floor(s / 60) + ":" + String(s % 60).padStart(2, "0");
-    }, 500);
+    $("callName").textContent = "🎨 Visionneuse de couleurs";
   }
   function closeCall() {
     $("callWin").classList.remove("open");
     $("callWin").classList.remove("reconst");
-    clearInterval(callTimerInt);
-    callTimerInt = null;
     stopReconstAmbience();
   }
-  let reconstTimer = null, reconstColorInt = null;
+  let reconstTimer = null, reconstColorInt = null, reconstBus = null, reconstStream = null;
   function shipSound(ctx, dest, t) {
     const kind = ["vague", "grincement", "cloche", "mouette"][Math.floor(Math.random() * 4)];
     if (kind === "vague") {
@@ -2660,8 +2659,20 @@
   function startReconstAmbience() {
     ensureAudio();
     stopReconstAmbience();
-    shipSound(AC, master, AC.currentTime);
-    reconstTimer = setInterval(() => shipSound(AC, master, AC.currentTime), 1400);
+    if (!reconstBus) {
+      try {
+        reconstBus = AC.createGain();
+        reconstBus.connect(master);
+        if (AC.createMediaStreamDestination) {
+          const dst = AC.createMediaStreamDestination();
+          reconstBus.connect(dst);
+          reconstStream = dst.stream;
+        }
+      } catch (e) { reconstBus = null; reconstStream = null; }
+    }
+    const out = reconstBus || master;
+    shipSound(AC, out, AC.currentTime);
+    reconstTimer = setInterval(() => shipSound(AC, out, AC.currentTime), 1400);
     reconstColorInt = setInterval(updateCallColor, 300);
     updateCallColor();
   }
@@ -2670,21 +2681,14 @@
     if (reconstColorInt) { clearInterval(reconstColorInt); reconstColorInt = null; }
   }
   function openReconst() {
+    $("callWin").classList.remove("mini");
     $("callWin").classList.add("open");
     $("callWin").classList.add("reconst");
-    $("callName").textContent = "🛳️ Reconstitution — la vie à bord";
-    $("callNote").textContent = "Micro au quai — pavillon « " + ($("pavSel").value || "Crâne rieur") + " » hissé : l'ambiance est prélevée en continu (vagues, mouettes, grincements, cloche).";
-    $("callTimer").textContent = "en reconstitution";
+    $("callName").textContent = "🛳️ Reconstitution — couleurs du pavillon";
     showPav();
     startReconstAmbience();
   }
-  $("btnCallHelp").addEventListener("click", () => {
-    const cur = $("pavSel").value || "Crâne rieur";
-    const i = PAVS.findIndex(p => p[0] === cur);
-    $("pavSel").value = PAVS[(i + 1) % PAVS.length][0];
-    showPav();
-    openMic();
-  });
+  $("pavSel").addEventListener("change", showPav);
   function applyCallTheme() {
     const t = $("callThemeSel").value || localStorage.getItem("rsCallTheme") || "pirate";
     const w = $("callWin");
@@ -2697,22 +2701,7 @@
   });
   try { const sth = localStorage.getItem("rsCallTheme"); if (sth) $("callThemeSel").value = sth; } catch (e) {}
   applyCallTheme();
-  $("btnCallSample").addEventListener("click", async () => {
-    if (!window.OfflineAudioContext) { status("❌ Ce navigateur ne sait pas cuisiner un sample offline"); return; }
-    try {
-      const off = new OfflineAudioContext(1, Math.floor(44100 * 4), 44100);
-      shipSound(off, off.destination, 0.1);
-      shipSound(off, off.destination, 1.2);
-      shipSound(off, off.destination, 2.3);
-      shipSound(off, off.destination, 3.1);
-      const buf = await off.startRendering();
-      butinSeq++;
-      butins.push({ name: "Ambiance du navire " + butinSeq, buffer: buf });
-      renderButins();
-      status("🎁 L'ambiance du navire est dans le coffre — boucle-la en fond de ton morceau !");
-    } catch (e) { status("❌ Sample d'ambiance impossible : " + e.message); }
-  });
-  function stopButin() { if (butinSrc) { try { butinSrc.stop(); } catch (e) {} butinSrc = null; } butinPlay = null; renderButins(); }
+    function stopButin() { if (butinSrc) { try { butinSrc.stop(); } catch (e) {} butinSrc = null; } butinPlay = null; renderButins(); }
   function renderButins() {
     const list = $("butinList");
     if (!list) return;
@@ -2789,34 +2778,6 @@
     const open = w.classList.toggle("open");
     if (open) { renderButins(); agentWake("butinWin", "ton butin est à l'abri — écoute, boucle, pose en sample !"); }
   });
-  async function harvestButin() {
-    if (!callRec) return;
-    const rec = callRec;
-    callRec = null;
-    if (rec.state !== "inactive") {
-      await new Promise(res => {
-        rec.onstop = () => res();
-        try { rec.stop(); } catch (e) { res(); }
-        setTimeout(res, 800);
-      });
-    }
-    if (!callChunks.length) return;
-    const blob = new Blob(callChunks);
-    callChunks = [];
-    try {
-      ensureAudio();
-      const buf = await AC.decodeAudioData(await blob.arrayBuffer());
-      callButin = buf;
-      butinSeq++;
-      butins.push({ name: "Butin " + butinSeq, buffer: buf });
-      renderButins();
-      $("butinRow").style.display = "flex";
-      $("butinInfo").textContent = "🎁 Butin de l'abordage : " + Math.max(1, Math.round(buf.duration)) + "s de chant capturé !" + (lootColorName ? " — teinté « " + lootColorName + " »" : "");
-      status("🏴‍☠️ L'équipage revient au navire avec le butin — écoute, mets en boucle ou pose-le en sample !");
-    } catch (e) {
-      status("🎁 Le chant n'a pas pu être décodé — mais les notes capturées restent dans la piste !");
-    }
-  }
   const PAVS = [["Crâne rieur", 8], ["Sabre d'abordage", 45], ["Vague noire", 265], ["Enfants Perdus", 150], ["Cœur de Marée", 205], ["Kraken chantant", 325]];
   function pavHue(name) { const p = PAVS.find(q => q[0] === name); return p ? p[1] : 210; }
   function showPav() {
@@ -2894,50 +2855,7 @@
       }
     }
   }
-  $("btnCallLoot").addEventListener("click", async () => {
-    if (!callRec || callRec.state === "inactive") { status("🎙 Rien à récupérer — le Micro n'enregistre pas encore !"); return; }
-    const rec = callRec;
-    callRec = null;
-    const nameC = lootColorName || "Butin";
-    if (rec.state !== "inactive") {
-      await new Promise(res => { rec.onstop = () => res(); try { rec.stop(); } catch (e) { res(); } setTimeout(res, 800); });
-    }
-    if (callChunks.length) {
-      const blob = new Blob(callChunks);
-      callChunks = [];
-      try {
-        ensureAudio();
-        const buf = await AC.decodeAudioData(await blob.arrayBuffer());
-        butinSeq++;
-        butins.push({ name: "Butin « " + nameC + " » " + butinSeq, buffer: buf });
-        renderButins();
-        $("butinRow").style.display = "flex";
-        $("butinInfo").textContent = "🪙 Butin « " + nameC + " » : " + Math.max(1, Math.round(buf.duration)) + "s — la couleur du moment est au coffre !";
-        status("🪙 Butin récupéré au moment voulu — « " + nameC + " » veille dans le coffre, et la bordée continue de chanter !");
-      } catch (e) { status("❌ Ce morceau de butin n'a pas pu être décodé — la bordée continue !"); }
-    }
-    try {
-      if (micStream && window.MediaRecorder) {
-        callRec = new MediaRecorder(micStream);
-        callRec.ondataavailable = ev => { if (ev.data && ev.data.size) callChunks.push(ev.data); };
-        callRec.start();
-      }
-    } catch (e) {}
-  });
-  $("btnCallEnd").addEventListener("click", async () => {
-    if (micStream) {
-      micStream.getTracks().forEach(tr => tr.stop());
-      micStream = null;
-      clearInterval(micTimer);
-      micTimer = null;
-      $("btnMic").textContent = "🎤 Activer le micro";
-      $("micInfo").textContent = "Micro éteint";
-    }
-    closeCall();
-    await harvestButin();
-    if (!callButin) status("L'équipage remonte au navire — le Micro reste à bord pour la prochaine session, micro coupé !");
-  });
-  $("btnButinPlay").addEventListener("click", () => {
+    $("btnButinPlay").addEventListener("click", () => {
     if (!callButin) return;
     ensureAudio();
     stopButin();
@@ -2965,18 +2883,18 @@
   $("btnCallMini").addEventListener("click", e => {
     e.stopPropagation();
     $("callWin").classList.add("mini");
-    status("➖ Appel réduit — l'équipage continue de chanter, crée en même temps ! (clique la pilule pour rouvrir l'appel)");
+    status("➖ Visionneuse réduite — les couleurs continuent de vivre, crée en même temps ! (clique la pilule pour rouvrir)");
   });
   $("callCard").addEventListener("click", e => {
-    if ($("callWin").classList.contains("mini") && e.target && e.target.id !== "btnCallEnd" && e.target.id !== "btnCallMini") $("callWin").classList.remove("mini");
+    if ($("callWin").classList.contains("mini") && e.target && e.target.id !== "btnCallMini") $("callWin").classList.remove("mini");
   });
   $("callWin").addEventListener("click", e => {
     if (e.target && e.target.id === "callWin" && !$("callWin").classList.contains("mini")) {
       $("callWin").classList.add("mini");
-      status("➖ Appel réduit — l'équipage continue de chanter, crée en même temps ! (clique la pilule pour rouvrir l'appel)");
+      status("➖ Visionneuse réduite — les couleurs continuent de vivre, crée en même temps ! (clique la pilule pour rouvrir)");
     }
   });
-  async function openMic() {
+    async function openMic() {
     if (window.isSecureContext === false) {
       $("micInfo").textContent = "🌊 Calme plat — ce quai n'a même pas de https : pas de pavillon sur une passerelle pourrie ! Ouvre la version en ligne sur raw.githack.com (le fichier local en double-clic ne peut pas l'avoir) !";
       status("🌊 Calme plat — Micro indisponible hors https : ouvre la version en ligne !");
@@ -3024,16 +2942,6 @@
     stopButin();
     callButin = null;
     $("butinRow").style.display = "none";
-    if (callRec && callRec.state !== "inactive") { callRec.ondataavailable = null; try { callRec.stop(); } catch (e) {} }
-    callRec = null;
-    callChunks = [];
-    try {
-      if (window.MediaRecorder) {
-        callRec = new MediaRecorder(micStream);
-        callRec.ondataavailable = ev => { if (ev.data && ev.data.size) callChunks.push(ev.data); };
-        callRec.start();
-      } else callRec = null;
-    } catch (e) { callRec = null; }
     micTimer = setInterval(() => {
       updateCallColor();
       micAN.getFloatTimeDomainData(data);
@@ -3054,7 +2962,6 @@
       }
       const cents = Math.round((midiF - midi) * 100);
       $("micInfo").textContent = "🎤 " + NAMES[midi % 12] + (Math.floor(midi / 12) - 1) + " — corrigé de " + (cents > 0 ? "+" : "") + cents + " cents (" + Math.round(f0) + " Hz)";
-      $("callNote").textContent = $("micInfo").textContent;
       if (midi !== micLastMidi) {
         const mi = $("micInfo");
         mi.classList.add("preSay");
