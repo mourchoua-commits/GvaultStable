@@ -118,6 +118,12 @@
   .vpad{aspect-ratio:1;border-radius:10px;border:1px solid rgba(255,255,255,0.2);cursor:pointer;padding:0;font-size:10px;color:rgba(0,0,0,0.65);font-weight:700;min-width:0;transition:transform .1s,box-shadow .1s}
   .vpad.on{transform:scale(1.1);box-shadow:0 0 14px rgba(255,255,255,0.85)}
   #playhead{position:absolute;top:0;bottom:0;width:2px;background:rgba(255,255,255,0.85);box-shadow:0 0 8px rgba(255,255,255,0.8);pointer-events:none;display:none}
+  #nextCol{position:absolute;top:0;bottom:0;width:36px;background:rgba(255,215,106,0.10);border-left:1px dashed rgba(255,215,106,0.55);pointer-events:none;display:none;animation:prePulse 1s ease-in-out infinite}
+  @keyframes prePulse{0%,100%{background:rgba(255,215,106,0.05)}50%{background:rgba(255,215,106,0.22)}}
+  @keyframes preSayK{0%,100%{opacity:.55}50%{opacity:1}}
+  .preSay{animation:preSayK .8s ease-in-out infinite;color:#ffd76a}
+  .pad,.csw{transition:transform .12s,filter .12s}
+  .pad:hover,.csw:hover{filter:brightness(1.3);transform:scale(1.07)}
   #notePanel{border:1px solid var(--gold);border-radius:14px;padding:10px 14px;background:var(--panel);
     display:flex;gap:14px;align-items:center;flex-wrap:wrap;font-size:13px}
   #notePanel.hidden{display:none}
@@ -180,6 +186,7 @@
         <div id="cells"></div>
         <div id="notesLayer"></div>
         <div id="playhead"></div>
+        <div id="nextCol"></div>
       </div>
     </div>
     <div id="toolsBar">
@@ -874,6 +881,7 @@
     $("btnPlay").classList.remove("on");
     $("btnPlay").textContent = "▶️ GO";
     $("playhead").style.display = "none";
+    $("nextCol").style.display = "none";
   }
   $("btnPlay").addEventListener("click", () => playing ? null : play());
   $("btnStop").addEventListener("click", stop);
@@ -2311,7 +2319,7 @@
     if (open) agentWake("vibGrid", "touche un pad : motif de vibration + son !");
   });
 
-  let micStream = null, micAN = null, micTimer = null, micLastMidi = null;
+  let micStream = null, micAN = null, micTimer = null, micLastMidi = null, micPreT = 0;
   $("btnMicOpen").addEventListener("click", () => {
     syncWinSels();
     const open = $("micWin").classList.toggle("open");
@@ -2364,6 +2372,10 @@
       const cents = Math.round((midiF - midi) * 100);
       $("micInfo").textContent = "🎤 " + NAMES[midi % 12] + (Math.floor(midi / 12) - 1) + " — corrigé de " + (cents > 0 ? "+" : "") + cents + " cents (" + Math.round(f0) + " Hz)";
       if (midi !== micLastMidi) {
+        const mi = $("micInfo");
+        mi.classList.add("preSay");
+        clearTimeout(micPreT);
+        micPreT = setTimeout(() => mi.classList.remove("preSay"), 450);
         micLastMidi = midi;
         padVoice(AC.currentTime, midi, 0.3);
         if (typeof navigator.vibrate === "function") navigator.vibrate(10);
@@ -2372,7 +2384,7 @@
     }, 90);
   });
 
-  const MAGIC = { on: true, lastBrush: null, lastNoteCount: -1, lastAct: 0, lastMsg: "les agents magiciens observent…" };
+  const MAGIC = { on: true, pending: false, lastBrush: null, lastNoteCount: -1, lastAct: 0, lastMsg: "les agents magiciens observent…" };
   function magicSay(msg) { MAGIC.lastMsg = msg; refreshEcho(); }
   function refreshEcho() {
     const w = $("echoWin");
@@ -2401,8 +2413,20 @@
     g.connect(master);
     scheduleNote(AC, g, inst, midi, AC.currentTime + 0.02, 0.5, 0.5);
   }
+  function magicAct(fn, pre, done) {
+    MAGIC.pending = true;
+    magicSay(pre);
+    const em = $("echoMagic");
+    if (em) em.classList.add("preSay");
+    setTimeout(() => {
+      if (em) em.classList.remove("preSay");
+      MAGIC.pending = false;
+      fn();
+      magicSay(done);
+    }, 900);
+  }
   function magicTick() {
-    if (!MAGIC.on) return;
+    if (!MAGIC.on || MAGIC.pending) return;
     const t = tracks[selTrack];
     const now = Date.now();
     if (MAGIC.lastNoteCount === -1) MAGIC.lastNoteCount = t.notes.length;
@@ -2412,9 +2436,7 @@
       MAGIC.lastAct = now;
       if (Math.random() < 0.6) {
         const [h, s, l] = hexToHsl(brushCol);
-        const c = hslToHex((h + (Math.random() < 0.5 ? 37 : 180)) % 360, Math.max(45, s), l);
-        rememberColor(c);
-        magicSay("🎨 Coloriste a glissé la nuance " + c + " dans la palette magique — sans rien te demander !");
+        magicAct(() => rememberColor(hslToHex((h + (Math.random() < 0.5 ? 37 : 180)) % 360, Math.max(45, s), l)), "🎨 Coloriste examine ton pinceau… une nuance va apparaître dans la palette !", "🎨 Coloriste a glissé la nuance dans la palette magique — sans rien te demander !");
       }
       return;
     }
@@ -2423,15 +2445,13 @@
       MAGIC.lastAct = now;
       const last = t.notes[t.notes.length - 1];
       if (last) {
-        magicNote(rowToMidi(t, last.row) + (Math.random() < 0.5 ? 4 : 7), Math.random() < 0.5 ? "bell" : "choir");
-        magicSay("🎶 Harmonique a soufflé une harmonie au-dessus de ta note !");
+        magicAct(() => magicNote(rowToMidi(t, last.row) + (Math.random() < 0.5 ? 4 : 7), Math.random() < 0.5 ? "bell" : "choir"), "🎶 Harmonique s'approche de ta note… écoute !", "🎶 Harmonique a soufflé une harmonie au-dessus de ta note !");
       }
       return;
     }
     if (now - MAGIC.lastAct > 12000 && AC) {
       MAGIC.lastAct = now;
-      magicNote(rowToMidi(t, Math.floor(Math.random() * melRows())), "mbox");
-      magicSay("🌙 Gardien a fait tinter une note d'ambiance dans ton silence…");
+      magicAct(() => magicNote(rowToMidi(t, Math.floor(Math.random() * melRows())), "mbox"), "🌙 Gardien s'éveille doucement…", "🌙 Gardien a fait tinter une note d'ambiance dans ton silence…");
     }
   }
   setInterval(magicTick, 1200);
@@ -2803,6 +2823,11 @@
       const pos = ((AC.currentTime - playStart) % total + total) % total;
       const ph = $("playhead");
       ph.style.left = (pos / stepDur()) * CW + "px";
+      const nc = $("nextCol");
+      nc.style.display = "block";
+      nc.style.left = ((Math.floor(pos / stepDur()) + 1) % STEPS) * CW + "px";
+    } else {
+      $("nextCol").style.display = "none";
     }
   }
 
