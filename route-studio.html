@@ -309,7 +309,7 @@
     <div id="callName">L'équipage a abordé le Micro !</div>
     <div id="callTimer">⚓ l'équipage rame vers le Micro…</div>
     <div id="callNote">…</div>
-    <button id="btnCallEnd">⛵ Renvoyer le Micro à la mer</button>
+    <button id="btnCallEnd">🛏️ Le Micro descend se reposer (il reste à bord !)</button>
   </div>
 </div>
 <div id="miniGame" class="fwindow">
@@ -2397,6 +2397,7 @@
     await openMic();
   });
   $("micDevSel").addEventListener("change", async () => {
+    try { localStorage.setItem("rsMicDev", $("micDevSel").value); } catch (e) {}
     if (!micStream) return;
     micStream.getTracks().forEach(tr => tr.stop());
     micStream = null;
@@ -2439,7 +2440,7 @@
   $("btnCallEnd").addEventListener("click", () => {
     if (micStream) $("btnMic").click();
     closeCall();
-    status("⛵ Le Micro est libre — il repart en mer, micro coupé !");
+    status("🛏️ Le Micro rejoint l'équipage pour la prochaine session — micro coupé !");
   });
   $("callWin").addEventListener("click", e => { if (e.target && e.target.id === "callWin") $("btnCallEnd").click(); });
   async function openMic() {
@@ -2476,7 +2477,8 @@
         o.textContent = d.label || "Micro " + (i + 1);
         sel.appendChild(o);
       });
-      if (cur && [...sel.options].some(o => o.value === cur)) sel.value = cur;
+      const pick = cur || localStorage.getItem("rsMicDev");
+      if (pick && [...sel.options].some(o => o.value === pick)) sel.value = pick;
     } catch (e) {}
     ensureAudio();
     const src = AC.createMediaStreamSource(micStream);
