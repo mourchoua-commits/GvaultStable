@@ -2463,7 +2463,7 @@
       if (navigator.permissions && navigator.permissions.query) {
         navigator.permissions.query({ name: "microphone" }).then(st => {
           if (st.state === "granted" && !micStream) $("micInfo").textContent = "🎤 Micro déjà autorisé — appuie sur Activer, aucune demande ne sera refaite !";
-          else if (st.state === "denied") $("micInfo").textContent = "🔒 Micro bloqué par le navigateur — barre d'adresse → 🔒 → Micro : Autoriser !";
+          else if (st.state === "denied") $("micInfo").textContent = "🔒 Pavillon refusé par le port — barre d'adresse → 🎙 → Micro : Autoriser !";
         }).catch(() => {});
       }
     }
@@ -2501,7 +2501,7 @@
       const st = await navigator.permissions.query({ name: "microphone" });
       st.onchange = () => {
         if (st.state === "granted" && !micStream) {
-          $("micInfo").textContent = "🎤 Le Micro accepte de monter à bord — relance automatique !";
+          $("micInfo").textContent = "🏴‍☠️ Pavillon hissé ! Le Micro monte à bord — l'équipage le fait monter tout seul !";
           status("🎤 Le Micro monte sur la planche — je le relance tout seul !");
           openMic();
         }
@@ -2622,7 +2622,7 @@
       renderButins();
       $("butinRow").style.display = "flex";
       $("butinInfo").textContent = "🎁 Butin de l'abordage : " + Math.max(1, Math.round(buf.duration)) + "s de chant capturé !";
-      status("🎁 Butin récupéré — écoute, mets en boucle ou pose-le en sample !");
+      status("🏴‍☠️ L'équipage revient au navire avec le butin — écoute, mets en boucle ou pose-le en sample !");
     } catch (e) {
       status("🎁 Le chant n'a pas pu être décodé — mais les notes capturées restent dans la piste !");
     }
@@ -2638,7 +2638,7 @@
     }
     closeCall();
     await harvestButin();
-    if (!callButin) status("🛏️ Le Micro rejoint l'équipage pour la prochaine session — micro coupé !");
+    if (!callButin) status("L'équipage remonte au navire — le Micro reste à bord pour la prochaine session, micro coupé !");
   });
   $("btnButinPlay").addEventListener("click", () => {
     if (!callButin) return;
@@ -2687,8 +2687,8 @@
       micStream = await navigator.mediaDevices.getUserMedia(dev ? { audio: { deviceId: { exact: dev } } } : { audio: true });
     } catch (err) {
       if (err && (err.name === "NotAllowedError" || err.name === "SecurityError")) {
-        $("micInfo").textContent = "🔒 Le Micro refuse de monter à bord ! Barre d'adresse → icône 🔒/🎙 → Micro : Autoriser → il montera TOUT SEUL !";
-        status("🔒 Micro bloqué — autorise-le dans la barre d'adresse, je le relance automatiquement après !");
+        $("micInfo").textContent = "🏴‍☠️ Le Micro refuse de monter à bord — la loi du port (le navigateur) exige le pavillon ! Barre d'adresse → icône 🎙 → Autoriser → il montera TOUT SEUL, promis mousse !";
+        status("🏴‍☠️ Le port exige le pavillon avant d'embarquer — hisse-le dans la barre d'adresse, l'équipage le fera monter tout seul !");
         watchMicPerm();
       } else status("❌ Micro refusé ou indisponible : " + err.message);
       return;
