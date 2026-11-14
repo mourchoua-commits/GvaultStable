@@ -210,8 +210,9 @@
     <div class="winRow">Piste : <select id="instTrackSel"></select>
       <label style="display:flex;gap:5px;align-items:center"><input id="instCap" type="checkbox" checked> 📝 capturer dans la piste</label>
     </div>
+    <div class="winRow">Instrument : <select id="instSel"></select></div>
     <div id="instCells"></div>
-    <div style="margin-top:8px;font-size:12px;color:var(--muted)">💡 Glisse sur les cases pour arpéger — chaque ligne = une note, chaque hauteur a SA couleur</div>
+    <div style="margin-top:8px;font-size:12px;color:var(--muted)">💡 Glisse sur les cases pour arpéger — l'instrument choisi ci-dessus est utilisé !</div>
   </div>
 </div>
 <div id="vibGrid" class="fwindow">
@@ -1373,19 +1374,20 @@
     return rgbToHex(rgbs.reduce((s, c) => s + c[0], 0) / n, rgbs.reduce((s, c) => s + c[1], 0) / n, rgbs.reduce((s, c) => s + c[2], 0) / n);
   }
   const padGrid = $("padGrid");
-  for (const hue of HUES) {
-    const col = hslToHex(hue, 80, 60);
+  const PAD_ROWS = [[74, 12], [58, 0], [40, -12]];
+  for (const [L, oct] of PAD_ROWS) for (const hue of HUES) {
+    const col = hslToHex(hue, 80, L);
     const pad = document.createElement("button");
     pad.className = "pad";
     pad.style.background = col;
-    pad.title = "Teinte " + hue + "°";
+    pad.title = "Teinte " + hue + "°" + (oct > 0 ? " · octave haute" : oct < 0 ? " · octave basse" : "");
     pad.addEventListener("pointerdown", e => {
       e.preventDefault();
       ensureAudio();
       const t = tracks[selTrack];
       const list = [];
       for (let r = 0; r < melRows(); r++) list.push(rowToMidi(t, r));
-      const midi = list[Math.min(list.length - 1, Math.floor(hue / 360 * list.length))];
+      const midi = list[Math.min(list.length - 1, Math.floor(hue / 360 * list.length))] + oct;
       const g = AC.createGain();
       g.gain.value = 0.9;
       g.connect(master);
@@ -1579,6 +1581,38 @@
   })();
 
   function instMidi(r) { return tracks[selTrack] ? rowToMidi(tracks[selTrack], r) : 60; }
+  let instSelBuilt = false;
+  function buildInstSel() {
+    if (instSelBuilt) return;
+    instSelBuilt = true;
+    const sel = $("instSel");
+    const o0 = document.createElement("option");
+    o0.value = "track";
+    o0.textContent = "🎛️ Comme la piste";
+    sel.appendChild(o0);
+    for (const [cat, glabel] of [["mel", "🎸 Instruments"], ["sfx", "💥 Bruits & FX"]]) {
+      const og = document.createElement("optgroup");
+      og.label = glabel;
+      for (const ins of INSTRUMENTS) {
+        if (ins.cat !== cat) continue;
+        const o = document.createElement("option");
+        o.value = ins.id;
+        o.textContent = ins.label;
+        sel.appendChild(o);
+      }
+      sel.appendChild(og);
+    }
+  }
+  function instVoice(time, midi, dur) {
+    const t = tracks[selTrack];
+    const g = AC.createGain();
+    g.gain.value = 0.9;
+    g.connect(master);
+    const inst = $("instSel") ? ($("instSel").value || "track") : "track";
+    if (inst !== "track") scheduleNote(AC, g, inst, midi, time, dur, 0.8);
+    else if (t.instrument === "sample" && t.sampleBuffer) scheduleSample(AC, g, t, { row: Math.floor(melRows() / 2), vel: 0.8 }, time, dur);
+    else scheduleNote(AC, g, t.instrument === "drums" ? "pluck" : t.instrument, midi, time, dur, 0.8);
+  }
   function buildInstGrid() {
     const g = $("instCells");
     g.innerHTML = "";
@@ -1599,7 +1633,7 @@
     if (!cell) return;
     const r = Number(cell.dataset.row);
     if (r !== instLastRow) {
-      padVoice(AC.currentTime, instMidi(r), 0.4);
+      instVoice(AC.currentTime, instMidi(r), 0.4);
       if (typeof navigator.vibrate === "function") navigator.vibrate(12);
       if ($("instCap").checked) captureNote(r);
       instLastRow = r;
@@ -1663,6 +1697,7 @@
     save();
   }
   $("btnInst").addEventListener("click", () => {
+    buildInstSel();
     buildInstGrid();
     fillTrackSel("instTrackSel");
     const open = $("instGrid").classList.toggle("open");
