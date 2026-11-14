@@ -370,7 +370,7 @@
   <div class="fwinHead"><span>🗄️ Le coffre fort — prélèvements entreposés</span><button class="fwclose" data-close="prlevWin">✖</button></div>
   <div class="fwinBody">
     <div id="prelevList"></div>
-    <div id="prelevTip">Chaque prélèvement (maintien du Micro) est entreposé DANS le navigateur (IndexedDB) — ferme, rouvre, reviens demain : ils sont toujours là, relisibles !</div>
+    <div id="prelevTip">Chaque prélèvement MIXTE (extérieur + intérieur, maintien du Micro) est entreposé DANS le navigateur (IndexedDB) — ferme, rouvre, reviens demain : ils sont toujours là, relisibles !</div>
   </div>
 </div>
 <div id="gateWin" class="fwindow">
@@ -410,7 +410,7 @@
         <button id="btnPrelevOpen">🗄️ Coffre fort</button>
         <span id="butinCount" style="font-size:12px;color:#8fb8d0">coffre vide — maintiens le Micro !</span>
       </div>
-      <div class="micTip">💡 Maintiens le GROS bouton (ou clique vite : il reste pressé tout seul) — ça enregistre et la visionneuse peint les couleurs en direct ; relâche ou reclique → le butin part au coffre, teinté de la couleur du moment, co-détenu à par égal avec le port. 🎵 Écoute = l'auto-tune accorde ta voix sans enregistrer.</div>
+      <div class="micTip">💡 Maintiens le GROS bouton (ou clique vite : il reste pressé tout seul) — ça prélève l'extérieur (micro) ET l'intérieur (studio) en un seul prélèvement, et la visionneuse peint les couleurs en direct ; relâche ou reclique → le butin part au coffre, teinté de la couleur du moment, co-détenu à par égal avec le port. 🎵 Écoute = l'auto-tune accorde ta voix sans enregistrer.</div>
     </div>
   </div>
 </div>
@@ -2556,7 +2556,7 @@
     if (open) agentWake("vibGrid", "touche un pad : motif de vibration + son !");
   });
 
-  let micStream = null, micAN = null, micTimer = null, micLastMidi = null, micPreT = 0;
+  let micStream = null, micAN = null, micTimer = null, micLastMidi = null, micPreT = 0, micSrcNode = null;
   let holdRec = null, holdChunks = [], callButin = null, butinLoop = false, butinSrc = null;
   let butins = [], butinSeq = 0, butinPlay = null, lootRecipe = 0, lootPart = 0;
   $("btnMicOpen").addEventListener("click", () => {
@@ -2594,7 +2594,7 @@
       $("btnListen").textContent = "🎵 Écoute auto-tune";
     }
   });
-  let holdActive = false, holdT0 = 0;
+  let holdActive = false, holdT0 = 0, holdMix = null;
   function startHoldRec() {
     holdChunks = [];
     holdRec = null;
@@ -2602,7 +2602,16 @@
     const cw0 = $("callWin");
     if (cw0) cw0.classList.add("holding");
     try {
-      const stream = micStream || reconstStream;
+      ensureAudio();
+      let stream = null;
+      if (AC && AC.createMediaStreamDestination) {
+        const dest = AC.createMediaStreamDestination();
+        try { master.connect(dest); } catch (e2) {}
+        if (micStream && micSrcNode) { try { micSrcNode.connect(dest); } catch (e2) {} }
+        holdMix = dest;
+        stream = dest.stream;
+      }
+      if (!stream) stream = micStream || reconstStream;
       if (stream && window.MediaRecorder) {
         holdRec = new MediaRecorder(stream);
         holdRec.ondataavailable = ev => { if (ev.data && ev.data.size) holdChunks.push(ev.data); };
@@ -2620,6 +2629,11 @@
     holdRec = null;
     if (rec && rec.state !== "inactive") {
       await new Promise(res => { rec.onstop = () => res(); try { rec.stop(); } catch (e) { res(); } setTimeout(res, 800); });
+    }
+    if (holdMix) {
+      try { master.disconnect(holdMix); } catch (e) {}
+      if (micStream && micSrcNode) { try { micSrcNode.disconnect(holdMix); } catch (e) {} }
+      holdMix = null;
     }
     if (micStream) {
       micStream.getTracks().forEach(tr => tr.stop());
@@ -2864,6 +2878,21 @@ function dockCallWin() {
   try { const sth = localStorage.getItem("rsCallTheme"); if (sth) $("callThemeSel").value = sth; } catch (e) {}
   applyCallTheme();
     function stopButin() { if (butinSrc) { try { butinSrc.stop(); } catch (e) {} butinSrc = null; } butinPlay = null; renderButins(); }
+  function hueOfName(nm) {
+    const ranges = [[8, "Rouge cardinal"], [30, "Or de doubloon"], [60, "Verte mar\u00e9e"], [110, "\u00c9meraude"], [190, "Azur hauturier"], [240, "Indigo nuit"], [300, "Pourpre corsaire"], [340, "Rose flibuste"]];
+    for (const r of ranges) if (nm && nm.indexOf(r[1]) !== -1) return r[0];
+    return 210;
+  }
+  async function storeButin(idx) {
+    const b = butins[idx];
+    if (!b || !b.buffer) return;
+    try {
+      if (!b.buffer.numberOfChannels || !b.buffer.getChannelData) throw new Error("format");
+      const blob = encodeWav(b.buffer);
+      const ok = await prelevSave({ name: b.name, col: "hsl(" + hueOfName(b.name) + ",72%,46%)", term: "transf\u00e9r\u00e9 du coffre au butin", date: new Date().toLocaleString("fr-FR").slice(0, 16), dur: b.buffer.duration, blob: blob });
+      status(ok ? "\ud83d\uddc4\ufe0f \u00ab " + b.name + " \u00bb entrepos\u00e9 au coffre fort \u2014 revisible m\u00eame apr\u00e8s fermeture du studio !" : "\ud83d\uddc4\ufe0f Coffre fort indisponible ici \u2014 le butin reste en m\u00e9moire pour la session !");
+    } catch (e) { status("\u274c Entreposage impossible pour ce butin \u2014 retente !"); }
+  }
   function renderButins() {
     const list = $("butinList");
     if (!list) return;
@@ -2899,7 +2928,12 @@ function dockCallWin() {
       const bs = document.createElement("button");
       bs.textContent = "➕ Piste";
       bs.addEventListener("click", () => addButinToTrack(b.buffer, b.name));
+      const bstore = document.createElement("button");
+      bstore.textContent = "\ud83d\uddc4\ufe0f Entreposer";
+      bstore.title = "Entreposer ce butin au coffre fort (revisible m\u00eame apr\u00e8s fermeture !)";
+      bstore.addEventListener("click", () => storeButin(idx));
       row.appendChild(bs);
+      row.appendChild(bstore);
       list.appendChild(row);
     });
   }
@@ -3231,6 +3265,7 @@ function dockCallWin() {
     } catch (e) {}
     ensureAudio();
     const src = AC.createMediaStreamSource(micStream);
+    micSrcNode = src;
     micAN = AC.createAnalyser();
     micAN.fftSize = 1024;
     src.connect(micAN);
