@@ -98,6 +98,7 @@
   #padGrid{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin-top:12px}
   #padGrid .pad{aspect-ratio:1;border-radius:50%;border:2px solid rgba(255,255,255,0.25);cursor:pointer;padding:0;min-width:0}
   #padGrid .pad.pressed{outline:3px solid #fff;box-shadow:0 0 10px rgba(255,255,255,0.7)}
+  #padGrid.square .pad{border-radius:8px}
   #mixSwatch{width:26px;height:26px;border-radius:50%;border:2px solid rgba(255,255,255,0.3);background:#222;flex:none}
   #mixUse{display:none}
   #mixUse.show{display:inline-block}
@@ -279,6 +280,7 @@
     <div class="winRow">Piste : <select id="micTrackSel"></select> 🎹 <select id="micInstSel" title="Instrument propre de cette fenêtre · ➡️ pour le mettre sur la piste"></select> <button id="micToTrack" title="Mettre l'instrument de cette fenêtre sur la piste sélectionnée">➡️</button>
       <label style="display:flex;gap:5px;align-items:center"><input id="micCap" type="checkbox"> 📝 capturer</label>
     </div>
+    <div class="winRow">🎤 Micro : <select id="micDevSel" title="Choisis le micro que tu veux !"></select></div>
     <button id="btnMic">🎤 Activer le micro</button>
     <div id="micInfo" style="margin-top:10px;font-size:13px;color:var(--muted)">Micro éteint</div>
     <div style="margin-top:8px;font-size:12px;color:var(--muted)">💡 Chante une note : elle est détectée, corrigée sur ta gamme et jouée avec l'instrument de la piste choisie</div>
@@ -328,13 +330,17 @@
       <span id="padMiniGrid" style="display:flex;gap:3px;flex-wrap:wrap"></span>
       <button id="padMoreCol" style="font-size:11px;padding:3px 8px">fenêtre 🎨</button>
     </div>
-    <div id="padGrid"></div>
+    <div class="winRow" style="gap:8px">
+      <button id="btnPadUndo" title="Récupérer le motif d'avant">↩ Retour</button>
+      <button id="btnPadShape" title="Pads carrés ou ronds">⚪ Rond</button>
+    </div>
+    <div id="padGrid" class="square"></div>
     <div id="mixRow">
       <span id="mixSwatch"></span>
       <span id="mixHex">Touche 2 couleurs en même temps pour le mélange…</span>
       <button id="mixUse">🪣 Utiliser le mélange</button>
     </div>
-    <div style="margin-top:12px;font-size:12px;color:var(--muted)">💡 La grille vit : chaque nouvelle couleur ajoute sa rangée — claire ✨, normale, foncée 🌙, <b>négatif</b> 🔄, <b>rotation +69°</b> 🌀 (cumulative, et elle <b>revient au clair</b> à la fin de la boucle 360° !) et <b>réinversée</b> ♾️ ! Les couleurs s'influencent à <b>valeur équivalente</b> ⚖️ (teinte, saturation et luminosité dérivent librement → le <b>taupe</b> revient quand tu joues des couleurs douces !) et des <b>anomalies</b> surgissent pour réveiller la palette : opposé exact ⚡ ou couleur-fréquence 📡 (celle de SA note !). Un clic sélectionne la couleur partout dans 🎨 Couleurs.</div>
+    <div style="margin-top:12px;font-size:12px;color:var(--muted)">💡 La grille vit : chaque nouvelle couleur ajoute sa rangée — claire ✨, normale, foncée 🌙, <b>négatif</b> 🔄, <b>rotation +69°</b> 🌀 (cumulative, et elle <b>revient au clair</b> à la fin de la boucle 360° !) et <b>réinversée</b> ♾️ ! Les couleurs s'influencent à <b>valeur équivalente</b> ⚖️ (teinte, saturation et luminosité dérivent librement → le <b>taupe</b> revient quand tu joues des couleurs douces !) et des <b>anomalies</b> surgissent pour réveiller la palette : opposé exact ⚡ ou couleur-fréquence 📡 (celle de SA note !). Un clic sélectionne la couleur partout dans 🎨 Couleurs. ↩ <b>Retour</b> récupère le motif d'avant, et ⚪⬜ change la forme !</div>
     <div style="margin-top:10px;font-size:12px;color:var(--muted)">🎨 Sélecteur personnalisé</div>
     <div class="cg" id="padPrecGrid" style="margin-top:8px"></div>
     <label style="display:flex;gap:5px;align-items:center;margin-top:10px;font-size:12px;color:var(--muted)"><input id="padInv" type="checkbox"> 🔄 inversée</label>
@@ -1565,14 +1571,17 @@
   const padActive = new Map();
   let lastMix = null;
   const padGrid = $("padGrid");
-  let padColors = HUES.map(h => hslToHex(h, 80, 60));
+  let padColors = [...HUES.map(h => hslToHex(h, 80, 60)), ...HUES.map(h => hslToHex((h + 15) % 360, 80, 60))];
   let padFlip = false;
   let padAnom = 0;
+  let padHistory = [];
   const padSpin = new Map();
   function rememberColor(col) {
     if (!col || !/^#[0-9a-fA-F]{6}$/.test(col)) return;
     col = col.toLowerCase();
     if (padColors[0] === col) return;
+    padHistory.push({ cols: padColors.slice(), flip: padFlip });
+    if (padHistory.length > 40) padHistory.shift();
     padFlip = !padFlip;
     const inf = padFlip ? col : invertHex(col);
     const driftHue = (a, b, t) => {
@@ -1593,7 +1602,7 @@
       padColors[i] = hslToHex(ah, 100, 55);
     }
     padColors.unshift(col);
-    if (padColors.length > 12) padColors.length = 12;
+    if (padColors.length > 24) padColors.length = 24;
     buildPadGrid();
   }
   function padPress(col, oct, pad, e) {
@@ -1665,6 +1674,19 @@
     }
   }
   buildPadGrid();
+  $("btnPadUndo").addEventListener("click", () => {
+    if (!padHistory.length) { status("↩ Rien à annuler — la grille est déjà au motif d'avant !"); return; }
+    const h = padHistory.pop();
+    padColors = h.cols;
+    padFlip = h.flip;
+    buildPadGrid();
+    status("↩ Motif d'avant restauré — la grille reprend son état précédent !");
+  });
+  $("btnPadShape").addEventListener("click", () => {
+    const sq = padGrid.classList.toggle("square");
+    $("btnPadShape").textContent = sq ? "⚪ Rond" : "⬜ Carré";
+    status(sq ? "⬜ Grille en carré !" : "⚪ Grille en rond !");
+  });
   window.addEventListener("pointerup", e => {
     if (!padActive.has(e.pointerId)) return;
     padActive.delete(e.pointerId);
@@ -2337,12 +2359,37 @@
       status("🎤 Micro coupé");
       return;
     }
+    await openMic();
+  });
+  $("micDevSel").addEventListener("change", async () => {
+    if (!micStream) return;
+    micStream.getTracks().forEach(tr => tr.stop());
+    micStream = null;
+    clearInterval(micTimer);
+    micTimer = null;
+    await openMic();
+  });
+  async function openMic() {
     try {
-      micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const dev = $("micDevSel").value;
+      micStream = await navigator.mediaDevices.getUserMedia(dev ? { audio: { deviceId: { exact: dev } } } : { audio: true });
     } catch (err) {
       status("❌ Micro refusé ou indisponible : " + err.message);
       return;
     }
+    try {
+      const devs = await navigator.mediaDevices.enumerateDevices();
+      const sel = $("micDevSel");
+      const cur = sel.value;
+      sel.innerHTML = "";
+      devs.filter(d => d.kind === "audioinput").forEach((d, i) => {
+        const o = document.createElement("option");
+        o.value = d.deviceId;
+        o.textContent = d.label || "Micro " + (i + 1);
+        sel.appendChild(o);
+      });
+      if (cur && [...sel.options].some(o => o.value === cur)) sel.value = cur;
+    } catch (e) {}
     ensureAudio();
     const src = AC.createMediaStreamSource(micStream);
     micAN = AC.createAnalyser();
@@ -2382,7 +2429,7 @@
         if ($("micCap").checked) captureNote(midiToRow(t, midi));
       }
     }, 90);
-  });
+  }
 
   const MAGIC = { on: true, pending: false, lastBrush: null, lastNoteCount: -1, lastAct: 0, lastMsg: "les agents magiciens observent…" };
   function magicSay(msg) { MAGIC.lastMsg = msg; refreshEcho(); }
