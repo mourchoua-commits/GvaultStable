@@ -2509,14 +2509,14 @@
     } catch (e) { micPermWatch = false; }
   }
   let callTimerInt = null, callT0 = 0;
-  function openCall() {
+  function openCall(idle) {
     $("callWin").classList.remove("mini");
     $("callWin").classList.add("open");
     $("callNote").textContent = "🎤 Le Micro est sur la planche — chante, l'équipage écoute !";
     $("callTimer").textContent = "⚓ l'équipage rame vers le Micro…";
     callT0 = Date.now();
     clearInterval(callTimerInt);
-    callTimerInt = setInterval(() => {
+    callTimerInt = idle ? null : setInterval(() => {
       const s = Math.floor((Date.now() - callT0) / 1000);
       $("callTimer").textContent = Math.floor(s / 60) + ":" + String(s % 60).padStart(2, "0");
     }, 500);
@@ -2674,7 +2674,7 @@
     if (window.isSecureContext === false) {
       $("micInfo").textContent = "🔒 Le micro exige une page https — ouvre la version en ligne sur raw.githack.com (le fichier local en double-clic ne peut pas l'avoir) !";
       status("🔒 Micro indisponible hors https — ouvre la version en ligne !");
-      openCall();
+      openCall(true);
       $("callNote").textContent = "🌊 Calme plat — le Micro exige une page https : ouvre la version en ligne !";
       $("callTimer").textContent = "hors ligne";
       return;
@@ -2687,7 +2687,7 @@
         $("micInfo").textContent = "🔒 Micro refusé par le navigateur ! Barre d'adresse → icône 🔒/🎛 → Micro : Autoriser → puis le micro se relancera TOUT SEUL !";
         status("🔒 Micro bloqué — autorise-le dans la barre d'adresse, je le relance automatiquement après !");
         watchMicPerm();
-        openCall();
+        openCall(true);
         $("callNote").textContent = "🔒 Le Micro refuse de monter à bord ! Barre d'adresse → Micro : Autoriser !";
         $("callTimer").textContent = "en attente d'autorisation…";
       } else status("❌ Micro refusé ou indisponible : " + err.message);
@@ -2720,6 +2720,8 @@
     stopButin();
     callButin = null;
     $("butinRow").style.display = "none";
+    if (callRec && callRec.state !== "inactive") { callRec.ondataavailable = null; try { callRec.stop(); } catch (e) {} }
+    callRec = null;
     callChunks = [];
     try {
       if (window.MediaRecorder) {
