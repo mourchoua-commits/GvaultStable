@@ -80,6 +80,9 @@
   #mixSwatch{width:26px;height:26px;border-radius:50%;border:2px solid rgba(255,255,255,0.3);background:#222;flex:none}
   #mixUse{display:none}
   #mixUse.show{display:inline-block}
+  #drawPad{width:100%;border:1px solid var(--line);border-radius:10px;background:rgba(0,0,0,0.35);cursor:crosshair;touch-action:none;margin-top:12px;display:block}
+  #drawRow{display:flex;gap:8px;align-items:center;margin-top:10px;flex-wrap:wrap;font-size:13px;color:var(--muted)}
+  .fwinHead{cursor:move;user-select:none}
   #playhead{position:absolute;top:0;bottom:0;width:2px;background:rgba(255,255,255,0.85);box-shadow:0 0 8px rgba(255,255,255,0.8);pointer-events:none;display:none}
   #notePanel{border:1px solid var(--gold);border-radius:14px;padding:10px 14px;background:var(--panel);
     display:flex;gap:14px;align-items:center;flex-wrap:wrap;font-size:13px}
@@ -178,7 +181,13 @@
       <span id="mixHex">Touche 2 couleurs en même temps pour le mélange…</span>
       <button id="mixUse">🪣 Utiliser le mélange</button>
     </div>
-    <div style="margin-top:8px;font-size:12px;color:var(--muted)">💡 Joue avec l'instrument de la piste sélectionnée — la teinte donne la note, claire = aigu</div>
+    <div id="drawRow">
+      <button id="btnPlayDraw">▶️ Jouer le dessin</button>
+      <button id="btnClearDraw">🗑️ Effacer</button>
+      <label style="display:flex;gap:5px;align-items:center"><input id="liveDraw" type="checkbox" checked> jouer en dessinant</label>
+    </div>
+    <canvas id="drawPad" width="320" height="200"></canvas>
+    <div style="margin-top:8px;font-size:12px;color:var(--muted)">💡 Dessine ! Haut = aigu, gauche = début. La couleur du tracé (ou l'arc-en-ciel auto) teinte la note. Joue avec l'instrument de la piste sélectionnée.</div>
   </div>
 </div>
 <script>
@@ -1118,6 +1127,26 @@
   document.querySelectorAll(".fwclose").forEach(b => {
     b.addEventListener("click", () => $(b.dataset.close).classList.remove("open"));
   });
+  let winZ = 60;
+  document.querySelectorAll(".fwindow").forEach(w => {
+    const head = w.querySelector(".fwinHead");
+    let wdrag = null;
+    w.addEventListener("pointerdown", () => { w.style.zIndex = ++winZ; });
+    head.addEventListener("pointerdown", e => {
+      if (e.target.classList.contains("fwclose")) return;
+      const r = w.getBoundingClientRect();
+      wdrag = { dx: e.clientX - r.left, dy: e.clientY - r.top };
+      head.setPointerCapture(e.pointerId);
+    });
+    head.addEventListener("pointermove", e => {
+      if (!wdrag) return;
+      w.style.left = clamp(e.clientX - wdrag.dx, 0, window.innerWidth - 80) + "px";
+      w.style.top = clamp(e.clientY - wdrag.dy, 0, window.innerHeight - 40) + "px";
+      w.style.right = "auto";
+      w.style.bottom = "auto";
+    });
+    head.addEventListener("pointerup", () => { wdrag = null; });
+  });
 
   const HUES = [0, 30, 60, 90, 120, 150, 180, 210, 240, 270, 300, 330];
   const padActive = new Map();
@@ -1189,8 +1218,106 @@
   });
   $("btnMagic").addEventListener("click", () => {
     const open = $("magicPad").classList.toggle("open");
-    if (open) status("🌈 Touche une couleur : elle joue une note selon sa teinte. Deux à la fois = mélange !");
+    if (open) status("🌈 Touche une couleur, ou dessine sur la grille en bas — le dessin se joue !");
   });
+
+  const dp = $("drawPad"), dctx = dp.getContext("2d");
+  const CELL = 8;
+  const drawn = new Map();
+  let drawing = false, lastCell = null, lastPlayedKey = null, sweep = null;
+  function padMidi(cy, rows) {
+    const t = tracks[selTrack];
+    const list = [];
+    for (let r = 0; r < melRows(); r++) list.push(rowToMidi(t, r));
+    return list[Math.min(list.length - 1, Math.floor((1 - cy / rows) * list.length))];
+  }
+  function padVoice(time, midi, dur) {
+    const t = tracks[selTrack];
+    const g = AC.createGain();
+    g.gain.value = 0.9;
+    g.connect(master);
+    if (t.instrument === "sample" && t.sampleBuffer) scheduleSample(AC, g, t, { row: Math.floor(melRows() / 2), vel: 0.8 }, time, dur);
+    else scheduleNote(AC, g, t.instrument === "drums" ? "pluck" : t.instrument, midi, time, dur, 0.8);
+  }
+  function drawGrid() {
+    dctx.clearRect(0, 0, dp.width, dp.height);
+    dctx.strokeStyle = "rgba(255,255,255,0.06)";
+    dctx.lineWidth = 1;
+    dctx.beginPath();
+    for (let x = 0; x <= dp.width; x += CELL) { dctx.moveTo(x + 0.5, 0); dctx.lineTo(x + 0.5, dp.height); }
+    for (let y = 0; y <= dp.height; y += CELL) { dctx.moveTo(0, y + 0.5); dctx.lineTo(dp.width, y + 0.5); }
+    dctx.stroke();
+    for (const [k, col] of drawn) {
+      const [cx, cy] = k.split(",").map(Number);
+      dctx.fillStyle = col;
+      dctx.fillRect(cx * CELL + 1, cy * CELL + 1, CELL - 2, CELL - 2);
+    }
+  }
+  function cellAt(e) {
+    const r = dp.getBoundingClientRect();
+    const RW = dp.width / CELL, RH = dp.height / CELL;
+    return [clamp(Math.floor((e.clientX - r.left) / (r.width / RW)), 0, RW - 1),
+      clamp(Math.floor((e.clientY - r.top) / (r.height / RH)), 0, RH - 1)];
+  }
+  function paintCell(e) {
+    const [cx, cy] = cellAt(e);
+    const rows = dp.height / CELL;
+    const col = brushCol || hslToHex((1 - cy / rows) * 360, 80, 60);
+    if (lastCell) {
+      const [lx, ly] = lastCell;
+      const n = Math.max(Math.abs(cx - lx), Math.abs(cy - ly), 1);
+      for (let i = 0; i <= n; i++) drawn.set(Math.round(lx + (cx - lx) * i / n) + "," + Math.round(ly + (cy - ly) * i / n), col);
+    } else drawn.set(cx + "," + cy, col);
+    lastCell = [cx, cy];
+    drawGrid();
+    if ($("liveDraw").checked) {
+      const key = cx + "," + cy;
+      if (key !== lastPlayedKey) {
+        lastPlayedKey = key;
+        padVoice(AC.currentTime, padMidi(cy, rows), 0.3);
+      }
+    }
+  }
+  dp.addEventListener("pointerdown", e => {
+    e.preventDefault();
+    ensureAudio();
+    drawing = true;
+    lastCell = null;
+    lastPlayedKey = null;
+    dp.setPointerCapture(e.pointerId);
+    paintCell(e);
+  });
+  dp.addEventListener("pointermove", e => { if (drawing) paintCell(e); });
+  window.addEventListener("pointerup", () => { drawing = false; lastCell = null; });
+  $("btnClearDraw").addEventListener("click", () => { drawn.clear(); sweep = null; drawGrid(); status("🗑️ Dessin effacé"); });
+  $("btnPlayDraw").addEventListener("click", () => {
+    if (!drawn.size) { status("🌈 Dessine d'abord sur la grille !"); return; }
+    ensureAudio();
+    const RW = dp.width / CELL, rows = dp.height / CELL;
+    const total = 16 * stepDur();
+    const cols = new Map();
+    for (const [k] of drawn) {
+      const [cx, cy] = k.split(",").map(Number);
+      if (!cols.has(cx)) cols.set(cx, []);
+      cols.get(cx).push(cy);
+    }
+    const start = AC.currentTime + 0.08;
+    for (const [cx, cys] of cols) {
+      const time = start + (cx / RW) * total;
+      for (const cy of cys) padVoice(time, padMidi(cy, rows), 0.35);
+    }
+    sweep = { start, total };
+    status("▶️ Le dessin se joue… (" + drawn.size + " cases, " + cols.size + " colonnes)");
+  });
+  drawGrid();
+  (function tickDraw() {
+    requestAnimationFrame(tickDraw);
+    if (!sweep) return;
+    const p = (AC.currentTime - sweep.start) / sweep.total;
+    drawGrid();
+    if (p >= 0 && p <= 1) { dctx.fillStyle = "rgba(255,255,255,0.75)"; dctx.fillRect(p * dp.width, 0, 2, dp.height); }
+    else if (p > 1.05) sweep = null;
+  })();
 
   function selectTrack(i) {
     selTrack = i;
