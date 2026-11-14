@@ -313,7 +313,7 @@
       <span id="mixHex">Touche 2 couleurs en même temps pour le mélange…</span>
       <button id="mixUse">🪣 Utiliser le mélange</button>
     </div>
-    <div style="margin-top:12px;font-size:12px;color:var(--muted)">💡 La grille vit : chaque nouvelle couleur ajoute sa rangée — claire ✨, normale, foncée 🌙, <b>négatif</b> 🔄, <b>complémentaire</b> 🎯 (+180°) et <b>réinversée</b> ♾️ ! Et les anciennes couleurs s'influencent entre elles (alterné avec leur négatif) → les teintes et les notes dérivent à chaque ajout ! Un clic sélectionne la couleur partout dans 🎨 Couleurs.</div>
+    <div style="margin-top:12px;font-size:12px;color:var(--muted)">💡 La grille vit : chaque nouvelle couleur ajoute sa rangée — claire ✨, normale, foncée 🌙, <b>négatif</b> 🔄, <b>rotation +69°</b> 🌀 (cumulative : chaque appui tourne de 69° de plus !) et <b>réinversée</b> ♾️ ! Et les anciennes couleurs s'influencent entre elles (alterné avec leur négatif) → les teintes et les notes dérivent à chaque ajout ! Un clic sélectionne la couleur partout dans 🎨 Couleurs.</div>
     <div style="margin-top:10px;font-size:12px;color:var(--muted)">🎨 Sélecteur personnalisé</div>
     <div class="cg" id="padPrecGrid" style="margin-top:8px"></div>
     <label style="display:flex;gap:5px;align-items:center;margin-top:10px;font-size:12px;color:var(--muted)"><input id="padInv" type="checkbox"> 🔄 inversée</label>
@@ -1543,6 +1543,7 @@
   const padGrid = $("padGrid");
   let padColors = HUES.map(h => hslToHex(h, 80, 60));
   let padFlip = false;
+  const padSpin = new Map();
   function rememberColor(col) {
     if (!col || !/^#[0-9a-fA-F]{6}$/.test(col)) return;
     col = col.toLowerCase();
@@ -1593,20 +1594,32 @@
   function buildPadGrid() {
     padGrid.innerHTML = "";
     for (const base of padColors) {
-      const shades = [
-        [mixHex([base, "#ffffff"]), 12, "claire · octave haute"],
-        [base, 0, ""],
-        [mixHex([base, "#000000"]), -12, "foncée · octave basse"],
-        [invertHex(base), 0, "négatif"],
-        [compHex(base), 0, "complémentaire · teinte +180°"],
-        [invertHex(compHex(base)), 0, "réinversée · complémentaire inversée"]
+      const [bh, bs, bl] = hexToHsl(base);
+      const k = padSpin.get(base) || 0;
+      const rot = hslToHex((bh + 69 * k) % 360, bs, bl);
+      const pads = [
+        [mixHex([base, "#ffffff"]), 12, "claire · octave haute", false],
+        [base, 0, "", false],
+        [mixHex([base, "#000000"]), -12, "foncée · octave basse", false],
+        [invertHex(base), 0, "négatif", false],
+        [rot, 0, "rotation +69°" + (k ? " ×" + k : ""), true],
+        [invertHex(rot), 0, "réinversée", false]
       ];
-      for (const [col, oct, tag] of shades) {
+      for (const [col, oct, tag, spin] of pads) {
         const pad = document.createElement("button");
         pad.className = "pad";
         pad.style.background = col;
         pad.title = col + (tag ? " · " + tag : "");
-        pad.addEventListener("pointerdown", e => padPress(col, oct, pad, e));
+        pad.addEventListener("pointerdown", e => {
+          if (spin) {
+            const nk = (padSpin.get(base) || 0) + 1;
+            padSpin.set(base, nk);
+            const c = hslToHex((bh + 69 * nk) % 360, bs, bl);
+            pad.style.background = c;
+            pad.title = c + " · rotation +69° ×" + nk;
+            padPress(c, 0, pad, e);
+          } else padPress(col, oct, pad, e);
+        });
         padGrid.appendChild(pad);
       }
     }
