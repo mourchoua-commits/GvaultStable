@@ -91,6 +91,7 @@
   #miniGame .fwinBody{padding:0}
   #miniGame iframe{width:100%;height:100%;border:0;display:block;min-height:180px}
   #padWin{width:420px}
+  #magicPad{width:460px}
   #padGrid{display:grid;grid-template-columns:repeat(6,1fr);gap:10px;margin-top:4px}
   #padGrid .pad{aspect-ratio:1;border-radius:50%;border:2px solid rgba(255,255,255,0.25);cursor:pointer;padding:0;min-width:0}
   #padGrid .pad.pressed{outline:3px solid #fff;box-shadow:0 0 10px rgba(255,255,255,0.7)}
@@ -285,8 +286,8 @@
       <label style="display:flex;gap:5px;align-items:center"><input id="liveDraw" type="checkbox" checked> jouer en dessinant</label>
       <label style="display:flex;gap:5px;align-items:center"><input id="drawCap" type="checkbox" checked> 📝 capturer</label>
     </div>
-    <canvas id="drawPad" width="320" height="200"></canvas>
-    <div style="margin-top:8px;font-size:12px;color:var(--muted)">💡 Dessine ! Haut = aigu, gauche = début. La couleur du tracé (ou l'arc-en-ciel auto) teinte la note. Joue avec l'instrument de la piste sélectionnée.</div>
+    <canvas id="drawPad" width="640" height="400"></canvas>
+    <div style="margin-top:8px;font-size:12px;color:var(--muted)">💡 Dessine ! Chaque couleur = SA note : fréquence de la lumière ÷ 2⁴⁰ (40 octaves !). Rouge ≈ 423 Hz, violet ≈ 717 Hz — les rapports physiques sont gardés. Gauche = début.</div>
   </div>
 </div>
 <script>
@@ -1503,6 +1504,31 @@
     for (let r = 0; r < melRows(); r++) list.push(rowToMidi(t, r));
     return list[Math.min(list.length - 1, Math.floor((1 - cy / rows) * list.length))];
   }
+  function rgbToHue(r, g, b) {
+    const mx = Math.max(r, g, b), mn = Math.min(r, g, b), d = mx - mn;
+    if (!d) return 0;
+    let h;
+    if (mx === r) h = ((g - b) / d) % 6;
+    else if (mx === g) h = (b - r) / d + 2;
+    else h = (r - g) / d + 4;
+    h *= 60;
+    return h < 0 ? h + 360 : h;
+  }
+  function colFreqMidi(col) {
+    const [r, g, b] = hexToRgb(col);
+    let hue = rgbToHue(r, g, b);
+    if (hue > 270) hue -= 270;
+    const wl = 645 - (hue / 270) * 265;
+    const fLight = 299792458 / (wl * 1e-9);
+    const fSound = fLight / Math.pow(2, 40);
+    return 69 + 12 * Math.log2(fSound / 440);
+  }
+  function colNote(col) {
+    const midiF = colFreqMidi(col);
+    if (freeMode) return Math.round(midiF);
+    const t = tracks[selTrack];
+    return rowToMidi(t, midiToRow(t, midiF));
+  }
   function padVoice(time, midi, dur) {
     const t = tracks[selTrack];
     const g = AC.createGain();
@@ -1546,8 +1572,8 @@
       const key = cx + "," + cy;
       if (key !== lastPlayedKey) {
         lastPlayedKey = key;
-        padVoice(AC.currentTime, padMidi(cy, rows), 0.3);
-        if ($("drawCap").checked) captureNote(midiToRow(tracks[selTrack], padMidi(cy, rows)));
+        padVoice(AC.currentTime, colNote(col), 0.3);
+        if ($("drawCap").checked) captureNote(midiToRow(tracks[selTrack], colFreqMidi(col)));
       }
     }
   }
@@ -1572,12 +1598,12 @@
     for (const [k] of drawn) {
       const [cx, cy] = k.split(",").map(Number);
       if (!cols.has(cx)) cols.set(cx, []);
-      cols.get(cx).push(cy);
+      cols.get(cx).push([cy, col]);
     }
     const start = AC.currentTime + 0.08;
     for (const [cx, cys] of cols) {
       const time = start + (cx / RW) * total;
-      for (const cy of cys) padVoice(time, padMidi(cy, rows), 0.35);
+      for (const [cy, col] of cys) padVoice(time, colNote(col), 0.35);
     }
     sweep = { start, total };
     status("▶️ Le dessin se joue… (" + drawn.size + " cases, " + cols.size + " colonnes)");
