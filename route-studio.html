@@ -279,7 +279,7 @@
 </main>
 <footer>
   <canvas id="viz" width="440" height="88"></canvas>
-  <button id="btnRec">⏺ Enregistrer</button>
+  <button id="btnRec" title="Capture TOUT le son du studio — à l’arrêt, la session part au coffre au butin (aucun téléchargement)">⏺ Session studio</button>
   <button id="btnWav">💾 Exporter en WAV</button>
   <button id="btnJsonOut">📁 Exporter (.json)</button>
   <label class="filebtn">🎛️ Importer un son (WAV/MP3)<input id="fileAudio" type="file" accept="audio/*" hidden></label>
@@ -3163,23 +3163,31 @@ function dockCallWin() {
       return;
     }
     mediaRec.ondataavailable = e => { if (e.data && e.data.size) recChunks.push(e.data); };
-    mediaRec.onstop = () => {
+    mediaRec.onstop = async () => {
       try { master.disconnect(recDest); } catch (err) {}
+      const hadAudio = recChunks.some(c => c && c.size);
       const blob = new Blob(recChunks, { type: mediaRec.mimeType || "audio/webm" });
-      const a = document.createElement("a");
-      a.href = URL.createObjectURL(blob);
-      a.download = "route-studio-session.webm";
-      a.click();
+      recChunks = [];
       clearInterval(recTimer);
-      $("btnRec").textContent = "⏺ Enregistrer";
+      $("btnRec").textContent = "\u23fa Session studio";
       $("btnRec").classList.remove("rec");
-      status("⏺ Session enregistrée — le fichier audio est téléchargé !");
+      if (!hadAudio) { status("\u23fa Session termin\u00e9e \u2014 rien de captur\u00e9, retente !"); return; }
+      try {
+        ensureAudio();
+        const buf = await AC.decodeAudioData(await blob.arrayBuffer());
+        butinSeq++;
+        butins.push({ name: "Butin \u00ab session \u00bb " + butinSeq, buffer: buf });
+        renderButins();
+        $("butinRow").style.display = "flex";
+        $("butinInfo").textContent = "\ud83c\udf81 Butin \u00ab session \u00bb : " + Math.max(1, Math.round(buf.duration)) + "s de studio au coffre !";
+        status("\u23fa Session au coffre au butin \u2014 z\u00e9ro t\u00e9l\u00e9chargement surprise, elle reste jouable et bouclable dans le studio !");
+      } catch (err) { status("\u23fa Session termin\u00e9e, mais le son n'a pas pu \u00eatre d\u00e9cod\u00e9 \u2014 retente !"); }
     };
     mediaRec.start();
     recStart = Date.now();
     $("btnRec").textContent = "⏹ Stop (0:00)";
     $("btnRec").classList.add("rec");
-    status("🔴 Ça enregistre tout ce qui sort du studio ! Reclique sur ⏹ pour arrêter et télécharger.");
+    status("🔴 Ça enregistre tout ce qui sort du studio ! Reclique sur \u23f9 pour arr\u00eater : la session part au coffre au butin, aucun fichier t\u00e9l\u00e9charg\u00e9 !");
     recTimer = setInterval(() => {
       const s = Math.floor((Date.now() - recStart) / 1000);
       $("btnRec").textContent = "⏹ Stop (" + Math.floor(s / 60) + ":" + String(s % 60).padStart(2, "0") + ")";
