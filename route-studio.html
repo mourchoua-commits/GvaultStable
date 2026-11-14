@@ -120,6 +120,7 @@
   .vpad.on{transform:scale(1.1);box-shadow:0 0 14px rgba(255,255,255,0.85)}
   #playhead{position:absolute;top:0;bottom:0;width:2px;background:rgba(255,255,255,0.85);box-shadow:0 0 8px rgba(255,255,255,0.8);pointer-events:none;display:none}
   #nextCol{position:absolute;top:0;bottom:0;width:36px;background:rgba(255,215,106,0.10);border-left:1px dashed rgba(255,215,106,0.55);pointer-events:none;display:none;animation:prePulse 1s ease-in-out infinite}
+  #lifeCanvas{position:absolute;left:0;top:0;pointer-events:none}
   @keyframes prePulse{0%,100%{background:rgba(255,215,106,0.05)}50%{background:rgba(255,215,106,0.22)}}
   @keyframes preSayK{0%,100%{opacity:.55}50%{opacity:1}}
   .preSay{animation:preSayK .8s ease-in-out infinite;color:#ffd76a}
@@ -201,6 +202,7 @@
       <div id="roll">
         <div id="cells"></div>
         <div id="notesLayer"></div>
+        <canvas id="lifeCanvas"></canvas>
         <div id="playhead"></div>
         <div id="nextCol"></div>
       </div>
@@ -211,6 +213,7 @@
       <button class="tool" data-tool="paint">🪣 Pot</button>
       <button class="tool" data-tool="smudge">🫳 Estomper</button>
       <button class="tool" id="btnSmooth">🪥 Aplanir</button>
+      <button class="tool active" id="btnLife">🧬 Vie</button>
     </div>
     <div id="notePanel" class="hidden">
       <span class="npName" id="npName">Note</span>
@@ -303,6 +306,7 @@
       <button id="btnButinPlay">▶️ Écouter</button>
       <button id="btnButinLoop">🔁 Boucle</button>
       <button id="btnButinSample">➕ Sample sur la piste</button>
+      <button id="btnButinOpen">🎁 Coffre</button>
     </div>
     <div style="margin-top:8px;font-size:12px;color:var(--muted)">💡 Chante une note : elle est détectée, corrigée sur ta gamme et jouée avec l'instrument de la piste choisie — 🔒 Refusé ? Barre d'adresse → Autoriser le micro : la relance est automatique !</div>
   </div>
@@ -316,6 +320,13 @@
     <div id="callTimer">⚓ l'équipage rame vers le Micro…</div>
     <div id="callNote">…</div>
     <button id="btnCallEnd">🛏️ Le Micro descend se reposer (il reste à bord !)</button>
+  </div>
+</div>
+<div id="butinWin" class="fwindow">
+  <div class="fwinHead"><span>🎁 Coffre au butin — tous les chants capturés</span><button class="fwclose" data-close="butinWin">✖</button></div>
+  <div class="fwinBody">
+    <div id="butinList"></div>
+    <div style="margin-top:8px;font-size:12px;color:var(--muted)">💡 ➕ pose le chant comme sample sur la piste sélectionnée — tes notes de la grille le joueront ! (les butins vivent pendant la session)</div>
   </div>
 </div>
 <div id="miniGame" class="fwindow">
@@ -1102,7 +1113,59 @@
       });
       layer.appendChild(d);
     }
+    syncLife();
   }
+
+  let lifeOn = true, lifeForms = [];
+  const lifeCtx = $("lifeCanvas").getContext("2d");
+  function syncLife() {
+    const t = tracks[selTrack];
+    const R = t.instrument === "drums" ? 4 : melRows();
+    const cv = $("lifeCanvas");
+    if (cv.width !== STEPS * CW || cv.height !== R * CH) { cv.width = STEPS * CW; cv.height = R * CH; }
+    for (const f of lifeForms) {
+      const n = f.note;
+      f.x = n.step * CW + (n.len * CW) / 2;
+      f.y = (R - 1 - n.row) * CH + CH / 2;
+      f.color = n.col || t.color;
+      f.size = (0.55 + Math.min(n.len, 4) * 0.14) * (0.65 + n.vel * 0.45);
+    }
+    const seen = new Set(t.notes);
+    lifeForms = lifeForms.filter(f => seen.has(f.note));
+    for (const n of t.notes) if (!lifeForms.some(f => f.note === n))
+      lifeForms.push({ note: n, born: performance.now(), phase: Math.random() * 6.28, x: n.step * CW + n.len * CW / 2, y: (R - 1 - n.row) * CH + CH / 2, color: n.col || t.color, size: 0.8 });
+  }
+  function drawLife(now) {
+    const cv = $("lifeCanvas");
+    lifeCtx.clearRect(0, 0, cv.width, cv.height);
+    if (!lifeOn) return;
+    for (const f of lifeForms) {
+      const grow = Math.min(1, (now - f.born) / 800);
+      const wig = Math.sin(now / 300 + f.phase);
+      const active = playing && curStep === f.note.step;
+      const r = f.size * 9 * grow * (1 + wig * 0.06) * (active ? 1.35 : 1);
+      const x = f.x + wig * 2, y = f.y + Math.cos(now / 260 + f.phase) * 2 - (1 - grow) * 8;
+      lifeCtx.globalAlpha = active ? 0.95 : 0.72;
+      lifeCtx.fillStyle = f.color;
+      lifeCtx.beginPath();
+      for (let a = 0; a <= 12; a++) {
+        const ang = a / 12 * Math.PI * 2;
+        const rr = r * (1 + 0.18 * Math.sin(ang * 3 + now / 400 + f.phase));
+        if (a) lifeCtx.lineTo(x + Math.cos(ang) * rr, y + Math.sin(ang) * rr);
+        else lifeCtx.moveTo(x + Math.cos(ang) * rr, y + Math.sin(ang) * rr);
+      }
+      lifeCtx.closePath(); lifeCtx.fill();
+      if (active) { lifeCtx.globalAlpha = 0.35; lifeCtx.beginPath(); lifeCtx.arc(x, y, r * 1.7, 0, 6.28); lifeCtx.fill(); }
+      lifeCtx.globalAlpha = 1; lifeCtx.fillStyle = "#0c0722";
+      lifeCtx.beginPath(); lifeCtx.arc(x - r * 0.3, y - r * 0.15, Math.max(1, r * 0.12), 0, 6.28); lifeCtx.fill();
+      lifeCtx.beginPath(); lifeCtx.arc(x + r * 0.3, y - r * 0.15, Math.max(1, r * 0.12), 0, 6.28); lifeCtx.fill();
+    }
+  }
+  $("btnLife").addEventListener("click", () => {
+    lifeOn = !lifeOn;
+    $("btnLife").classList.toggle("active", lifeOn);
+    status(lifeOn ? "🧬 Le monde vivant revient — chaque note est un organisme !" : "🧬 Monde vivant éteint");
+  });
 
   function selectNote(n) {
     selNote = n;
@@ -1492,6 +1555,7 @@
     vibGrid: { emoji: "\ud83d\udcf3", name: "Vibra", w: 390, h: 350, say: "pads calibr\u00e9s \u2014 touche-les !" },
     micWin: { emoji: "\ud83c\udfa4", name: "Tuneur", w: 400, h: 310, say: "micro en \u00e9coute \u2014 chante juste !" },
     echoWin: { emoji: "\ud83e\ude9e", name: "\u00c9cho", w: 340, h: 320, say: "fen\u00eatre \u00e9cho en poste \u2014 elle se met \u00e0 jour toute seule selon tes choix !" },
+    butinWin: { emoji: "\ud83c\udf81", name: "Pillard", w: 420, h: 400, say: "coffre au butin ouvert — \u00e9coute, boucle, pose en sample !" },
     miniGame: { emoji: "\ud83d\ude97", name: "Miroir", w: 370, h: 300, corner: true, say: "route en miroir gar\u00e9e dans le coin \u2014 roule !" }
   };
   function openWins() {
@@ -2375,6 +2439,7 @@
 
   let micStream = null, micAN = null, micTimer = null, micLastMidi = null, micPreT = 0;
   let callRec = null, callChunks = [], callButin = null, butinLoop = false, butinSrc = null;
+  let butins = [], butinSeq = 0, butinPlay = null;
   $("btnMicOpen").addEventListener("click", () => {
     syncWinSels();
     const open = $("micWin").classList.toggle("open");
@@ -2445,7 +2510,77 @@
     clearInterval(callTimerInt);
     callTimerInt = null;
   }
-  function stopButin() { if (butinSrc) { try { butinSrc.stop(); } catch (e) {} butinSrc = null; } }
+  function stopButin() { if (butinSrc) { try { butinSrc.stop(); } catch (e) {} butinSrc = null; } butinPlay = null; renderButins(); }
+  function renderButins() {
+    const list = $("butinList");
+    if (!list) return;
+    list.innerHTML = "";
+    if (!butins.length) {
+      const empty = document.createElement("div");
+      empty.style.cssText = "font-size:13px;color:var(--muted);padding:6px 0";
+      empty.textContent = " Coffre vide — aborde le Micro et fais-le chanter !";
+      list.appendChild(empty);
+      return;
+    }
+    butins.forEach((b, idx) => {
+      const row = document.createElement("div");
+      row.className = "winRow";
+      row.style.cssText = "gap:8px;align-items:center;padding:6px 0;border-bottom:1px dashed var(--line)";
+      const lab = document.createElement("span");
+      lab.style.cssText = "flex:1;font-size:13px";
+      lab.textContent = "🎁 " + b.name + " · " + Math.max(1, Math.round(b.buffer.duration)) + "s";
+      row.appendChild(lab);
+      const bp = document.createElement("button");
+      bp.textContent = butinPlay && butinPlay.idx === idx && !butinPlay.loop ? "⏹ Stop" : "▶️ Écouter";
+      bp.addEventListener("click", () => playButin(idx, false));
+      row.appendChild(bp);
+      const bl = document.createElement("button");
+      bl.textContent = butinPlay && butinPlay.idx === idx && butinPlay.loop ? "⏹ Stop" : "🔁 Boucle";
+      bl.classList.toggle("on", !!(butinPlay && butinPlay.idx === idx && butinPlay.loop));
+      bl.addEventListener("click", () => playButin(idx, true));
+      row.appendChild(bl);
+      const bs = document.createElement("button");
+      bs.textContent = "➕ Piste";
+      bs.addEventListener("click", () => addButinToTrack(b.buffer, b.name));
+      row.appendChild(bs);
+      list.appendChild(row);
+    });
+  }
+  function playButin(idx, loop) {
+    const b = butins[idx];
+    if (!b) return;
+    if (butinPlay && butinPlay.idx === idx && butinPlay.loop === loop) {
+      stopButin();
+      status("⏹ Butin arrêté");
+      return;
+    }
+    ensureAudio();
+    stopButin();
+    const src = AC.createBufferSource();
+    src.buffer = b.buffer;
+    src.loop = loop;
+    src.connect(master);
+    src.start();
+    butinSrc = src;
+    butinPlay = { idx, loop };
+    renderButins();
+    status(loop ? "🔁 « " + b.name + " » tourne en boucle !" : "▶️ Lecture de « " + b.name + " » !");
+  }
+  function addButinToTrack(buffer, name) {
+    if (!buffer) return;
+    const t = tracks[selTrack];
+    t.instrument = "sample";
+    t.sampleBuffer = buffer;
+    t.sampleName = name;
+    renderTrackList();
+    save();
+    status("🎁 « " + name + " » posé comme sample sur « " + t.name + " » — place tes notes, ça jouera ton chant !");
+  }
+  $("btnButinOpen").addEventListener("click", () => {
+    const w = $("butinWin");
+    const open = w.classList.toggle("open");
+    if (open) { renderButins(); agentWake("butinWin", "ton butin est à l'abri — écoute, boucle, pose en sample !"); }
+  });
   async function harvestButin() {
     if (!callRec) return;
     const rec = callRec;
@@ -2464,6 +2599,9 @@
       ensureAudio();
       const buf = await AC.decodeAudioData(await blob.arrayBuffer());
       callButin = buf;
+      butinSeq++;
+      butins.push({ name: "Butin " + butinSeq, buffer: buf });
+      renderButins();
       $("butinRow").style.display = "flex";
       $("butinInfo").textContent = "🎁 Butin de l'abordage : " + Math.max(1, Math.round(buf.duration)) + "s de chant capturé !";
       status("🎁 Butin récupéré — écoute, mets en boucle ou pose-le en sample !");
@@ -2504,13 +2642,7 @@
   });
   $("btnButinSample").addEventListener("click", () => {
     if (!callButin) return;
-    const t = tracks[selTrack];
-    t.instrument = "sample";
-    t.sampleBuffer = callButin;
-    t.sampleName = "butin-micro";
-    renderTrackList();
-    save();
-    status("🎁 Butin posé comme sample sur « " + t.name + " » — place tes notes, ça jouera ton chant !");
+    addButinToTrack(callButin, "butin-micro");
   });
   $("callWin").addEventListener("click", e => { if (e.target && e.target.id === "callWin") $("btnCallEnd").click(); });
   async function openMic() {
@@ -3021,6 +3153,7 @@
   const vizCtx = $("viz").getContext("2d");
   function drawViz() {
     requestAnimationFrame(drawViz);
+    drawLife(performance.now());
     const w = $("viz").width, h = $("viz").height;
     vizCtx.clearRect(0, 0, w, h);
     if (!analyser) return;
