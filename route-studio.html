@@ -120,6 +120,7 @@
   <canvas id="viz" width="440" height="88"></canvas>
   <button id="btnWav">💾 Exporter en WAV</button>
   <button id="btnJsonOut">📁 Exporter (.json)</button>
+  <label class="filebtn">🎛️ Importer un son (WAV/MP3)<input id="fileAudio" type="file" accept="audio/*" hidden></label>
   <label class="filebtn">📂 Importer<input id="fileJson" type="file" accept=".json,application/json" hidden></label>
   <a class="hublink" href="jeux.html">🎮 Mes jeux</a>
   <span id="status"></span>
@@ -144,6 +145,10 @@
     { id:"synth", label:"🌊 Synthé" },
     { id:"chip",  label:"👾 8-bit" },
     { id:"bell",  label:"🔔 Cloches" },
+    { id:"organ", label:"🎼 Orgue" },
+    { id:"strings", label:"🎻 Cordes" },
+    { id:"pluck", label:"🪕 Pluck" },
+    { id:"b808", label:"💣 808" },
     { id:"drums", label:"🥁 Batterie" }
   ];
   const DRUM_ROWS = ["🥁 Kick","🪘 Snare","🎩 Charley","👏 Clap"];
@@ -266,7 +271,63 @@
       g.gain.linearRampToValueAtTime(vel * 0.3, t + 0.005);
       g.gain.exponentialRampToValueAtTime(0.0001, t + 1.4);
       nodes.forEach(o => o.stop(t + 1.5));
+    } else if (inst === "organ") {
+      const parts = [[freq, 0.5], [freq * 2, 0.25], [freq * 3, 0.12]];
+      for (const [f, a] of parts) {
+        const o = ctx.createOscillator();
+        o.type = "sine";
+        o.frequency.setValueAtTime(f, t);
+        const og = ctx.createGain();
+        og.gain.value = a;
+        o.connect(og).connect(g);
+        o.start(t);
+        o.stop(t + durSec + 0.15);
+        nodes.push(o);
+      }
+      g.gain.setValueAtTime(0, t);
+      g.gain.linearRampToValueAtTime(vel * 0.22, t + 0.02);
+      g.gain.setValueAtTime(vel * 0.22, t + durSec * 0.9);
+      g.gain.linearRampToValueAtTime(0.0001, t + durSec + 0.1);
+    } else if (inst === "strings") {
+      nodes = [osc("sawtooth", freq, -8), osc("sawtooth", freq, 8)];
+      g.gain.setValueAtTime(0, t);
+      g.gain.linearRampToValueAtTime(vel * 0.16, t + 0.12);
+      g.gain.setValueAtTime(vel * 0.16, t + Math.max(0.13, durSec * 0.85));
+      g.gain.linearRampToValueAtTime(0.0001, t + durSec + 0.25);
+      nodes.forEach(o => o.stop(t + durSec + 0.3));
+    } else if (inst === "pluck") {
+      nodes = [osc("triangle", freq), osc("square", freq * 2, 6)];
+      g.gain.setValueAtTime(vel * 0.35, t);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + 0.3);
+      nodes.forEach(o => o.stop(t + 0.35));
+    } else if (inst === "b808") {
+      const o = ctx.createOscillator();
+      o.type = "sine";
+      o.frequency.setValueAtTime(freq * 2, t);
+      o.frequency.exponentialRampToValueAtTime(freq, t + 0.04);
+      o.connect(g);
+      o.start(t);
+      o.stop(t + Math.max(0.45, durSec) + 0.1);
+      nodes.push(o);
+      g.gain.setValueAtTime(vel * 0.55, t);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + Math.max(0.45, durSec));
     }
+  }
+
+  function scheduleSample(ctx, dest, t, n, time, durSec) {
+    if (!t.sampleBuffer) return;
+    const midi = rowToMidi(t, n.row);
+    const rate = Math.pow(2, (midi - 60) / 12);
+    const src = ctx.createBufferSource();
+    src.buffer = t.sampleBuffer;
+    src.playbackRate.value = rate;
+    const g = ctx.createGain();
+    g.gain.setValueAtTime(n.vel * 0.9, time);
+    g.gain.setValueAtTime(n.vel * 0.9, time + Math.max(0.02, durSec - 0.04));
+    g.gain.linearRampToValueAtTime(0.0001, time + durSec);
+    src.connect(g).connect(dest);
+    src.start(time);
+    src.stop(time + durSec + 0.05);
   }
 
   function scheduleDrum(ctx, dest, row, t, vel) {
@@ -311,6 +372,7 @@
         if (n.step !== step) continue;
         const durSec = n.len * stepDur;
         if (t.instrument === "drums") scheduleDrum(ctx, dest, n.row, time, n.vel);
+        else if (t.instrument === "sample") scheduleSample(ctx, dest, t, n, time, durSec);
         else scheduleNote(ctx, dest, t.instrument, rowToMidi(t, n.row), time, durSec, n.vel);
       }
     }
@@ -366,7 +428,9 @@
       color: TRACK_COLORS[used % TRACK_COLORS.length],
       notes: [],
       muted: false,
-      fx: { vol: 0.8, echo: 0.2, cut: 0.85 }
+      fx: { vol: 0.8, echo: 0.2, cut: 0.85 },
+      sampleBuffer: null,
+      sampleName: null
     };
   }
   function addTrack(inst) {
@@ -375,6 +439,7 @@
     if (AC) buildLiveChain(t);
     selectTrack(tracks.length - 1);
     save();
+    return t;
   }
 
   function renderTrackList() {
@@ -405,10 +470,18 @@
         if (ins.id === t.instrument) o.selected = true;
         sel.appendChild(o);
       }
+      if (t.instrument === "sample") {
+        const o = document.createElement("option");
+        o.value = "sample";
+        o.textContent = "🎛️ Sample" + (t.sampleName ? " · " + t.sampleName.slice(0, 12) : "");
+        o.selected = true;
+        sel.appendChild(o);
+      }
       sel.addEventListener("click", e => e.stopPropagation());
       sel.addEventListener("change", e => {
         e.stopPropagation();
         t.instrument = e.target.value;
+        if (t.instrument !== "sample") t.sampleBuffer = null;
         t.notes = t.notes.filter(n => n.row < (t.instrument === "drums" ? 4 : melRows()));
         selectTrack(i);
         save();
@@ -650,7 +723,7 @@
   });
 
   function serialize() {
-    return JSON.stringify({ tempo, scale, root, freeMode, tracks: tracks.map(t => ({ name: t.name, instrument: t.instrument, color: t.color, notes: t.notes, muted: t.muted, fx: t.fx })) });
+    return JSON.stringify({ tempo, scale, root, freeMode, tracks: tracks.map(t => ({ name: t.name, instrument: t.instrument, color: t.color, notes: t.notes, muted: t.muted, fx: t.fx, sampleName: t.sampleName || null })) });
   }
   function save() {
     try { localStorage.setItem("route_studio_song", serialize()); } catch (e) {}
@@ -672,7 +745,9 @@
       color: td.color || TRACK_COLORS[i % TRACK_COLORS.length],
       notes: (td.notes || []).map(n => ({ step: n.step, row: n.row, len: n.len || 1, vel: n.vel || 0.8 })),
       muted: !!td.muted,
-      fx: Object.assign({ vol: 0.8, echo: 0.2, cut: 0.85 }, td.fx)
+      fx: Object.assign({ vol: 0.8, echo: 0.2, cut: 0.85 }, td.fx),
+      sampleBuffer: null,
+      sampleName: td.sampleName || null
     }));
     if (!tracks.length) tracks = [newTrack("piano")];
     if (AC) for (const t of tracks) buildLiveChain(t);
@@ -761,6 +836,25 @@
     r.readAsText(f);
   });
 
+  $("fileAudio").addEventListener("change", async e => {
+    const f = e.target.files[0];
+    e.target.value = "";
+    if (!f) return;
+    status("⏳ Décodage de « " + f.name + " »…");
+    try {
+      ensureAudio();
+      const buf = await AC.decodeAudioData(await f.arrayBuffer());
+      const t = addTrack("sample");
+      t.sampleBuffer = buf;
+      t.sampleName = f.name;
+      renderTrackList();
+      save();
+      status("🎛️ Son importé dans une nouvelle piste ! Place tes notes 🎹");
+    } catch (err) {
+      status("❌ Son illisible : " + (err && err.message ? err.message : "format non supporté"));
+    }
+  });
+
   function status(msg) { $("status").textContent = msg; }
 
   function encodeWav(buffer) {
@@ -829,24 +923,14 @@
         delay.connect(oMaster);
         chains.set(t.id, input);
       }
-      const saved = { tempo, scale, root, freeMode, tracks: tracks.map(t => ({ name: t.name, instrument: t.instrument, color: t.color, notes: t.notes, muted: t.muted, fx: t.fx })) };
+      const saved = { tempo, scale, root, freeMode, tracks: tracks.map(t => ({ name: t.name, instrument: t.instrument, color: t.color, notes: t.notes, muted: t.muted, fx: t.fx, sampleName: t.sampleName || null })) };
       const realTracks = tracks;
       const realPlaying = playing;
       stop();
       tracks = realTracks;
       for (let L = 0; L < loops; L++) {
         for (let s = 0; s < STEPS; s++) {
-          const time = 0.05 + (L * STEPS + s) * sd;
-          for (const t of realTracks) {
-            if (t.muted) continue;
-            const dest = chains.get(t.id);
-            for (const n of t.notes) {
-              if (n.step !== s) continue;
-              const durSec = n.len * sd;
-              if (t.instrument === "drums") scheduleDrum(off, dest, n.row, time, n.vel);
-              else scheduleNote(off, dest, t.instrument, rowToMidi(t, n.row), time, durSec, n.vel);
-            }
-          }
+          scheduleAt(off, chains, s, 0.05 + (L * STEPS + s) * sd, sd);
         }
       }
       const buf = await off.startRendering();
