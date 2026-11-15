@@ -896,27 +896,21 @@
       }
       g.gain.setValueAtTime(1, t);
     } else if (inst === "balloon") {
-      const o = ctx.createOscillator();
-      o.type = "sine";
+      const o = ctx.createOscillator(); o.type = "sine";
       o.frequency.setValueAtTime(freq * 6, t);
       o.frequency.exponentialRampToValueAtTime(freq * 0.5, t + 0.18);
       const n = noiseSrc(ctx, t, 0.25);
-      const nf = ctx.createBiquadFilter();
-      nf.type = "highpass"; nf.frequency.setValueAtTime(800, t);
-      nf.frequency.exponentialRampToValueAtTime(120, t + 0.22);
+      const nf = ctx.createBiquadFilter(); nf.type = "highpass";
+      nf.frequency.setValueAtTime(800, t); nf.frequency.exponentialRampToValueAtTime(120, t + 0.22);
       const ng = ctx.createGain();
-      ng.gain.setValueAtTime(vel * 0.9, t);
-      ng.gain.exponentialRampToValueAtTime(0.0001, t + 0.25);
+      ng.gain.setValueAtTime(vel * 0.9, t); ng.gain.exponentialRampToValueAtTime(0.0001, t + 0.25);
       o.connect(g); n.connect(nf).connect(ng).connect(g);
-      o.start(t); o.stop(t + 0.3);
-      nodes.push(o, n);
-      g.gain.setValueAtTime(vel * 0.6, t);
-      g.gain.exponentialRampToValueAtTime(0.0001, t + 0.3);
+      o.start(t); o.stop(t + 0.3); nodes.push(o, n);
+      g.gain.setValueAtTime(vel * 0.6, t); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.3);
     } else if (inst === "wall") {
       const chops = Math.max(2, Math.round(durSec / 0.09));
       for (const m of [1, 1.5, 2, 2.99]) {
-        const o = ctx.createOscillator();
-        o.type = "sawtooth"; o.frequency.value = freq * m; o.detune.value = (m - 1) * 12;
+        const o = ctx.createOscillator(); o.type = "sawtooth"; o.frequency.value = freq * m; o.detune.value = (m - 1) * 12;
         const og = ctx.createGain();
         for (let c = 0; c < chops; c++) {
           const ct = t + (c * durSec) / chops;
@@ -924,9 +918,7 @@
           og.gain.exponentialRampToValueAtTime(vel * 0.16, ct + 0.02);
           og.gain.exponentialRampToValueAtTime(0.0001, ct + durSec / chops);
         }
-        o.connect(og).connect(g);
-        o.start(t); o.stop(t + durSec + 0.05);
-        nodes.push(o);
+        o.connect(og).connect(g); o.start(t); o.stop(t + durSec + 0.05); nodes.push(o);
       }
       g.gain.setValueAtTime(1, t);
     } else if (inst === "rain") {
@@ -1275,6 +1267,26 @@
     renderNotes();
   }
 
+  function mixCol(a, b, f) {
+    const pa = parseInt(a.slice(1), 16), pb = parseInt(b.slice(1), 16);
+    const r = Math.round(((pa >> 16) & 255) * (1 - f) + ((pb >> 16) & 255) * f);
+    const g = Math.round(((pa >> 8) & 255) * (1 - f) + ((pb >> 8) & 255) * f);
+    const bl = Math.round((pa & 255) * (1 - f) + (pb & 255) * f);
+    return "#" + ((1 << 24) + (r << 16) + (g << 8) + bl).toString(16).slice(1);
+  }
+  function smudgeNote(t, n) {
+    const src = n.col || t.color;
+    n.vel = Math.max(0.1, n.vel * 0.9);
+    const ns = n.step + n.len;
+    if (ns < STEPS && !collides(t, n.row, ns, 1, n)) {
+      const dst = { step: ns, row: n.row, len: 1, vel: Math.max(0.15, n.vel * 0.75), col: mixCol(src, t.color, 0.35) };
+      t.notes.push(dst);
+    } else {
+      const hit2 = noteHit(t, ns, n.row);
+      if (hit2 && hit2 !== n) hit2.col = mixCol(src, hit2.col || t.color, 0.5);
+    }
+    renderNotes(); save();
+  }
   function noteHit(t, step, row) {
     return t.notes.find(n => n.row === row && step >= n.step && step < n.step + n.len);
   }
@@ -1304,7 +1316,7 @@
         e.stopPropagation();
         if (tool === "erase") { t.notes = t.notes.filter(x => x !== n); renderNotes(); save(); return; }
         if (tool === "paint") { if (brushCol) n.col = brushCol; else delete n.col; renderNotes(); save(); return; }
-        if (tool === "smudge") { n.vel = Math.max(0.1, n.vel * 0.85); renderNotes(); save(); return; }
+        if (tool === "smudge") { smudgeNote(t, n); return; }
         selectNote(n);
         dragNote = { n, startX: e.clientX, startLen: n.len };
       });
@@ -1601,7 +1613,7 @@
     }
     if (tool === "smudge") {
       const hit = noteHit(t, step, row);
-      if (hit) hit.vel = Math.max(0.1, hit.vel * 0.85);
+      if (hit) smudgeNote(t, hit);
       dragSmudge = true;
       roll.setPointerCapture(e.pointerId);
       return;
@@ -1636,7 +1648,7 @@
       const hit = noteHit(t, step, row);
       if (dragErase && hit) { t.notes = t.notes.filter(x => x !== hit); renderNotes(); save(); }
       if (dragPaint && hit && brushCol && hit.col !== brushCol) { hit.col = brushCol; renderNotes(); save(); }
-      if (dragSmudge && hit) hit.vel = Math.max(0.1, hit.vel * 0.92);
+      if (dragSmudge && hit) { smudgeNote(t, hit); }
       if (dragSmudge && hit && Math.random() < 0.25) { renderNotes(); save(); }
       return;
     }
@@ -4223,7 +4235,7 @@ function dockCallWin() {
 #une .lead strong{color:#101014}
 #une .cta{display:inline-block; background:var(--rouge); color:#fff; padding:1rem 2.6rem; border-radius:999px; font-weight:700; font-size:1.05rem; border:none; cursor:pointer; transition:transform .18s, box-shadow .18s; box-shadow:0 10px 30px rgba(225,29,46,.35)}
 #une .cta:hover{transform:translateY(-3px) scale(1.02); box-shadow:0 16px 40px rgba(225,29,46,.45)}
-#une .feats{display:flex; gap:.6rem; flex-wrap:wrap; justify-content:center; margin:2rem auto .4rem; max-width:680px}
+#une .feats{display:flex; gap:.6rem; flex-wrap:wrap; justify-content:center; margin:2rem auto .4rem; max-width:720px}
 #une .feats span{font-size:.8rem; color:#374151; background:#fff; border:1px solid #e5e7eb; border-radius:999px; padding:.4rem .95rem}
 #une .hint{margin-top:1.4rem; font-size:.82rem; color:#9ca3af}
 #une .privacy{margin-top:.5rem; font-size:.78rem; color:#9ca3af}
@@ -4232,10 +4244,10 @@ function dockCallWin() {
 <section id="une" class="hidden">
   <span class="kicker">La une</span>
   <h1>Route Studio <span>Clean</span></h1>
-  <p class="lead">Le studio musical complet dans un habillage <strong>propre et rapide</strong> : séquenceur, pistes, fenêtres qui ne se chevauchent jamais, micro, butin — et un <strong>consentement clair</strong> avant toute utilisation. <strong>100&nbsp;% local, zéro serveur, zéro pistage.</strong></p>
+  <p class="lead">Le studio musical complet dans un habillage <strong>propre et rapide</strong> : séquenceur, pistes, estompe façon peinture à l'huile, fenêtres qui ne se chevauchent jamais — et un <strong>consentement clair</strong> avant toute utilisation. <strong>100&nbsp;% local, zéro serveur, zéro pistage.</strong></p>
   <button class="cta" id="uneEnter">Entrer dans le studio</button>
   <div class="feats">
-    <span>🎹 Séquenceur 16 pas</span><span>🎈 Ballon qui explose</span><span>🧱 Mur du son découpé</span><span>🎨 Palette magique</span><span>🌍 Magic System</span><span>🎤 Micro sur geste</span><span>🧰 Butin &amp; coffre</span><span>📁 Export WAV / JSON</span><span>🔒 Consentement RGPD</span>
+    <span>🎹 Séquenceur 16 pas</span><span>🫳 Estompe huile</span><span>🎈 Ballon qui explose</span><span>🧱 Mur du son découpé</span><span>🎨 Palette magique</span><span>🌍 Magic System</span><span>🎤 Micro sur geste</span><span>🧰 Butin &amp; coffre</span><span>📁 Export WAV / JSON</span><span>🔒 Consentement RGPD</span>
   </div>
   <span class="hint">Astuce : barre espace = GO/STOP · glisse les fenêtres librement</span>
   <span class="privacy"><a id="revokeConsent">Retirer mon consentement</a> · aucune donnée ne quitte ton appareil</span>
