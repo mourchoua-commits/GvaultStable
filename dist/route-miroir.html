@@ -93,6 +93,12 @@
     user-select: none;
   }
   #moreGames:hover { background: rgba(60, 75, 120, 0.55); }
+  html[data-mini] #moreGames { display:none; }
+  html[data-mini] #garden { display:none !important; }
+  html[data-mini] #btns { top:44px; }
+  html[data-mini] #hud { gap:7px; flex-wrap:wrap; font-size:13px; }
+  html[data-mini] #hint { width:max-content; max-width:85%; white-space:normal; text-align:center; padding:5px 8px; font-size:11px; }
+  html[data-mini] #gameover .goPanel { padding:16px; }
   #gameover {
     inset: 0;
     display: grid;
@@ -116,7 +122,7 @@
 </style>
 </head>
 <body>
-<canvas id="game"></canvas>
+<canvas id="game" tabindex="0" aria-label="Route Miroir"></canvas>
 <div id="hud" class="ui"><span id="score">🚸 0 · Record 0</span><span id="hearts">❤️❤️❤️</span><span id="garden" style="display:none">🥕 0</span></div>
 <div id="btns" class="ui">
   <button id="btnSound" type="button" aria-label="Son">🔊</button>
@@ -154,6 +160,9 @@
   const btnFull = document.getElementById("btnFull");
   const btnGarden = document.getElementById("btnGarden");
   const gardenEl = document.getElementById("garden");
+  const mini = window.parent !== window && new URLSearchParams(location.search).has("mini");
+  const fileOrigin = location.protocol === "file:";
+  if (mini) document.documentElement.dataset.mini = "";
 
   let W = 0, H = 0, dpr = 1, horizonY = 0, reflScale = 0.85;
   let scene = null, sctx = null;
@@ -185,6 +194,9 @@
   const VEGGIES = ["🥕", "🥬", "🍅", "🌽"];
   const BUGS = ["🐛", "🦋", "🐝"];
   try { harvest = Number(localStorage.getItem("rm_harvest") || 0) || 0; } catch (e) { harvest = 0; }
+  function shareHarvest() {
+    if (mini) window.parent.postMessage({ type:"route-miroir:harvest", total:harvest }, fileOrigin ? "*" : location.origin);
+  }
 
   function hexLerp(a, b, t) {
     const pa = parseInt(a.slice(1), 16), pb = parseInt(b.slice(1), 16);
@@ -662,6 +674,7 @@
       best = Math.max(best, score);
       try { localStorage.setItem("rm_best", String(best)); } catch (e) {}
       try { localStorage.setItem("rm_harvest", String(harvest)); } catch (e) {}
+      shareHarvest();
       (it.kind === "veg" ? sfx.pick : it.kind === "bug" ? sfx.bug : sfx.gem)();
       pulse = Math.max(pulse, 0.5);
       spawnItems();
@@ -707,7 +720,29 @@
     }
   }
 
-  let last = performance.now();
+  let last = performance.now(), frameId = null, showing = !mini;
+  function setShowing(show) {
+    if (showing === show) return;
+    showing = show;
+    if (show) {
+      last = performance.now();
+      frameId = requestAnimationFrame(frame);
+      if (AC?.state === "suspended") AC.resume().catch(() => {});
+    } else {
+      cancelAnimationFrame(frameId);
+      frameId = null;
+      if (AC?.state === "running") AC.suspend().catch(() => {});
+    }
+  }
+  if (mini) window.addEventListener("message", e => {
+    if (e.source !== window.parent || e.origin !== (fileOrigin ? "null" : location.origin) || e.data?.type !== "route-miroir:visible") return;
+    if (Number.isSafeInteger(e.data.harvest) && e.data.harvest > harvest){
+      harvest = e.data.harvest;
+      updateHud();
+      shareHarvest();
+    }
+    setShowing(e.data.show === true);
+  });
   function frame(now) {
     const dt = Math.min(0.05, (now - last) / 1000);
     last = now;
@@ -773,7 +808,7 @@
       ctx.fillRect(0, 0, W, H);
     }
 
-    requestAnimationFrame(frame);
+    if (showing) frameId = requestAnimationFrame(frame);
   }
 
   window.addEventListener("keydown", e => {
@@ -847,7 +882,8 @@
   tNow = CYCLE * 0.3;
   player.col = Math.floor(colMax() / 2);
   updateHud();
-  requestAnimationFrame(frame);
+  if (showing) frameId = requestAnimationFrame(frame);
+  shareHarvest();
 })();
 </script>
 </body>

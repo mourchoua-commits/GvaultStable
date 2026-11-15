@@ -1,49 +1,25 @@
-# Route Studio v1.0 — édition particulier 🎨🎵
+# Route Studio v1.0 · édition particulier
 
-Studio musical colorimétrique **autonome** : un seul fichier HTML, aucune installation,
-aucune connexion requise, aucune donnée qui sort de ton appareil.
+Décompresse le paquet et ouvre `jeux.html` pour choisir Route Studio ou Route Miroir. Tu peux aussi ouvrir `route-studio.html` directement. Garde `route-miroir.html` dans le même dossier pour la Simulation.
 
-## 🚀 Lancer
+## Passerelle
 
-1. **Double-clique sur `route-studio.html`** — il s'ouvre dans ton navigateur (Chrome, Firefox, Edge…).
-2. C'est tout. Pas de serveur, pas de compte, pas de pub.
+Dans Route Studio, ouvre **🪜 Passerelle**. Les modules de l’Anatomie du portail s’ouvrent au clic. Les liens s’allument quand une teinte, une note ou un prélèvement circule. **Ranger les fenêtres** les dispose selon la place disponible.
 
-Version en ligne (pratique pour partager) : https://raw.githack.com/mourchoua-commits/GvaultStable/vibe/route-studio-clean-3d2cda/route-studio.html
+- **🚗 Simulation** permet de jouer à Route Miroir en restant dans le studio. Active le mode Jardin 🥕 pour ramasser des objets. La récolte remonte dans Écho et Jardinage.
+- **🎹 Grille instant** joue au toucher. Choisis l’instrument et la piste, puis active **Capturer** pour inscrire les notes dans le motif.
+- **🎨 Couleurs** réunit la grille précise, l’hexadécimal et le négatif. La cible peut être le pinceau, la note ou la piste. La palette magique joue ses teintes et peut mélanger les deux derniers pads.
+- **✏️ Dessinateur** transforme une grille de 80 × 50 en notes. **🌍 Magic System** fait évoluer les matières et permet de jouer, boucler et capturer la musique du monde.
+- **🎤 Micro** propose l’écoute auto-tune et le prélèvement mixte. Maintiens pour enregistrer, ou fais un clic court pour verrouiller et reclique pour terminer. Trois secondes de maintien ouvrent la Passerelle. Le navigateur gère la permission au moment de l’action.
+- **Visionneuse** affiche le niveau, la fragrance, le pavillon, les terminaux et quatre thèmes. La Sonde reçoit la même couleur. Dans **Écho**, **Magie** active les interventions annoncées par les Avant-sachants.
+- **🎁 Butin** permet de jouer, boucler, exporter, armer comme sample et entreposer les prises. Le **🗄️ Coffre fort** conserve les prélèvements dans le navigateur. Rapporter une prise déjà présente la laisse en un seul exemplaire.
 
-## 🎹 Mode d'emploi express
+## Motifs et fichiers
 
-- **▶ GO / ⏹** : la grille 8 pistes × 16 pas joue en boucle. BPM réglable.
-- **Clique dans la grille** pour poser/retirer des notes. Outils : ✏️ crayon, 🧽 gomme, 🪣 pot, 🌫️ estompe, 📏 aplanir, **↩️ retour** (annule 50 coups).
-- **🎨 Couleurs** : teinte/saturation/luminosité, hex, **négatif** 🔄, palette XXL 24 teintes.
-- **🪄 Palette** : 64 pads vivants — chaque appui joue la note de la teinte (+69°), influence les voisins (+12°), **revient au clair** tout seul, avec parfois une **anomalie ⚡** (le pad opposé s'inverse).
-- **✏️ Dessinateur** : dessine, chaque couleur devient une fréquence, lecture colonne par colonne, boucle possible.
-- **🌍 Magic System** : écosystème à matériaux (eau, sable, feu, lave, plante…) — le monde vivant **participe à la couleur perçue**.
-- **🎤 Micro** : **maintiens le bouton** pour prélever l'extérieur + l'intérieur (mixte). Relâche → le **butin** naît avec sa fragrance colorimétrique. Clic court = verrou (reste armé, re-clic pour clore). Après 3 s de maintien, la **🪜 Passerelle** s'ouvre (état du port : https, permissions — on frappe à la porte, on ne la défonce jamais).
-- **🎛️ Auto-tune** : chante, ta voix est recalée sur la gamme (micro à bord requis).
-- **🎁 Butin** : ▶️ écouter, 🔁 boucler, 🗄️ entreposer au coffre fort, **⬆ armer comme sample d'une piste**.
-- **🤝 Économie à par égal** : chaque butin lu rapporte +2 écus de recette, dont +1 pour celui qui a appuyé — co-propriété avec le navigateur, pas une taxe.
-- **🗄️ Coffre fort** : prélèvements persistants (IndexedDB), gardés entre les sessions, transfert ↔ butin dans les deux sens.
-- **🛰️ Sonde** : vision de l'espace pilotée par la couleur entendue. **🔮 Sachants / 📯 Écho** : tout ce qui va arriver est annoncé juste avant.
-- **🪜 Anatomie du portail** : ouvre la Passerelle et clique sur un module pour le retrouver. Les liens s'allument quand une teinte ou un prélèvement passe d'une fenêtre à l'autre.
-- **🦠 Grille vivante** : chaque note fait naître un organisme qui s'envole.
-- **⏺ Session** : enregistre toute la session studio → au coffre au butin (jamais de téléchargement surprise).
-- **⬇ WAV / JSON** : exporte un butin en audio, ou ton motif (réimportable).
+- Pose et règle les notes dans le séquenceur. Chaque piste a son instrument, son volume, son écho et son filtre. Essaie les démos Lofi, Rétro ou Trap, le métronome ou le mode chromatique.
+- **↥ JSON** ouvre un motif CLEAN ou un morceau exporté d’une ancienne version de Route Studio. **Importer un son** décode un WAV ou MP3 dans une nouvelle piste.
+- **Session** enregistre le son du studio et le range au butin. **⬇ WAV** exporte le motif. Pour exporter un prélèvement, utilise le bouton WAV de sa ligne dans le coffre.
 
-## 🔒 Vie privée
+Le studio, le jeu et les traitements audio fonctionnent localement. Les motifs, réglages, archives et récoltes sont stockés dans le navigateur.
 
-- **0 appel réseau** : pas de script externe, pas de traqueur, pas de crypto-minage, code 100 % lisible (vanilla HTML/CSS/JS).
-- Tes données (butins, coffre fort, préférences) restent **sur ton appareil** (IndexedDB / localStorage).
-- Le micro ne s'active **que** quand tu maintiens le bouton, et **jamais** sans ta permission navigateur.
-
-## 🎮 Bonus : Route Miroir
-
-`route-miroir.html` : la route miroir avec nuages, voitures, piétons — et le **Mode Jardin** 🥕🐛💎 (récolte persistante).
-
-## 🛠️ Dépannage
-
-- **Micro refusé ?** Ouvre la **🪜 Passerelle** pour voir l'état du port, puis réautorise le micro dans les réglages du navigateur (icône cadenat dans la barre d'adresse) et clique « ⚓ Aborder le port ». En ligne, la page doit être en **https** (c'est le cas du lien ci-dessus).
-- **Tout semble figé ?** **Ctrl+F5** pour vider le cache du navigateur.
-- **Coffre fort indisponible ?** Ton navigateur bloque peut-être IndexedDB en local — ouvre la version en ligne, ou utilise Firefox/Chrome.
-
----
-Route Studio v1.0 — fait avec 🖤, des écus à par égal et zéro serveur.
+[Version en ligne](https://raw.githack.com/mourchoua-commits/GvaultStable/vibe/route-studio-clean-3d2cda/route-studio.html)
