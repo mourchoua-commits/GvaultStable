@@ -57,6 +57,8 @@ input[type=range]{padding:0; accent-color:var(--acc)}
 .row{display:flex; gap:8px; align-items:center; flex-wrap:wrap}
 .hint{color:var(--dim); font-size:12px}
 .sw{width:26px; height:26px; border-radius:6px; border:1px solid var(--line); flex:none}
+#xxlRow{display:flex; flex-wrap:wrap; gap:4px; margin-top:6px}
+#xxlRow button{width:22px; height:22px; padding:0; border:1px solid var(--line); border-radius:5px; cursor:pointer}
 .itemList{display:flex; flex-direction:column; gap:5px; max-height:220px; overflow:auto; min-width:220px}
 .itemRow{display:flex; gap:6px; align-items:center; background:var(--panel2); border:1px solid var(--line); border-radius:8px; padding:5px 8px}
 .itemRow .nm{flex:1; font-size:12px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
@@ -67,6 +69,10 @@ input[type=range]{padding:0; accent-color:var(--acc)}
 #padGrid{display:grid; grid-template-columns:repeat(8,1fr); gap:4px}
 .pad{aspect-ratio:1; border-radius:6px; border:1px solid rgba(255,255,255,.08); cursor:pointer}
 .pad.pulse{transform:scale(1.12)}
+#padGrid.round .pad{border-radius:50%}
+.rsz{position:absolute; right:0; bottom:0; width:16px; height:16px; cursor:nwse-resize; touch-action:none; background:linear-gradient(135deg, transparent 50%, var(--line) 50%)}
+.org{position:fixed; z-index:40; pointer-events:none; font-size:13px; animation:orgf .9s ease-out forwards}
+@keyframes orgf{to{transform:translateY(-26px); opacity:0}}
 
 #sysGrid{display:grid; grid-template-columns:repeat(28,1fr); gap:1px; background:var(--line); border-radius:6px; overflow:hidden; touch-action:none}
 .mcell{aspect-ratio:1; background:var(--panel2); cursor:pointer}
@@ -129,6 +135,7 @@ input[type=range]{padding:0; accent-color:var(--acc)}
       <button data-tool="pot">🪣</button>
       <button data-tool="estompe">🌫️</button>
       <button data-tool="aplanir">📏</button>
+      <button id="btnUndo">↩️</button>
       <span id="toolTip">crayon — pose une note</span>
     </div>
     <div id="seq"></div>
@@ -139,7 +146,8 @@ input[type=range]{padding:0; accent-color:var(--acc)}
 <section class="fwindow" id="colorWin">
   <header class="wbar"><span class="wt">🎨 Couleurs</span><button class="wmin">➖</button><button class="wx">✕</button></header>
   <div class="wbody">
-    <div class="row"><span class="sw" id="colSw"></span><input id="colHex" value="#4c8dff" style="width:90px"><button id="colApply">Teinter la piste</button></div>
+    <div class="row"><span class="sw" id="colSw"></span><input id="colHex" value="#4c8dff" style="width:90px"><button id="colApply">Teinter la piste</button><button id="colNeg">Négatif</button></div>
+    <div id="xxlRow"></div>
     <label class="hint">Teinte <input id="colHue" type="range" min="0" max="359" value="217" style="width:100%"></label>
     <label class="hint">Saturation <input id="colSat" type="range" min="0" max="100" value="80" style="width:100%"></label>
     <label class="hint">Lumière <input id="colLit" type="range" min="10" max="90" value="55" style="width:100%"></label>
@@ -151,6 +159,7 @@ input[type=range]{padding:0; accent-color:var(--acc)}
   <header class="wbar"><span class="wt">🪄 Palette magique</span><button class="wmin">➖</button><button class="wx">✕</button></header>
   <div class="wbody">
     <div id="padGrid"></div>
+    <div class="row"><button id="padShape">⬫ Carré / rond</button><span class="hint">forme des pads</span></div>
     <p class="hint">Chaque pad joue la note de SA teinte · les voisins s'influencent (+12°) · le pad pressé tourne de +69° · tout rentre au clair en s'effaçant.</p>
   </div>
 </section>
@@ -196,6 +205,7 @@ input[type=range]{padding:0; accent-color:var(--acc)}
   <div class="wbody">
     <select id="micDev" style="width:100%"></select>
     <button id="micHold">🎤 Maintenir pour prélever</button>
+    <button id="btnAtune">🎛️ Auto-tune</button>
     <p class="hint" id="micStatus">le micro reste à bord — on ne le renvoie jamais à la mer</p>
     <p class="hint">Maintiens = prélèvement mixte (extérieur + studio) · relâche = butin au coffre · clic court = verrou (re-clic pour clore) · 3 s tenus = la Passerelle s'ouvre.</p>
   </div>
@@ -203,7 +213,7 @@ input[type=range]{padding:0; accent-color:var(--acc)}
 
 <section class="fwindow" id="butinWin">
   <header class="wbar"><span class="wt">🎁 Coffre au butin <span id="butinCount" class="hint"></span></span><button class="wmin">➖</button><button class="wx">✕</button></header>
-  <div class="wbody"><div class="itemList" id="butinList"></div></div>
+  <div class="wbody"><div class="itemList" id="butinList"></div><p class="hint" id="lootLine"></p></div>
 </section>
 
 <section class="fwindow" id="fortWin">
@@ -321,6 +331,21 @@ document.querySelectorAll(".fwindow").forEach(w => {
     b.addEventListener("click", ev => { ev.stopPropagation(); openWin(t); });
     lw.appendChild(b);
   });
+  const rz = document.createElement("div");
+  rz.className = "rsz";
+  rz.addEventListener("pointerdown", e => {
+    e.stopPropagation();
+    const r = w.getBoundingClientRect(), sx = e.clientX, sy = e.clientY, sw0 = r.width, sh0 = r.height;
+    const mv = ev => {
+      w.style.width = Math.max(220, sw0 + ev.clientX - sx) + "px";
+      w.style.height = Math.max(140, sh0 + ev.clientY - sy) + "px";
+    };
+    const up = () => { window.removeEventListener("pointermove", mv); window.removeEventListener("pointerup", up); };
+    window.addEventListener("pointermove", mv);
+    window.addEventListener("pointerup", up);
+    e.preventDefault();
+  });
+  w.appendChild(rz);
 });
 
 let AC = null, master = null, masterDest = null, micSrcNode = null, micStream = null;
@@ -412,6 +437,7 @@ const STEPS = 16, NTRACKS = 8;
 const grid = Array.from({length:NTRACKS}, () => new Array(STEPS).fill(0));
 const tracks = Array.from({length:NTRACKS}, (_, i) => ({ins:(i * 3) % INSTRS.length, hue:(i * 45) % 360, mute:false, vol:0.8}));
 let selTrack = 0, tool = "crayon";
+const undoStack = [];
 let curHue = 217, curSat = 80, curLit = 55;
 const curCol = () => `hsl(${curHue},${curSat}%,${curLit}%)`;
 
@@ -436,7 +462,7 @@ for (let r = 0; r < NTRACKS; r++){
     sel.appendChild(o);
   });
   sel.value = tracks[r].ins;
-  sel.addEventListener("change", () => { tracks[r].ins = Number(sel.value); });
+  sel.addEventListener("change", () => { tracks[r].ins = Number(sel.value); tracks[r].sample = null; });
   const mute = document.createElement("button");
   mute.className = "tmute"; mute.textContent = "🔊";
   mute.addEventListener("click", () => { tracks[r].mute = !tracks[r].mute; mute.textContent = tracks[r].mute ? "🔇" : "🔊"; });
@@ -467,7 +493,22 @@ function pulseCell(r, s){
   c.classList.add("pulse");
   setTimeout(() => c.classList.remove("pulse"), 130);
 }
+const ORGS = ["🦠","🌱","✨","🫧","🪸"];
+function spawnOrg(r, s){
+  const c = cellEls[r] && cellEls[r][s];
+  if (!c || !c.getBoundingClientRect) return;
+  const rect = c.getBoundingClientRect();
+  const o = document.createElement("span");
+  o.className = "org";
+  o.textContent = ORGS[(r + s) % ORGS.length];
+  o.style.left = rect.left + 10 + "px";
+  o.style.top = rect.top - 4 + "px";
+  document.body.appendChild(o);
+  setTimeout(() => o.remove(), 900);
+}
 function applyTool(r, s){
+  undoStack.push({r, row:grid[r].slice()});
+  if (undoStack.length > 50) undoStack.shift();
   if (tool === "crayon"){ grid[r][s] = grid[r][s] > 0 ? 0 : 0.8; }
   else if (tool === "gomme"){ grid[r][s] = 0; }
   else if (tool === "pot"){ for (let i = 0; i < STEPS; i++) grid[r][i] = 0.8; }
@@ -486,16 +527,32 @@ document.querySelectorAll("[data-tool]").forEach(b => b.addEventListener("click"
   document.querySelectorAll("[data-tool]").forEach(x => x.classList.toggle("on", x === b));
   $("toolTip").textContent = {crayon:"crayon — pose une note", gomme:"gomme — efface la case", pot:"pot — remplit toute la ligne", estompe:"estompe — adoucit la note", aplanir:"aplanir — uniformise la ligne"}[tool];
 }));
+$("btnUndo").addEventListener("click", () => {
+  const u = undoStack.pop();
+  if (!u){ status("rien à défaire"); return; }
+  grid[u.r] = u.row;
+  for (let s = 0; s < STEPS; s++) paintCell(u.r, s);
+  status("↩️ retour : motif d'avant restauré");
+});
 
 let timer = null, step = 0, nextT = 0;
 function bpmVal(){ return Math.min(240, Math.max(40, Number($("bpm").value) || 112)); }
 function tick(){
   const spb = 60 / bpmVal() / 4;
   while (nextT < AC.currentTime + 0.12){
-    for (let r = 0; r < NTRACKS; r++){
-      if (grid[r][step] > 0 && !tracks[r].mute) INSTRS[tracks[r].ins].f(nextT, rowFreq(r), grid[r][step] * tracks[r].vol);
-    }
     const cs = step, ps = (cs + STEPS - 1) % STEPS;
+    for (let r = 0; r < NTRACKS; r++){
+      if (grid[r][cs] > 0 && !tracks[r].mute){
+        if (tracks[r].sample){
+          const bs = AC.createBufferSource();
+          bs.buffer = tracks[r].sample;
+          bs.playbackRate.value = rowFreq(r) / 220;
+          bs.connect(master);
+          bs.start(nextT);
+        } else INSTRS[tracks[r].ins].f(nextT, rowFreq(r), grid[r][cs] * tracks[r].vol);
+        spawnOrg(r, cs);
+      }
+    }
     for (let r = 0; r < NTRACKS; r++){
       pulseCell(r, cs);
       cellEls[r][cs].classList.add("ph");
@@ -561,6 +618,27 @@ $("colApply").addEventListener("click", () => {
   for (let s = 0; s < STEPS; s++) paintCell(selTrack, s);
   status("piste " + (selTrack + 1) + " teintée " + hueName(curHue));
 });
+$("colNeg").addEventListener("click", () => {
+  curHue = (curHue + 180) % 360;
+  curSat = 100 - curSat;
+  curLit = 100 - curLit;
+  $("colHue").value = Math.round(curHue); $("colSat").value = Math.round(curSat); $("colLit").value = Math.round(curLit);
+  refreshCol();
+  status("🔄 négatif : " + hueName(curHue));
+});
+for (let i = 0; i < 24; i++){
+  const h = i * 15, s = 65 + (i % 3) * 15, l = 45 + (i % 4) * 8;
+  const b = document.createElement("button");
+  b.style.background = `hsl(${h},${s}%,${l}%)`;
+  b.title = hueName(h);
+  b.addEventListener("click", () => {
+    curHue = h; curSat = s; curLit = l;
+    $("colHue").value = h; $("colSat").value = s; $("colLit").value = l;
+    refreshCol();
+    status("🎨 " + hueName(h) + " choisi dans la palette XXL");
+  });
+  $("xxlRow").appendChild(b);
+}
 refreshCol();
 
 const NPADS = 64;
@@ -589,10 +667,32 @@ function padHit(i){
   });
   padEls[i].classList.add("pulse");
   setTimeout(() => padEls[i].classList.remove("pulse"), 150);
+  let msg = "🪄 pad " + hueName(h) + " → " + Math.round(hueToFreq(h)) + " Hz";
+  if (Math.random() < 0.1){
+    const opp = (i + 32) % NPADS;
+    padCur[opp] = (padCur[opp] + 180) % 360;
+    msg += " · ⚡ opposé inversé !";
+  }
   paintPads();
-  status("🪄 pad " + hueName(h) + " → " + Math.round(hueToFreq(h)) + " Hz");
+  status(msg);
 }
 paintPads();
+$("padShape").addEventListener("click", () => {
+  const round = padGrid.classList.toggle("round");
+  $("padShape").textContent = round ? "⬤ Rond" : "⬫ Carré / rond";
+  status(round ? "⬤ pads ronds" : "⬫ pads carrés");
+});
+setInterval(() => {
+  let ch = false;
+  for (let i = 0; i < NPADS; i++){
+    const diff = ((padBase[i] - padCur[i] + 540) % 360) - 180;
+    if (diff !== 0){
+      padCur[i] = (padCur[i] + (diff > 0 ? Math.min(8, diff) : Math.max(-8, diff)) + 360) % 360;
+      ch = true;
+    }
+  }
+  if (ch) paintPads();
+}, 250);
 
 const drawCv = $("drawCv"), dctx = drawCv.getContext("2d");
 const DCOLS = 32, DROWS = 16, CW = drawCv.width / DCOLS, CH = drawCv.height / DROWS;
@@ -694,6 +794,12 @@ function worldTick(){
         }
       } else if (m === MID.graine){
         if (nb.some(j => world[j] === MID.eau) && Math.random() < 0.4) world[i] = MID.plante;
+      } else if (m === MID.plante){
+        if (nb.some(j => world[j] === MID.eau)){
+          for (const j of nb){
+            if (world[j] === 0 && Math.random() < 0.06){ world[j] = MID.plante; break; }
+          }
+        }
       }
     }
   }
@@ -913,6 +1019,46 @@ mh.addEventListener("pointerdown", holdStart);
 mh.addEventListener("pointerup", holdEnd);
 mh.addEventListener("pointerleave", holdEnd);
 mh.addEventListener("pointercancel", holdEnd);
+let atOn = false, atTimer = null;
+function autoTune(){
+  if (!micAnalyser || !micAnalyser.getFloatTimeDomainData || !AC) return;
+  const buf = new Float32Array(2048);
+  micAnalyser.getFloatTimeDomainData(buf);
+  let rms = 0;
+  for (let i = 0; i < buf.length; i++) rms += buf[i] * buf[i];
+  rms = Math.sqrt(rms / buf.length);
+  if (rms < 0.01) return;
+  let best = -1, bestV = 0;
+  for (let lag = 32; lag <= 800; lag += 4){
+    let c = 0;
+    for (let i = 0; i < buf.length - lag; i += 4) c += buf[i] * buf[i + lag];
+    if (c > bestV){ bestV = c; best = lag; }
+  }
+  if (best < 0) return;
+  const f = 44100 / best;
+  if (f < 70 || f > 1000) return;
+  const midi = 69 + 12 * Math.log2(f / 440);
+  const pc = ((Math.round(midi) - 9) % 12 + 12) % 12;
+  const PENTA = [0, 3, 5, 7, 10];
+  let snap = PENTA[0], bd = 1e9;
+  for (const p of PENTA){ const d = Math.min(Math.abs(pc - p), 12 - Math.abs(pc - p)); if (d < bd){ bd = d; snap = p; } }
+  const f2 = 440 * Math.pow(2, (Math.round(midi) - pc + snap - 69) / 12);
+  vo(AC.currentTime, f2, 0.14, "triangle", 0.1, 4000);
+  status("🎛️ auto-tune : " + Math.round(f) + " Hz → " + Math.round(f2) + " Hz");
+}
+$("btnAtune").addEventListener("click", () => {
+  atOn = !atOn;
+  $("btnAtune").classList.toggle("on", atOn);
+  if (atOn){
+    if (!micAnalyser){ atOn = false; $("btnAtune").classList.remove("on"); status("🎛️ auto-tune en attente : le micro n'est pas encore à bord — maintiens pour prélever"); return; }
+    atTimer = setInterval(autoTune, 150);
+    avantSay("L'auto-tune va écouter ta voix et la recaler sur la gamme !");
+    status("🎛️ auto-tune ON — chante !");
+  } else {
+    clearInterval(atTimer); atTimer = null;
+    status("auto-tune off");
+  }
+});
 
 function refreshGate(){
   $("gateHttps").textContent = (window.isSecureContext ? "✅ https : le port est sûr" : "⚠️ pas de https : le port reste fermé (le micro exige https)");
@@ -929,9 +1075,18 @@ $("btnAborder").addEventListener("click", async () => {
   refreshGate();
   if (ok) status("⚓ le micro est à bord");
 });
+if (navigator.permissions && navigator.permissions.query){
+  navigator.permissions.query({name:"microphone"}).then(p => {
+    p.onchange = () => {
+      refreshGate();
+      status(p.state === "granted" ? "🎤 permission accordée — le micro peut monter à bord" : "🎤 permission : " + p.state);
+    };
+  }).catch(() => {});
+}
 
 const butins = [];
 let butinLoopId = null;
+let lootRecipe = 0, lootPart = 0;
 function renderButins(){
   const l = $("butinList");
   l.innerHTML = "";
@@ -950,16 +1105,20 @@ function renderButins(){
     bl.addEventListener("click", () => loopButin(i));
     const bw = document.createElement("button"); bw.textContent = "🗄️";
     bw.addEventListener("click", () => storeButin(i));
-    row.appendChild(dot); row.appendChild(nm); row.appendChild(bp); row.appendChild(bl); row.appendChild(bw);
+    const bs = document.createElement("button"); bs.textContent = "⬆";
+    bs.addEventListener("click", () => armSample(i));
+    row.appendChild(dot); row.appendChild(nm); row.appendChild(bp); row.appendChild(bl); row.appendChild(bw); row.appendChild(bs);
     l.appendChild(row);
   });
   $("butinCount").textContent = butins.length ? "(" + butins.length + ")" : "(vide)";
+  $("lootLine").textContent = "🤝 recette totale : " + lootRecipe + " écus · ta part à par égal : " + lootPart + " écus";
 }
 async function playButin(i){
   ensureAudio();
   if (!AC) return;
   const b = butins[i];
   avantSay("Le butin va sonner — recette à par égal en vue !");
+  lootRecipe += 2; lootPart += 1;
   try{
     const buf = await AC.decodeAudioData(await b.blob.arrayBuffer());
     const s = AC.createBufferSource();
@@ -974,6 +1133,18 @@ function loopButin(i){
   butinLoopId = butinLoopId === i ? null : i;
   avantSay(butinLoopId === i ? "La boucle va s'armer !" : "La boucle va se désarmer.");
   status(butinLoopId === i ? "🔁 boucle armée sur le butin " + (i + 1) : "boucle désarmée");
+}
+async function armSample(i){
+  ensureAudio();
+  if (!AC){ status("audio indisponible"); return; }
+  const b = butins[i];
+  if (!b) return;
+  try{
+    if (!b.buf) b.buf = await AC.decodeAudioData(await b.blob.arrayBuffer());
+    tracks[selTrack].sample = b.buf;
+    avantSay("Le butin va devenir l'instrument de la piste " + (selTrack + 1) + " !");
+    status("⬆ butin « " + b.name + " » armé comme sample de la piste " + (selTrack + 1));
+  } catch (e){ status("sample impossible : " + e.message); }
 }
 let prelevDB = null;
 function prelevOpen(){
@@ -1216,7 +1387,9 @@ globalThis.__HOOK = {
   get butins(){ return butins; }, get holdActive(){ return holdActive; }, get holdLatch(){ return holdLatch; },
   get sysTimer(){ return sysTimer; }, get world(){ return world; }, get drawGrid(){ return drawGrid; },
   get selTrack(){ return selTrack; }, get curHue(){ return curHue; }, get butinLoopId(){ return butinLoopId; },
-  perceivedCol, applyTool, padHit, vibHit, worldTick, gardenReport, openWin, paintMat
+  get padCur(){ return padCur; }, get lootRecipe(){ return lootRecipe; }, get lootPart(){ return lootPart; },
+  get atOn(){ return atOn; }, get undoLen(){ return undoStack.length; },
+  perceivedCol, applyTool, padHit, vibHit, worldTick, gardenReport, openWin, paintMat, armSample, autoTune
 };
 })();
 </script>
