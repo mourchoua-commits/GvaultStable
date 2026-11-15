@@ -21,11 +21,17 @@ Dans Route Studio, ouvre **🪜 Passerelle**. Les modules de l’Anatomie du por
 - **Réglages du monde** pilote la pluie, le vent, l’air, l’éclairage et la vitesse. Il donne aussi accès aux rendus Cinéma et Pixels et à la sauvegarde locale de la scène.
 - **Jouer le monde** convertit le terrain en musique. **Capturer dans la piste** ajoute les notes au motif, qui peut ensuite être exporté en WAV ou en JSON.
 
-## Motifs et fichiers
+## Éditeur de pistes
 
-- Pose et règle les notes dans le séquenceur. Chaque piste a son instrument, son volume, son écho et son filtre. Essaie les démos Lofi, Rétro ou Trap, le métronome ou le mode chromatique.
-- **↥ JSON** ouvre un motif CLEAN ou un morceau exporté d’une ancienne version de Route Studio. **Importer un son** décode un WAV ou MP3 dans une nouvelle piste.
-- **Session** enregistre le son du studio et le range au butin. **⬇ WAV** exporte le motif. Pour exporter un prélèvement, utilise le bouton WAV de sa ligne dans le coffre.
+- **Piano roll** et **Pas** ouvrent le même motif. Dans le piano roll, pose une note au crayon, glisse-la pour la déplacer et tire son bord droit pour l’allonger. Tu peux empiler plusieurs hauteurs au même pas pour former un accord. **Grille** règle l’alignement, **Zoom** agrandit la timeline et **Main** permet de défiler par glissement.
+- Sous **Réglages**, personnalise le nom, la couleur, la durée et la vélocité de chaque note. Tu peux régler sa probabilité de lecture, son décalage en millisecondes et son accordage fin. Pour la piste, choisis le nom, l’instrument et la couleur, puis règle le volume, le panoramique, le filtre et l’écho. **M** coupe une piste, **S** l’isole. Replie **Pistes** ou **Réglages** pour agrandir la grille.
+- **Motif, boucle et noms des notes** ouvre les réglages de mesure, de swing et de métronome. Définis les bornes de la boucle, choisis Do Ré Mi, C D E ou tes propres noms de hauteur, puis essaie Lofi, Rétro ou Trap. Clique sur la règle pour placer la tête de lecture. **Pause** garde sa position et **Reprendre** poursuit la lecture.
+
+## Fichiers
+
+- **↥ JSON** ouvre un motif CLEAN ou un morceau exporté d’une ancienne version de Route Studio. **Importer un son** décode un WAV ou MP3 dans une nouvelle piste. Pour l’associer à une piste existante, utilise **Charger un échantillon** dans ses réglages.
+- **⬇ JSON** sauvegarde le motif et ses réglages. Les échantillons importés restent dans le navigateur. **⬇ MIDI** exporte les notes et leur rythme pour les reprendre dans un autre logiciel. **⬇ WAV** rend le motif avec les sons et effets des pistes.
+- **Session** enregistre le son du studio et le range au butin. Pour exporter un prélèvement, utilise le bouton WAV de sa ligne dans le coffre.
 
 Le studio, le jeu et les traitements audio fonctionnent localement. Les motifs, réglages, archives et récoltes sont stockés dans le navigateur.
 
