@@ -1,0 +1,50 @@
+name: Public Soft Egress Playwright
+
+on:
+  pull_request:
+    paths:
+      - "alpha/dual-core-blob/egress-membrane.mjs"
+      - "alpha/dual-core-blob/outward.html"
+      - "alpha/dual-core-blob/egress-qa.mjs"
+      - "alpha/dual-core-blob/manifest.json"
+      - ".github/workflows/public-soft-egress-playwright.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Verify soft egress contract
+        run: |
+          node -e "const m=require('./alpha/dual-core-blob/manifest.json');const e=m.egressMembrane;if(e?.policy!=='SOFT_DENY_ALL_INTERNAL_CONTENT'||e.outwardRawPayload!==false||e.outwardDerivedPayload!==false||e.outwardHash!==false||e.outwardSize!==false||e.outwardReasonDetail!==false||e.throwsOnReject!==false)throw new Error('soft egress contract mismatch')"
+      - name: Install Playwright Chromium
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium
+      - name: Start public lab
+        run: |
+          python3 -m http.server 4173 --bind 127.0.0.1 >/tmp/soft-egress-http.log 2>&1 &
+          for i in $(seq 1 40); do curl -fsS http://127.0.0.1:4173/alpha/dual-core-blob/outward.html >/dev/null && exit 0; sleep .25; done
+          cat /tmp/soft-egress-http.log || true
+          exit 1
+      - name: Verify outward soft rejection
+        run: node alpha/dual-core-blob/egress-qa.mjs
+      - name: Print proof
+        run: cat alpha/dual-core-blob/qa/egress-latest.json
+      - name: Upload evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: public-soft-egress-playwright
+          path: |
+            alpha/dual-core-blob/qa/egress-latest.json
+            alpha/dual-core-blob/qa/egress.png
+          if-no-files-found: error
+          retention-days: 30

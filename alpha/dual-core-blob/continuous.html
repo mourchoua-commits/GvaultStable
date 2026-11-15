@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>GVAULT · Continuous Dual-Core Blob</title>
+<style>
+:root{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;color-scheme:dark;background:#080a0f;color:#edf1f7}*{box-sizing:border-box}body{margin:0;min-height:100vh;padding:14px;background:radial-gradient(circle at 20% 0,#1c2740,#080a0f 55%)}main{max-width:1050px;margin:auto}h1{margin:0 0 6px;font-size:clamp(22px,5vw,42px)}.sub{opacity:.7;margin-bottom:14px}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:8px}.card{padding:11px;border:1px solid #30394a;border-radius:13px;background:#10151f}.k{font-size:11px;opacity:.64}.v{margin-top:4px;font-size:18px;font-weight:800;word-break:break-word}.actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:12px 0}button{padding:12px;border:1px solid #53627d;border-radius:12px;background:#171e2b;color:inherit;font:inherit;font-weight:800}pre{white-space:pre-wrap;overflow-wrap:anywhere;border:1px solid #30394a;border-radius:13px;background:#0c1017;padding:11px;min-height:170px;max-height:42vh;overflow:auto}.ok{color:#b8ffd0}.warn{color:#ffe6a8}
+</style>
+</head>
+<body><main>
+<h1>DUAL-CORE CONTINUOUS BLOB</h1>
+<div class="sub">RUN_UNTIL_STOPPED · auto-start · persistent Blob workers · bounded trace · soft egress deny</div>
+<div class="grid">
+ <div class="card"><div class="k">STATE</div><div class="v" id="state">BOOT</div></div>
+ <div class="card"><div class="k">CYCLES</div><div class="v" id="cycles">0</div></div>
+ <div class="card"><div class="k">DUAL READY</div><div class="v" id="dual">0</div></div>
+ <div class="card"><div class="k">RECOVERIES</div><div class="v" id="recoveries">0</div></div>
+ <div class="card"><div class="k">RESTARTS</div><div class="v" id="restarts">0</div></div>
+ <div class="card"><div class="k">EGRESS REJECTS</div><div class="v" id="egress">0</div></div>
+ <div class="card"><div class="k">FAMILY</div><div class="v" id="family">—</div></div>
+ <div class="card"><div class="k">ELAPSED</div><div class="v" id="elapsed">0s</div></div>
+</div>
+<div class="actions"><button id="start">DÉMARRER / REPRENDRE</button><button id="stop">STOP MANUEL</button></div>
+<pre id="out">INITIALIZING…</pre>
+<script type="module">
+import {sendOutward,probeEgress} from './egress-membrane.mjs';
+const FAMILIES=['SILLAGE_ROTATION','ROUTE_INTENT','PROOF_CONTEXT','RECOVERY','FUZZ_INPUTS','BURST','CHAIN_CONTINUITY','SERIALIZATION','QUEUE_PRESSURE','STATE_RECONCILIATION','WATCHDOG','EGRESS_MEMBRANE'];
+const MODES=['PROFILE_FIELD','ORPHAN_PRESSURE','CRITICALITY','CAPABILITY'];
+const ITER={SILLAGE_ROTATION:768,ROUTE_INTENT:1024,PROOF_CONTEXT:1024,RECOVERY:1024,FUZZ_INPUTS:1280,BURST:4096,CHAIN_CONTINUITY:1024,SERIALIZATION:896,QUEUE_PRESSURE:3072,STATE_RECONCILIATION:1024,WATCHDOG:768,EGRESS_MEMBRANE:768};
+const core1Source=`
+const modes=['PROFILE_FIELD','ORPHAN_PRESSURE','CRITICALITY','CAPABILITY'];
+const hash=s=>{let h=2166136261>>>0;for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619)>>>0}return h>>>0};
+self.onmessage=e=>{const j=e.data;if(j.family==='WATCHDOG'&&j.cycle>0&&j.cycle%17===0&&!j.retry)throw new Error('SYNTHETIC_WATCHDOG_CORE1');let ready=0,d=2166136261>>>0;const mc=[0,0,0,0],routes=[0,0,0,0,0];for(let i=0;i<j.iterations;i++){const m=i%4;mc[m]++;let s=j.family+':'+modes[m]+':'+j.cycle+':'+i;if(j.family==='FUZZ_INPUTS')s+=':'+String.fromCharCode(33+(i%90))+':'+(i%2?'α':'β');if(j.family==='SERIALIZATION')s=JSON.stringify(JSON.parse(JSON.stringify({s,i,m})));const h=hash(s);routes[h%5]++;d^=h;ready++}self.postMessage({id:j.id,core:'CORE1',ready,digest:(d>>>0).toString(16),modeCounts:mc,routes,iterations:j.iterations})};`;
+const core2Source=`
+const hash=s=>{let h=0x811c9dc5>>>0;for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,0x01000193)>>>0}return h>>>0};
+self.onmessage=e=>{const j=e.data;let ready=0,recoveries=0,d=hash(String(j.chainSeed||'GENESIS'));for(let i=0;i<j.iterations;i++){let proof=true;if((j.family==='RECOVERY'||j.family==='PROOF_CONTEXT')&&i>0&&i%97===0){proof=false;recoveries++;proof=true}if(j.family==='STATE_RECONCILIATION'&&i%131===0){const a=(i^j.cycle)>>>0,b=(j.cycle^i)>>>0;if(a!==b)proof=false}if(proof)ready++;d=hash(d+':'+j.family+':'+j.cycle+':'+i)}self.postMessage({id:j.id,core:'CORE2',ready,recoveries,chainHead:(d>>>0).toString(16),iterations:j.iterations})};`;
+let seq=0;
+function makeEndpoint(name,source){let worker=null,pending=new Map();const boot=()=>{const url=URL.createObjectURL(new Blob([source],{type:'text/javascript'}));worker=new Worker(url);URL.revokeObjectURL(url);worker.onmessage=e=>{const p=pending.get(e.data?.id);if(p){pending.delete(e.data.id);p.resolve(e.data)}};worker.onerror=e=>{e.preventDefault();const err=new Error(name+':'+(e.message||'WORKER_ERROR'));for(const p of pending.values())p.reject(err);pending.clear();worker?.terminate();worker=null}};boot();return {request(payload){if(!worker)boot();const id=++seq;return new Promise((resolve,reject)=>{const t=setTimeout(()=>{pending.delete(id);reject(new Error(name+':TIMEOUT'))},5000);pending.set(id,{resolve:v=>{clearTimeout(t);resolve(v)},reject:e=>{clearTimeout(t);reject(e)}});worker.postMessage({...payload,id})})},restart(){worker?.terminate();for(const p of pending.values())p.reject(new Error(name+':RESTART'));pending.clear();worker=null;boot()},close(){worker?.terminate();worker=null;for(const p of pending.values())p.reject(new Error(name+':CLOSED'));pending.clear()}}}
+let c1=makeEndpoint('CORE1',core1Source),c2=makeEndpoint('CORE2',core2Source);
+const state={schema:'GVAULT_PUBLIC_DUAL_CORE_CONTINUOUS_V1',mode:'RUN_UNTIL_STOPPED',running:false,startedAt:null,stoppedAt:null,cycles:0,totalIterations:0,dualReady:0,proofRecoveries:0,restarts:0,egressRejects:0,errors:[],familyCounts:Object.fromEntries(FAMILIES.map(x=>[x,0])),modeCounts:Object.fromEntries(MODES.map(x=>[x,0])),familiesSeen:[],chainHead:'GENESIS',history:[],lastFamily:null,lastDurationMs:0,artificialThrottle:false,cooperativeYield:true,boundedHistory:64,networkAfterLoad:'NONE',externalWrites:'NONE',canonicalMutation:false,privateData:false};
+const copy=()=>JSON.parse(JSON.stringify(state));
+function trim(){if(state.history.length>64)state.history.splice(0,state.history.length-64);if(state.errors.length>32)state.errors.splice(0,state.errors.length-32)}
+async function pair(job,retry=false){const t0=performance.now();try{const [a,b]=await Promise.all([c1.request({...job,retry}),c2.request({...job,retry})]);return {a,b,durationMs:performance.now()-t0,retried:retry}}catch(e){state.restarts++;state.errors.push({at:new Date().toISOString(),kind:'WORKER_RECOVERY',message:String(e.message||e)});trim();c1.restart();c2.restart();if(retry)throw e;return pair(job,true)}}
+function paint(){const elapsed=state.startedAt?Math.max(0,(Date.now()-Date.parse(state.startedAt))/1000):0;document.querySelector('#state').textContent=state.running?'RUNNING':'STOPPED';document.querySelector('#cycles').textContent=String(state.cycles);document.querySelector('#dual').textContent=String(state.dualReady);document.querySelector('#recoveries').textContent=String(state.proofRecoveries);document.querySelector('#restarts').textContent=String(state.restarts);document.querySelector('#egress').textContent=String(state.egressRejects);document.querySelector('#family').textContent=state.lastFamily||'—';document.querySelector('#elapsed').textContent=elapsed.toFixed(1)+'s';const out=document.querySelector('#out');out.className=state.running?'ok':'';out.textContent=JSON.stringify({running:state.running,cycles:state.cycles,totalIterations:state.totalIterations,dualReady:state.dualReady,proofRecoveries:state.proofRecoveries,restarts:state.restarts,egressRejects:state.egressRejects,familiesSeen:state.familiesSeen,modeCounts:state.modeCounts,last:state.history.at(-1)||null},null,2)}
+async function cycle(){const family=FAMILIES[state.cycles%FAMILIES.length],iterations=ITER[family];const job={family,iterations,cycle:state.cycles,chainSeed:state.chainHead};const r=await pair(job);const gate=Math.min(r.a.ready,r.b.ready);if(r.a.ready!==iterations||r.b.ready!==iterations||gate!==iterations)throw new Error('CROSS_CORE_GAP:'+gate+'/'+iterations);state.chainHead=r.b.chainHead;state.totalIterations+=iterations;state.dualReady+=gate;state.proofRecoveries+=r.b.recoveries;state.familyCounts[family]++;if(!state.familiesSeen.includes(family))state.familiesSeen.push(family);for(let i=0;i<MODES.length;i++)state.modeCounts[MODES[i]]+=r.a.modeCounts[i];const rejected=sendOutward({source:'INTERNAL_CONTINUOUS_BLOB',family,cycle:state.cycles,chainHead:state.chainHead});if(rejected?.allowed!==false||rejected?.status!=='SOFT_EGRESS_REJECT')throw new Error('EGRESS_MEMBRANE_GAP');state.egressRejects++;state.lastFamily=family;state.lastDurationMs=r.durationMs;state.history.push({cycle:state.cycles,family,iterations,dualReady:gate,proofRecoveries:r.b.recoveries,retried:r.retried,durationMs:Number(r.durationMs.toFixed(3))});state.cycles++;trim();paint()}
+async function loop(){while(state.running){try{await cycle()}catch(e){state.errors.push({at:new Date().toISOString(),kind:'CYCLE_ERROR',message:String(e.message||e)});trim();c1.restart();c2.restart();state.restarts++;paint()}await new Promise(r=>setTimeout(r,0))}}
+function start(){if(state.running)return;state.running=true;state.stoppedAt=null;if(!state.startedAt)state.startedAt=new Date().toISOString();paint();loop()}
+function stop(){state.running=false;state.stoppedAt=new Date().toISOString();paint()}
+window.GVaultContinuousDualCore={schema:state.schema,mode:state.mode,families:[...FAMILIES],modes:[...MODES],start,stop,report:copy,probe:()=>({schema:state.schema,mode:state.mode,autoStart:true,workerModel:'TWO_PERSISTENT_WEB_WORKERS_FROM_BLOB_URLS',crossCoreGate:'BOTH_WORKERS_READY_REQUIRED',artificialThrottle:false,cooperativeYield:true,boundedHistory:64,networkAfterLoad:'NONE',externalWrites:'NONE',canonicalMutation:false,privateData:false,softEgress:probeEgress()})};
+document.querySelector('#start').addEventListener('click',start);document.querySelector('#stop').addEventListener('click',stop);setInterval(paint,250);start();
+</script>
+</main></body></html>

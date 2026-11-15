@@ -1,0 +1,59 @@
+name: Public Dual-Core Blob Playwright
+
+on:
+  push:
+    branches: ["lab/public-dual-core-blob-20260903"]
+    paths:
+      - "alpha/dual-core-blob/**"
+      - ".github/workflows/public-dual-core-blob-playwright.yml"
+  pull_request:
+    branches: ["main"]
+    paths:
+      - "alpha/dual-core-blob/**"
+      - ".github/workflows/public-dual-core-blob-playwright.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  simulate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Verify public-only contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          node -e "const m=require('./alpha/dual-core-blob/manifest.json');if(m.schema!=='GVAULT_PUBLIC_DUAL_CORE_BLOB_MANIFEST_V1'||m.mode!=='FULL_BUDGET_SIMULATION'||m.containsPrivateVaultSource!==false||m.containsPrivateCatalog!==false||m.containsTokens!==false||m.privateData!==false||m.externalWrites!=='NONE'||m.canonicalMutation!==false||m.artificialThrottle!==false)throw new Error('unsafe public dual-core manifest')"
+      - name: Install Playwright Chromium
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium
+      - name: Start public lab locally
+        shell: bash
+        run: |
+          python3 -m http.server 4173 --bind 127.0.0.1 >/tmp/dual-core-blob-http.log 2>&1 &
+          for i in $(seq 1 40); do curl -fsS http://127.0.0.1:4173/alpha/dual-core-blob/ >/dev/null && exit 0; sleep .25; done
+          cat /tmp/dual-core-blob-http.log || true
+          exit 1
+      - name: Run full-budget dual-core Playwright matrix
+        run: node alpha/dual-core-blob/qa.mjs
+      - name: Print proof summary
+        if: always()
+        run: |
+          if [ -f alpha/dual-core-blob/qa/latest.json ]; then
+            node -e "const r=require('./alpha/dual-core-blob/qa/latest.json');console.log(JSON.stringify({pass:r.pass,totalIterations:r.totalIterations,totalDualReady:r.totalDualReady,recoveries:r.recoveries,profiles:r.profiles,consoleErrors:r.consoleErrors},null,2))"
+          fi
+      - name: Upload public simulation evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: public-dual-core-blob-playwright
+          path: alpha/dual-core-blob/qa/
+          if-no-files-found: error
+          retention-days: 30
