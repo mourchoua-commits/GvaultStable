@@ -55,7 +55,8 @@ input[type=range]{padding:0; accent-color:var(--acc)}
 .fwindow.open{display:flex}
 .fwindow.min{height:auto !important}
 .fwindow.min .wbody, .fwindow.min .wlinks, .fwindow.min .rsz{display:none}
-#drawWin,#sysWin,#nasaWin,#instWin{width:480px}
+#drawWin,#nasaWin,#instWin{width:480px}
+#sysWin{width:740px}
 #simWin{width:560px}
 #gateWin{width:650px}
 .wbar{display:flex; flex:none; align-items:center; gap:8px; padding:7px 10px; border-bottom:1px solid var(--line); cursor:grab; user-select:none; touch-action:none}
@@ -128,11 +129,40 @@ input[type=range]{padding:0; accent-color:var(--acc)}
 .org{position:fixed; z-index:40; pointer-events:none; font-size:13px; animation:orgf .9s ease-out forwards}
 @keyframes orgf{to{transform:translateY(-26px); opacity:0}}
 
-#sysGrid{display:grid; grid-template-columns:repeat(28,1fr); gap:1px; background:var(--line); border-radius:6px; overflow:hidden; touch-action:none}
-.mcell{aspect-ratio:1; background:var(--panel2); cursor:pointer}
-.mats{display:flex; gap:4px; flex-wrap:wrap}
-.mats button{padding:3px 8px; font-size:12px}
-.mats button.on{outline:2px solid var(--acc)}
+#sysWin{--world-accent:#94e6d9; --world-ink:#141d25}
+#sysWin .wbody{gap:10px}
+.world-bar{background:#141f29; border-radius:var(--r) var(--r) 0 0}
+.world-bar .wt{color:#d1f5ef; font-weight:650}
+#sysAnim{min-width:78px; padding:4px 9px; font-size:12px; color:var(--world-accent); border-color:#3b6b6d; background:#203836}
+#sysAnim[aria-pressed="true"]{color:#fbd393; border-color:#795d37; background:#3e3023}
+.world-stage{position:relative; flex:none; overflow:hidden; border:1px solid #38515e; border-radius:9px; background:#131e32}
+#sysGrid{display:block; width:100%; aspect-ratio:16 / 9; cursor:crosshair; touch-action:none}
+#sysGrid[data-panning="true"]{cursor:grab}
+#sysGrid:focus-visible{outline:2px solid var(--world-accent); outline-offset:-2px}
+.world-hud{position:absolute; inset:10px 11px auto; display:flex; gap:6px; flex-wrap:wrap; justify-content:space-between; align-items:center; pointer-events:none}
+.world-hud span{padding:4px 8px; color:#e9f6f7; background:#111926df; border:1px solid #acc2cf55; border-radius:6px; font-size:11px; font-variant-numeric:tabular-nums}
+.world-hud #sysState[data-paused]{border-color:#dba268; color:#ffdcaa}
+.world-tools,.world-sound{font-size:12px}
+.world-tools label,.world-sound label,.world-options label{display:inline-flex; gap:5px; align-items:center}
+.world-tools button,.world-sound button,.world-options button{font-size:12px; padding:4px 8px}
+.world-tools select{max-width:12em}
+.world-tools input[type=range],.world-options input[type=range]{width:74px; accent-color:var(--world-accent)}
+.world-mats{display:flex; gap:5px; flex-wrap:wrap}
+.world-mats button{display:flex; align-items:center; gap:5px; padding:4px 7px; background:var(--world-ink); font-size:12px}
+.world-mats button[aria-pressed="true"]{color:var(--world-accent); border-color:var(--world-accent); background:#223631}
+.world-chip{width:10px; height:10px; border-radius:2px; flex:none; background:var(--swatch); outline:1px solid #c7dee53f}
+.world-options{min-width:0; padding:6px 8px; border:1px solid var(--line); border-radius:8px; font-size:12px}
+.world-options .row{margin-top:7px}
+.world-options output{min-width:3ch; font-variant-numeric:tabular-nums}
+#sysWin button:disabled{opacity:.52; cursor:default}
+#sysTip{min-height:1.4em; color:#a1b8c3}
+#sysTip:empty{display:none}
+@media(max-width:480px){
+  .world-tools,.world-options{gap:6px}
+  .world-hud{inset:6px 6px auto}
+  .world-hud span{font-size:10px; padding:3px 5px}
+  .world-mats button{font-size:11px; padding:4px 6px}
+}
 
 #vibPads{display:grid; grid-template-columns:repeat(4,1fr); gap:6px}
 .vpad{aspect-ratio:1.4; border-radius:8px; border:1px solid var(--line); cursor:pointer; font-size:11px; color:#fff; text-shadow:0 1px 2px rgba(0,0,0,.6)}
@@ -264,21 +294,42 @@ input[type=range]{padding:0; accent-color:var(--acc)}
 </section>
 
 <section class="fwindow" id="sysWin">
-  <header class="wbar"><span class="wt">🌍 Magic System</span><button class="wmin">➖</button><button class="wx">✕</button></header>
+  <header class="wbar world-bar"><span class="wt">🌍 Magic System</span><button id="sysAnim" aria-pressed="false" aria-keyshortcuts="P">⏸ Pause</button><button class="wmin">➖</button><button class="wx">✕</button></header>
   <div class="wbody">
-    <div class="mats" id="sysMats"></div>
-    <div class="row">
-      <button id="sysAnim">▶ Animer</button>
-      <button id="sysPlay">🎵 Jouer le monde</button>
-      <button id="sysLoop">🔁 Boucle</button>
-      <button id="sysSeed">🌱 Semer</button>
-      <button id="sysClear">🗑️ Vider</button>
-      <label class="hint"><input type="checkbox" id="sysRain"> Pluie</label>
-      <label class="hint"><input type="checkbox" id="sysCap"> Capturer</label>
-      <span class="hint" id="sysTip">monde en jachère</span>
+    <div class="row world-tools">
+      <label>Scène <select id="sysScene"></select></label>
+      <button id="sysLoadScene">Charger</button>
+      <button id="sysStep" disabled>+1 pas</button>
+      <button id="sysMove" aria-pressed="false">Déplacer la vue</button>
     </div>
-    <div id="sysGrid"></div>
-    <p class="hint">Peins des matières : l'eau coule, le feu brûle, la lave durcit, les graines poussent près de l'eau. Le monde teinte la couleur perçue.</p>
+    <div class="world-stage">
+      <canvas id="sysGrid" width="768" height="432" tabindex="0" aria-label="Terrain interactif. Au clavier, les flèches déplacent le pinceau et Espace peint."></canvas>
+      <div class="world-hud"><span id="sysState">En cours</span><span id="sysTelemetry" aria-live="off"></span></div>
+    </div>
+    <div class="world-mats" id="sysMats" role="group" aria-label="Matières"></div>
+    <div class="row world-tools">
+      <label>Pinceau <input id="sysBrush" type="range" min="1" max="16" value="4"><output id="sysBrushValue" for="sysBrush">4</output></label>
+      <label>Zoom <input id="sysZoom" type="range" min="1" max="4" step="0.1" value="1"><output id="sysZoomValue" for="sysZoom">1×</output></label>
+      <button id="sysSeed">🌱 Semer</button>
+    </div>
+    <details class="world-options">
+      <summary>Réglages du monde</summary>
+      <div class="row">
+        <label><input type="checkbox" id="sysRain"> Pluie</label>
+        <label><input type="checkbox" id="sysDay" checked> Cycle jour/nuit</label>
+        <label>Heure initiale <input type="range" id="sysHour" min="0" max="23.5" step="0.5" value="10.5"><output id="sysHourValue" for="sysHour"></output></label>
+        <label>Air <input type="range" id="sysHeat" min="-32" max="55" value="18"><output id="sysHeatValue" for="sysHeat"></output></label>
+        <label>Vent <input type="range" id="sysWind" min="-3" max="3" value="0"><output id="sysWindValue" for="sysWind"></output></label>
+        <label>Vitesse <select id="sysSpeed"><option value="0.5">0,5×</option><option value="1" selected>1×</option><option value="2">2×</option></select></label>
+        <label>Rendu <select id="sysRender"><option value="cinema">Cinéma</option><option value="pixels">Pixels</option></select></label>
+      </div>
+      <div class="row"><button id="sysSave">Sauvegarder la scène</button><button id="sysRestore">Restaurer</button><button id="sysClear">Vider</button></div>
+    </details>
+    <div class="row world-sound">
+      <button id="sysPlay">🎵 Jouer le monde</button><button id="sysLoop" aria-pressed="false">🔁 Boucle</button>
+      <label><input type="checkbox" id="sysCap"> Capturer dans la piste</label>
+    </div>
+    <p id="sysTip" class="hint" role="status"></p>
   </div>
 </section>
 
@@ -578,6 +629,7 @@ function syncWindow(id){
   if (id === "nasaWin") syncNasa();
   if (id === "simWin") syncSimulation();
   if (id === "gateWin") requestPortalDraw();
+  if (id === "sysWin") syncWorldWindow();
 }
 function openWin(id, from, opener){
   const w = $(id);
@@ -1565,157 +1617,835 @@ $("drawLoop").addEventListener("click", () => {
   else { clearTimeout(drawTimer); drawTimer = null; status("boucle dessin stoppée"); }
 });
 
-const MATS = ["pierre","sable","eau","plante","feu","lave","graine","bois","vapeur"];
-const MATCOL = {"pierre":"#8a8f98","sable":"#d8c07a","eau":"#4c8dff","plante":"#3fb950","feu":"#ff7b3d","lave":"#ff4c3d","graine":"#b7e07a","bois":"#a5713d","vapeur":"#c9d4e0"};
-const MID = {};
-MATS.forEach((m, i) => MID[m] = i + 1);
-const SWD = 28, SHD = 14;
-const world = new Array(SWD * SHD).fill(0);
-let sysTimer = null, worldPlayTimer = null, curMat = MID.eau;
-const sysGrid = $("sysGrid");
-const mEls = [];
-for (let i = 0; i < SWD * SHD; i++){
-  const d = document.createElement("div");
-  d.className = "mcell";
-  d.addEventListener("pointerdown", e => { e.preventDefault(); paintMat(i); });
-  d.addEventListener("pointermove", e => { if (e.buttons) paintMat(i); });
-  sysGrid.appendChild(d);
-  mEls[i] = d;
-}
-function paintMat(i){ world[i] = curMat; mEls[i].style.background = MATCOL[MATS[curMat - 1]] || "var(--panel2)"; }
-function paintWorld(){ for (let i = 0; i < world.length; i++) mEls[i].style.background = world[i] ? MATCOL[MATS[world[i] - 1]] : "var(--panel2)"; }
-["gomme", ...MATS].forEach(m => {
-  const b = document.createElement("button");
-  b.textContent = m;
-  if (m === "eau") b.classList.add("on");
-  b.addEventListener("click", () => { curMat = MID[m] || 0; $("sysMats").querySelectorAll("button").forEach(x => x.classList.toggle("on", x === b)); });
-  $("sysMats").appendChild(b);
-});
-function worldTick(){
-  if ($("sysRain").checked){
-    const drop = Math.floor(Math.random() * SWD);
-    if (!world[drop]) world[drop] = MID.eau;
+const SWD = 192, SHD = 108;
+const MATERIALS = [
+  {key:"air", label:"Gomme", color:"#17263a"},
+  {key:"pierre", label:"Pierre", color:"#667383", sound:13, texture:"rock"},
+  {key:"sable", label:"Sable", color:"#d6ae70", sound:24, motion:"grain", density:8},
+  {key:"eau", label:"Eau", color:"#3c9fc1", sound:26, motion:"liquid", density:5},
+  {key:"plante", label:"Plante", color:"#67ac65", sound:10, fuel:0.18},
+  {key:"feu", label:"Feu", color:"#ffad5c", sound:22, heat:440, lifetime:33},
+  {key:"lave", label:"Lave", color:"#fa632d", sound:31, motion:"liquid", density:7, heat:880},
+  {key:"graine", label:"Graine", color:"#b1c968", sound:15, motion:"grain", density:6, fuel:0.12},
+  {key:"bois", label:"Bois", color:"#987052", sound:28, fuel:0.1},
+  {key:"vapeur", label:"Vapeur", color:"#c9e3ec", sound:25, motion:"gas", density:0.2, heat:105, lifetime:90},
+  {key:"terre", label:"Terre", color:"#785845", sound:8, texture:"rock"},
+  {key:"glace", label:"Glace", color:"#8ddbed", sound:14, heat:-15},
+  {key:"huile", label:"Huile", color:"#ad8d43", sound:33, motion:"liquid", density:4, fuel:0.36},
+  {key:"cendre", label:"Cendre", color:"#8d8994", sound:34, motion:"grain", density:3},
+  {key:"metal", label:"Métal", color:"#acb9bf", sound:5, texture:"rock"},
+  {key:"fumee", label:"Fumée", color:"#798097", sound:25, motion:"gas", density:0.1, heat:64, lifetime:68}
+];
+const MID = Object.fromEntries(MATERIALS.map((material,i)=>[material.key,i]));
+const MATERIAL_RGB = MATERIALS.map(({color})=>color.slice(1).match(/../g).map(v=>parseInt(v,16)));
+
+class MagicWorld {
+  constructor(width,height){
+    this.width = width; this.height = height;
+    const size = width * height;
+    this.cells = new Uint8Array(size);
+    this.heat = new Float32Array(size);
+    this.previousHeat = new Float32Array(size);
+    this.moisture = new Uint8Array(size);
+    this.age = new Uint16Array(size);
+    this.cellFields = [this.cells,this.heat,this.moisture,this.age];
+    this.moved = new Uint32Array(size);
+    this.reset(1,18);
   }
-  for (let y = SHD - 1; y >= 0; y--){
-    for (let x = 0; x < SWD; x++){
-      const i = y * SWD + x, m = world[i];
-      if (!m) continue;
-      const below = i + SWD;
-      const ok = j => j >= 0 && j < SWD * SHD && world[j] === 0;
-      const nb = [x ? i-1 : -1, x < SWD-1 ? i+1 : -1, i-SWD, i+SWD].filter(j => j >= 0 && j < SWD * SHD);
-      if (m === MID.vapeur){
-        if (Math.random() < 0.04) world[i] = MID.eau;
-        else if (y > 0 && ok(i-SWD) && Math.random() < 0.4){ world[i-SWD] = m; world[i] = 0; }
-      } else if (m === MID.eau || m === MID.sable){
-        if (y < SHD - 1 && ok(below)){ world[below] = m; world[i] = 0; }
-        else if (y < SHD - 1 && world[below] !== 0){
-          if (x > 0 && ok(i - 1)){ world[i - 1] = m; world[i] = 0; }
-          else if (x < SWD - 1 && ok(i + 1)){ world[i + 1] = m; world[i] = 0; }
-        }
-      } else if (m === MID.feu){
-        for (const j of nb){
-          if ((world[j] === MID.bois || world[j] === MID.plante) && Math.random() < 0.5) world[j] = MID.feu;
-        }
-        if (Math.random() < 0.25) world[i] = MID.vapeur;
-      } else if (m === MID.lave){
-        if (y < SHD - 1 && ok(below) && Math.random() < 0.08) world[below] = MID.lave;
-        for (const j of nb){
-          if (world[j] === MID.eau){ world[j] = MID.vapeur; world[i] = MID.pierre; }
-        }
-      } else if (m === MID.graine){
-        if (nb.some(j => world[j] === MID.eau) && Math.random() < 0.4) world[i] = MID.plante;
-      } else if (m === MID.plante){
-        if (nb.some(j => world[j] === MID.eau)){
-          for (const j of nb){
-            if (world[j] === 0 && Math.random() < 0.06){ world[j] = MID.plante; break; }
-          }
-        }
+  reset(seed,ambient){
+    this.seed = seed >>> 0; this.ticks = 0; this.ambient = ambient; this.reaction = null;
+    this.cells.fill(MID.air); this.heat.fill(ambient); this.moisture.fill(0); this.age.fill(0); this.moved.fill(0);
+  }
+  random(){
+    this.seed = (Math.imul(this.seed,1664525)+1013904223)>>>0;
+    return this.seed/4294967296;
+  }
+  at(x,y){ return x < 0 || x >= this.width || y < 0 || y >= this.height ? -1 : y*this.width+x; }
+  write(i,material,temperature = MATERIALS[material].heat ?? this.ambient){
+    if (i < 0 || i >= this.cells.length) return;
+    this.cells[i] = material; this.heat[i] = temperature; this.moved[i] = this.ticks;
+    this.moisture[i] = material === MID.eau ? 100 : 0;
+    this.age[i] = MATERIALS[material].lifetime || 0;
+  }
+  put(x,y,material){ this.write(this.at(x,y),material); }
+  brush(x,y,radius,material){
+    for (let dy = -radius; dy <= radius; dy++) for (let dx = -radius; dx <= radius; dx++){
+      if (dx*dx+dy*dy > radius*radius) continue;
+      this.put(x+dx,y+dy,material);
+    }
+  }
+  swap(i,j){
+    for (const field of this.cellFields){
+      const first = field[i]; field[i] = field[j]; field[j] = first;
+    }
+    this.moved[i] = this.moved[j] = this.ticks;
+  }
+  canSink(i,j){
+    if (j < 0 || this.moved[j] === this.ticks) return false;
+    const target = this.cells[j], source = MATERIALS[this.cells[i]];
+    if (target === this.cells[i]) return false;
+    const door = MATERIALS[target];
+    return target === MID.air || door.motion === "gas" || (door.motion === "liquid" && source.density > door.density);
+  }
+  emit(text){
+    if (!this.reaction || this.ticks-this.reaction.tick >= 18) this.reaction = {text,tick:this.ticks};
+  }
+  warm(i,material,left,right,above,below){
+    const previous = this.previousHeat, own = previous[i];
+    const surrounding = ((previous[left] ?? this.ambient)+(previous[right] ?? this.ambient)+(previous[above] ?? this.ambient)+(previous[below] ?? this.ambient))/4;
+    const speed = material === MID.metal ? 0.38 : material === MID.air ? 0.18 : 0.13;
+    let next = own + (surrounding-own)*speed + (this.ambient-own)*0.014;
+    if (material === MID.lave) next = Math.max(660,next);
+    if (material === MID.feu) next = Math.max(340,next);
+    this.heat[i] = next;
+  }
+  updateMoisture(i,left,right,above,below){
+    const wet = Math.max(this.moisture[left]||0,this.moisture[right]||0,this.moisture[above]||0,this.moisture[below]||0);
+    const own = this.moisture[i];
+    this.moisture[i] = clamp(own + Math.round((wet-own)*0.22) - (this.heat[i]>45 ? 3 : 1),0,100);
+  }
+  react(i,m,left,right,above,below){
+    if (m === MID.lave){
+      const water = [left,right,above,below].find(j=>this.cells[j] === MID.eau || this.cells[j] === MID.glace);
+      if (water !== undefined){
+        this.write(i,MID.pierre,260); this.write(water,MID.vapeur);
+        this.emit("La lave se solidifie au contact de l’eau. La vapeur remonte.");
+        return true;
+      }
+    } else if (m === MID.eau || m === MID.glace){
+      const lava = this.cells[left] === MID.lave ? left : this.cells[right] === MID.lave ? right :
+        this.cells[above] === MID.lave ? above : this.cells[below] === MID.lave ? below : -1;
+      if (lava >= 0){
+        this.write(lava,MID.pierre,260); this.write(i,MID.vapeur);
+        this.emit("La lave se solidifie au contact de l’eau. La vapeur remonte.");
+        return true;
       }
     }
+    if (m === MID.eau){
+      if (this.heat[i] >= 105){ this.write(i,MID.vapeur); this.emit("L’eau chaude se transforme en vapeur."); return true; }
+      if (this.heat[i] < -4 && this.cells[above] !== MID.eau && this.random()<0.036){
+        this.write(i,MID.glace); this.emit("La surface de l’eau gèle."); return true;
+      }
+    } else if (m === MID.glace && this.heat[i] > 3){
+      this.write(i,MID.eau,2); this.emit("La glace fond et rejoint l’eau."); return true;
+    }
+    const fuel = MATERIALS[m].fuel;
+    if (fuel && this.heat[i]>140 && this.random()<fuel*0.55){
+      this.write(i,MID.feu); this.emit("La chaleur propage le feu aux matières combustibles."); return true;
+    }
+    return false;
   }
-  paintWorld();
-}
-function worldAlive(){ return world.some(m => m !== 0 && m !== MID.vapeur); }
-function toggleWorld(){
-  if (sysTimer){
-    clearInterval(sysTimer); sysTimer = null;
-    $("sysAnim").classList.remove("on");
-    $("sysTip").textContent = "monde en jachère";
-    status("🌍 monde stoppé");
-  } else {
-    avantSay("Ton monde va s'animer — ses matières vont vivre et teinter la couleur perçue !");
-    sysTimer = setInterval(worldTick, 120);
-    $("sysAnim").classList.add("on");
-    $("sysTip").textContent = "le monde vit";
-    status("🌍 le monde s'anime");
+  burn(i,left,right,above,below){
+    const wet = [left,right,above,below].find(j=>this.cells[j] === MID.eau);
+    if (wet !== undefined && this.random()<0.42){
+      this.write(i,MID.fumee,50); this.write(wet,MID.vapeur); this.emit("L’eau étouffe le feu."); return;
+    }
+    for (const j of [above,left,right,below]){
+      const fuel = MATERIALS[this.cells[j]]?.fuel;
+      if (fuel && this.random()<fuel){ this.write(j,MID.feu); this.emit("Le feu gagne la matière voisine."); }
+    }
+    if (above >= 0 && !this.cells[above] && this.random()<0.17) this.write(above,MID.fumee);
+    if (this.age[i] && --this.age[i] > 0) return;
+    this.write(i,this.random()<0.55 ? MID.cendre : MID.fumee,70);
   }
-}
-$("sysAnim").addEventListener("click", toggleWorld);
-$("sysRain").addEventListener("change", () => { if ($("sysRain").checked && !sysTimer) toggleWorld(); });
-$("sysSeed").addEventListener("click", () => {
-  let planted = 0;
-  for (let x = 1; x < SWD; x += 3){
-    for (let y = SHD-1; y >= 0; y--){
-      const i = y * SWD + x;
-      if (!world[i]){ world[i] = MID.graine; planted++; break; }
+  rise(i,x,y,m,wind){
+    if (!this.age[i] || --this.age[i] === 0){
+      if (m === MID.vapeur && this.heat[i]<48){ this.write(i,MID.eau,this.ambient); this.emit("La vapeur refroidit et retombe en eau."); }
+      else this.write(i,MID.air);
+      return;
+    }
+    if (m === MID.vapeur && this.heat[i]<20 && this.random()<0.035){ this.write(i,MID.eau,this.ambient); return; }
+    const side = wind ? Math.sign(wind) : (this.random()<0.5 ? -1 : 1);
+    const aim = Math.abs(wind)>1 && this.random()<0.7 ? side : 0;
+    const above = this.at(x+aim,y-1), drift = this.at(x+side,y);
+    if (above >= 0 && !this.cells[above] && this.moved[above] !== this.ticks) this.swap(i,above);
+    else if (drift >= 0 && !this.cells[drift] && this.moved[drift] !== this.ticks && this.random()<0.66) this.swap(i,drift);
+  }
+  fall(i,x,y,m,wind){
+    if (m === MID.lave && this.random()>0.32) return;
+    const dir = Math.abs(wind)>=2 && m === MID.cendre ? Math.sign(wind) : (this.random()<0.5 ? -1 : 1);
+    const down = this.at(x,y+1);
+    if (this.canSink(i,down)){ this.swap(i,down); return; }
+    for (const side of [dir,-dir]){
+      const diagonal = this.at(x+side,y+1), lateral = this.at(x+side,y);
+      if (this.canSink(i,diagonal) && this.canSink(i,lateral)){ this.swap(i,diagonal); return; }
+    }
+    if (MATERIALS[m].motion === "liquid"){
+      const first = this.at(x+dir,y), second = this.at(x-dir,y);
+      if (this.canSink(i,first)) this.swap(i,first);
+      else if (this.canSink(i,second)) this.swap(i,second);
     }
   }
-  paintWorld(); status(`🌱 ${planted} graines semées`);
+  grow(i,m,left,right,above,below,light){
+    this.updateMoisture(i,left,right,above,below);
+    const substrate = this.cells[below];
+    const rooted = substrate === MID.terre || substrate === MID.sable || substrate === MID.plante;
+    if (m === MID.graine && rooted && this.moisture[i]>=24 && this.heat[i]>5 && this.heat[i]<44 && this.random()<0.13*light){
+      this.write(i,MID.plante,this.heat[i]); this.moisture[i] = 38;
+      this.emit("Une graine humide germe."); return true;
+    }
+    if (m === MID.plante && this.moisture[i]>20 && this.heat[i]>5 && this.heat[i]<42 && this.age[i]<5){
+      if (above >= 0 && !this.cells[above] && this.random()<0.02*light){
+        this.write(above,MID.plante,this.heat[i]); this.age[above] = this.age[i]+1;
+        this.moisture[above] = Math.max(8,this.moisture[i]-5);
+        this.age[i] = 6; this.emit("La végétation se développe près des zones humides.");
+      }
+    }
+    return false;
+  }
+  step({rain,wind,ambient,light}){
+    this.ticks++;
+    this.ambient = ambient;
+    const w = this.width, h = this.height;
+    this.previousHeat.set(this.heat);
+    if (rain){
+      for (let k = 0; k < 5; k++){
+        const x = Math.floor(this.random()*w);
+        if (!this.cells[x]) this.write(x,MID.eau,ambient);
+      }
+    }
+    const reverse = this.ticks % 2 === 0;
+    for (let y = h-1; y >= 0; y--) for (let col = 0; col < w; col++){
+      const x = reverse ? w-1-col : col, i = y*w+x, m = this.cells[i];
+      if (this.moved[i] === this.ticks) continue;
+      const left = x ? i-1 : -1, right = x+1<w ? i+1 : -1, above = y ? i-w : -1, below = y+1<h ? i+w : -1;
+      this.warm(i,m,left,right,above,below);
+      if (m === MID.air || this.react(i,m,left,right,above,below)) continue;
+      if (m === MID.feu){ this.burn(i,left,right,above,below); continue; }
+      if (m === MID.terre || m === MID.sable || m === MID.bois) this.updateMoisture(i,left,right,above,below);
+      if ((m === MID.graine || m === MID.plante) && this.grow(i,m,left,right,above,below,light)) continue;
+      const motion = MATERIALS[m].motion;
+      if (motion === "gas") this.rise(i,x,y,m,wind);
+      else if (motion) this.fall(i,x,y,m,wind);
+    }
+  }
+}
+
+const SCENES = {
+  delta:{label:"Delta vivant",seed:41923,air:18,wind:0,rain:false,sky:["#24445c","#91ccc4","#f2cc9d"],ridges:["#537e87","#345a62"],sun:"#fff0ba"},
+  volcano:{label:"Caldeira",seed:87643,air:29,wind:1,rain:false,sky:["#322746","#925963","#e7a170"],ridges:["#755761","#483b52"],sun:"#ffe2a8"},
+  ice:{label:"Banquise",seed:11827,air:-14,wind:-1,rain:false,sky:["#263b65","#88aacc","#dfc6e8"],ridges:["#708cab","#4c6d8e"],sun:"#f3ecff"},
+  dunes:{label:"Mer de dunes",seed:35487,air:39,wind:2,rain:false,sky:["#345275","#aba6b7","#ffc786"],ridges:["#ab8676","#816979"],sun:"#ffe3a1"},
+  empty:{label:"Terrain vide",seed:7135,air:18,wind:0,rain:false,sky:["#243551","#69959d","#a7c1c6"],ridges:["#507180","#354e65"],sun:"#e5f5ef"}
+};
+
+function makeTree(model,x,ground,size){
+  for (let y = 1; y < size; y++) model.put(x,ground-y,MID.bois);
+  const crown = ground-size+1, radius = Math.round(size*0.41);
+  for (let dy = -radius; dy <= radius; dy++) for (let dx = -radius-1; dx <= radius+1; dx++){
+    const i = model.at(x+dx,crown+dy);
+    if (i >= 0 && !model.cells[i] && Math.hypot(dx*0.84,dy) < radius+model.random()*1.4) model.write(i,MID.plante);
+  }
+}
+function buildScene(model,key){
+  const scene = SCENES[key];
+  model.reset(scene.seed,scene.air);
+  if (key === "empty") return;
+  const w = model.width, h = model.height;
+  for (let x = 0; x < w; x++){
+    const u = x/w;
+    let floor, waterline;
+    if (key === "delta"){
+      floor = Math.round(49+34*Math.exp(-Math.pow((u-0.52)*4.4,2))+5*Math.sin(u*18)+2*Math.sin(u*39));
+      waterline = 65;
+    } else if (key === "volcano"){
+      floor = Math.round(90-52*Math.exp(-Math.pow((u-0.60)*3.5,2))+7*Math.exp(-Math.pow((u-0.60)*25,2))+2*Math.sin(u*43));
+      waterline = 78;
+    } else if (key === "ice"){
+      floor = Math.round(53+32*Math.exp(-Math.pow((u-0.5)*8,2))+4*Math.sin(u*22)+1.7*Math.cos(u*59));
+      waterline = 65;
+    } else {
+      floor = Math.round(67+12*Math.sin(u*15+0.8)+5*Math.sin(u*37));
+      waterline = 86;
+    }
+    for (let y = floor; y < h; y++){
+      const d = y-floor, grain = Math.sin(y*.42+x*.16)+Math.cos(y*.28-x*.19), pick = model.random();
+      let matter = MID.pierre;
+      if (key === "delta") matter = d < 4+(pick>0.65 ? 2 : 0) ? (floor>waterline-4 ? MID.sable : MID.terre) : grain>1.05 ? MID.terre : MID.pierre;
+      if (key === "volcano") matter = d < 3 && floor>73 ? MID.cendre : d>12 && grain>1.30 && pick>0.48 ? MID.metal : MID.pierre;
+      if (key === "ice") matter = d < 10+4*Math.sin(u*23) ? MID.glace : grain>1.1 ? MID.glace : MID.pierre;
+      if (key === "dunes") matter = d < 8+6*pick ? MID.sable : grain>0.75 ? MID.terre : MID.pierre;
+      model.put(x,y,matter);
+    }
+    for (let y = waterline; y < floor; y++) model.put(x,y,MID.eau);
+    if (key === "delta" && floor < waterline-3){
+      if (x%13 === 4 && model.random()<0.82) makeTree(model,x,floor,6+Math.floor(model.random()*9));
+      else if (model.random()<0.68 && !model.cells[model.at(x,floor-1)]) model.put(x,floor-1,MID.plante);
+    }
+    if (key === "volcano" && u>0.39 && u<0.62 && (x%4 !== 0 || u>0.56)){
+      const lip = Math.min(5,Math.floor(3.6+2*Math.cos(u*40)));
+      for (let y = floor-lip; y < floor; y++) model.put(x,y,MID.lave);
+    }
+    if (key === "dunes" && x%31 === 8 && floor<75) makeTree(model,x,floor,4+Math.floor(model.random()*4));
+  }
+}
+
+const WORLD_RATE = 24;
+function worldNoise(x){
+  x = Math.imul(x ^ (x>>>16),0x45d9f3b);
+  x = Math.imul(x ^ (x>>>16),0x45d9f3b);
+  return ((x ^ (x>>>16))>>>0)/4294967296;
+}
+function daylight(ticks,cycle,start){
+  const hours = (start+(cycle ? ticks/WORLD_RATE*0.20 : 0))%24;
+  const sun = Math.sin((hours-6)*Math.PI/12);
+  return {hours,light:clamp(0.32+sun*0.8,0.19,1),sun};
+}
+
+class MagicRenderer {
+  constructor(canvas,model){
+    this.canvas = canvas; this.model = model; this.ctx = canvas.getContext("2d");
+    this.camera = {x:0,y:0,zoom:1};
+    this.pixels = document.createElement("canvas");
+    this.emission = document.createElement("canvas");
+    for (const image of [this.pixels,this.emission]){
+      image.width=model.width; image.height=model.height;
+    }
+    this.pixelCtx = this.pixels.getContext("2d");
+    this.lightCtx = this.emission.getContext("2d");
+    this.image = this.pixelCtx.createImageData(model.width,model.height);
+    this.glow = this.lightCtx.createImageData(model.width,model.height);
+    this.waterDepth = new Uint8Array(model.width);
+  }
+  move(x,y,zoom){
+    const {width:W,height:H} = this.model;
+    this.camera = {x:clamp(x,0,W-W/zoom),y:clamp(y,0,H-H/zoom),zoom};
+  }
+  zoom(next,fx=0.5,fy=0.5){
+    const {x,y,zoom} = this.camera;
+    this.move(x+fx*this.model.width*(1/zoom-1/next),y+fy*this.model.height*(1/zoom-1/next),next);
+  }
+  point(fx,fy){
+    const {x,y,zoom} = this.camera;
+    return {x:Math.floor(x+fx*this.model.width/zoom),y:Math.floor(y+fy*this.model.height/zoom)};
+  }
+  sky(scene,lighting,weather){
+    const c = this.ctx, {width:W,height:H,ticks} = this.model;
+    const daylight = lighting.light;
+    const sky = c.createLinearGradient(0,0,0,H*.87);
+    sky.addColorStop(0,scene.sky[0]); sky.addColorStop(.58,scene.sky[1]); sky.addColorStop(1,scene.sky[2]);
+    c.fillStyle=sky; c.fillRect(0,0,W,H);
+    c.fillStyle=`rgba(6,12,37,${(1-daylight)*.76 + (weather.rain ? .10 : 0)})`;
+    c.fillRect(0,0,W,H);
+    const night = lighting.sun < 0;
+    if (night){
+      for (let i = 0; i<58; i++){
+        const x = worldNoise(scene.seed+i*41)*W, y = worldNoise(scene.seed+i*71)*H*.56;
+        c.fillStyle=`rgba(232,244,255,${0.25+worldNoise(i+13)*.67})`;
+        c.beginPath(); c.arc(x,y,.18+worldNoise(i*5)*.23,0,Math.PI*2); c.fill();
+      }
+    }
+    const orbit = ((lighting.hours+(night ? 6 : -6)+24)%24)/12;
+    const sx = W*(.12+clamp(orbit,0,1)*.78), sy = H*(.43-Math.abs(lighting.sun)*.33);
+    const halo = c.createRadialGradient(sx,sy,1,sx,sy,night ? 14 : 31);
+    halo.addColorStop(0,night ? "#bfd3ff55" : "#ffeac5b5"); halo.addColorStop(1,"#ffd9a900");
+    c.fillStyle=halo; c.fillRect(0,0,W,H);
+    c.fillStyle=night ? "#e6e9fb" : scene.sun;
+    c.beginPath(); c.arc(sx,sy,night ? 3.1 : 4.5,0,Math.PI*2); c.fill();
+    for (let i=0;i<2;i++){
+      c.beginPath(); c.moveTo(0,H);
+      for (let x=0;x<=W;x+=2){
+        const a=x/W, ripple= Math.sin(a*19+scene.seed*.013+i*3.5)*5 + Math.cos(a*27-i)*3 + Math.sin(a*7-i*3.4)*11;
+        const ridge=H*(.50+i*.10)+ripple+i*3;
+        c.lineTo(x,ridge);
+      }
+      c.lineTo(W,H); c.closePath(); c.fillStyle=scene.ridges[i]; c.fill();
+      c.fillStyle=`rgba(13,25,47,${(1-daylight)*.49})`; c.fill();
+    }
+    const wind = weather.wind*0.16 + 0.38;
+    for (let p=0;p<7;p++){
+      const center = ((worldNoise(scene.seed+p*232)*W+ticks*wind*(.018+p*.005))%(W+61)+(W+61))%(W+61)-23;
+      const y = 14+worldNoise(scene.seed+p*415)*32;
+      const cloud = c.createRadialGradient(center,y,1,center,y,15);
+      cloud.addColorStop(0,`rgba(${weather.rain ? "133,157,169" : "243,244,222"},${.095+daylight*.16})`);
+      cloud.addColorStop(1,"#dce6ee00");
+      c.save(); c.translate(center,y); c.scale(1,.37);
+      c.translate(-center,-y); c.fillStyle=cloud; c.fillRect(center-16,y-16,32,32); c.restore();
+    }
+    const fog=c.createLinearGradient(0,43,0,76);
+    fog.addColorStop(0,"#e4ede900"); fog.addColorStop(.54,`rgba(200,228,224,${.12+daylight*.12})`); fog.addColorStop(1,"#e4ede900");
+    c.fillStyle=fog; c.fillRect(0,43,W,33);
+  }
+  texture(lighting){
+    const {width:W,height:H,ticks,cells,heat,moisture} = this.model;
+    const data = this.image.data, light = this.glow.data;
+    this.waterDepth.fill(0);
+    let glowing=false;
+    for (let y=0;y<H;y++) for (let x=0;x<W;x++){
+      const i=y*W+x, m=cells[i], p=i*4;
+      light[p+3]=0;
+      if (m !== MID.eau) this.waterDepth[x]=0;
+      if (m === MID.air){ data[p+3]=0; continue; }
+      const [r,g,b]=MATERIAL_RGB[m];
+      const above=y>0 ? cells[i-W] : MID.air, open=above===MID.air || MATERIALS[above].motion==="gas";
+      const side=x>0 ? cells[i-1] : MID.air, noise=worldNoise(i+2753)-.50;
+      let shade=(.48+.52*lighting.light)*(1.04+noise*.24-(y/H)*.16+(open ? .23 : 0)+(side===MID.air ? .08 : 0));
+      let red=r, green=g, blue=b, opacity=255;
+      if (m === MID.eau){
+        const depth=++this.waterDepth[x];
+        const ripple=Math.sin(x*.24+y*.40-ticks*.15)*.28 + Math.cos(x*.09-y*.49+ticks*.09)*.13;
+        const foam=depth<3 ? 1-depth*.28 : 0;
+        shade=(.58+.47*lighting.light)*(1.08-depth*.014+ripple*.50+foam*.64);
+        red+=foam*37; green+=foam*28; blue+=foam*24;
+        opacity=depth<3 ? 227 : 244;
+      } else if (m === MID.lave || m === MID.feu){
+        const flicker=Math.sin(x*.68-y*.38+ticks*.38)*.5+.5;
+        red=255; green=(m===MID.lave ? 93 : 142)+flicker*89; blue=40+flicker*22;
+        shade=1+(open ? .09 : 0); glowing=true;
+        light[p]=255; light[p+1]=green*.77; light[p+2]=38; light[p+3]=open ? 210 : 116;
+      } else if (m === MID.vapeur || m === MID.fumee){
+        opacity=(m===MID.vapeur ? 80 : 104)+Math.round(noise*28);
+        shade=.84+lighting.light*.14;
+      } else {
+        const strata=MATERIALS[m].texture==="rock" ? Math.cos(y*.86+x*.23+5*Math.sin(x*.09))*.11 : 0;
+        shade+=strata;
+        if (m===MID.glace){ shade+=Math.sin(x*.37+y*.67)*.16; opacity=248; }
+        if (m===MID.terre || m===MID.sable) shade-=moisture[i]*.0016;
+        if (m===MID.plante){ green += open ? 21 : 4; blue+=noise*13; }
+        if (heat[i]>140){ red+=Math.min(78,(heat[i]-140)*.16); blue*=.81; }
+      }
+      data[p]=red*shade; data[p+1]=green*shade; data[p+2]=blue*shade; data[p+3]=opacity;
+    }
+    this.pixelCtx.putImageData(this.image,0,0);
+    if (glowing) this.lightCtx.putImageData(this.glow,0,0);
+    return glowing;
+  }
+  weather(weather,lighting){
+    const c=this.ctx, {width:W,height:H,ticks,cells}=this.model;
+    if (weather.rain){
+      c.lineWidth=.20;
+      c.strokeStyle="#cbf2ff70";
+      c.beginPath();
+      for (let i=0;i<110;i++){
+        const x=(worldNoise(i*381+541)*W+ticks*weather.wind*.11+W*20)%W;
+        const y=(worldNoise(i*493+11)*H+ticks*(.75+worldNoise(i)*.35))%H;
+        if (cells[Math.floor(y)*W+Math.floor(x)]) continue;
+        c.moveTo(x,y); c.lineTo(x+weather.wind*.29,y+1.6+worldNoise(i)*1.4);
+      }
+      c.stroke();
+    }
+    if (lighting.sun < .10 || weather.rain) return;
+    c.fillStyle=`rgba(225,255,178,${.35+lighting.light*.35})`;
+    for (let a=0;a<29;a++){
+      const x=Math.floor((worldNoise(a*1223+677)*W+ticks*.041)%W);
+      const y=Math.floor(1+worldNoise(a*982+16)*89+Math.sin(ticks*.055+a)*1.3);
+      if (cells[y*W+x] || ![MID.plante,MID.bois].includes(cells[(y+3)*W+x])) continue;
+      c.beginPath(); c.arc(x+.2,y+.2,.24+worldNoise(a*242)*.18,0,Math.PI*2); c.fill();
+    }
+  }
+  draw(scene,weather,lighting,cursor){
+    const canvas=this.canvas, c=this.ctx, rect=canvas.getBoundingClientRect();
+    if (!rect.width || !rect.height || !c) return;
+    const scale=Math.min(devicePixelRatio||1,2,1560/rect.width);
+    const width=Math.max(1,Math.round(rect.width*scale)), height=Math.max(1,Math.round(rect.height*scale));
+    if (canvas.width!==width || canvas.height!==height){ canvas.width=width; canvas.height=height; }
+    const camera=this.camera, sx=width/this.model.width*camera.zoom, sy=height/this.model.height*camera.zoom;
+    c.setTransform(sx,0,0,sy,-camera.x*sx,-camera.y*sy);
+    this.sky(scene,lighting,weather);
+    const glowing=this.texture(lighting);
+    if (glowing){
+      c.save(); c.globalCompositeOperation="screen"; c.globalAlpha=.64; c.filter="blur(7px)";
+      c.drawImage(this.emission,0,0); c.restore();
+    }
+    c.imageSmoothingEnabled=weather.render==="cinema";
+    c.imageSmoothingQuality="high";
+    c.drawImage(this.pixels,0,0);
+    if (glowing){
+      c.save(); c.globalCompositeOperation="screen"; c.globalAlpha=.36; c.filter="blur(5px)";
+      c.drawImage(this.emission,0,0); c.restore();
+    }
+    this.weather(weather,lighting);
+    if (weather.render==="cinema"){
+      const {width:W,height:H}=this.model;
+      const edge=c.createRadialGradient(W*.50,H*.42,H*.33,W*.50,H*.42,W*.59);
+      edge.addColorStop(0,"#0c142000"); edge.addColorStop(1,"#080e2482");
+      c.fillStyle=edge; c.fillRect(0,0,W,H);
+    }
+    if (cursor){
+      const at = {x:cursor.x+.5,y:cursor.y+.5};
+      c.lineWidth=.40/camera.zoom; c.strokeStyle=cursor.color;
+      c.beginPath(); c.arc(at.x,at.y,cursor.radius+.6,0,Math.PI*2); c.stroke();
+      c.strokeStyle="#17242cbd";
+      c.beginPath(); c.moveTo(at.x-1.5,at.y); c.lineTo(at.x+1.5,at.y); c.moveTo(at.x,at.y-1.5); c.lineTo(at.x,at.y+1.5); c.stroke();
+    }
+  }
+}
+
+const magicWorld = new MagicWorld(SWD,SHD), world = magicWorld.cells;
+const sysGrid = $("sysGrid"), worldRenderer = new MagicRenderer(sysGrid,magicWorld);
+const WORLD_SAVE_KEY = "rsMagicSystemScene";
+let curMat = MID.eau, worldScene = "delta", worldActive = false, worldPaused = false;
+let sysTimer = null, worldDrawFrame = null, lastWorldFrame = null, worldRemainder = 0;
+let worldColor = null, worldStatsAt = -Infinity, deliveredReaction = null;
+let worldPlayTimer = null, worldLoopOn = false, worldBus = null, worldBusTail = null;
+let worldPhrase = null, pausedPhrase = null;
+let cameraMode = false, worldCursor = null, terrainPointer = null, worldDrag = null;
+
+function worldSettings(){
+  return {rain:$("sysRain").checked,cycle:$("sysDay").checked,hour:Number($("sysHour").value),
+    temperature:Number($("sysHeat").value),wind:Number($("sysWind").value),speed:Number($("sysSpeed").value),render:$("sysRender").value};
+}
+let climate = worldSettings();
+let worldLight = daylight(0,climate.cycle,climate.hour);
+function worldTime(hours){
+  const minutes = Math.floor(hours*60);
+  return `${String(Math.floor(minutes/60)).padStart(2,"0")}:${String(minutes%60).padStart(2,"0")}`;
+}
+function worldAir(){
+  return Math.round(climate.temperature+(climate.cycle ? 6*(worldLight.light-0.65) : 0));
+}
+function updateWorldHud(){
+  $("sysTelemetry").textContent = `${worldTime(worldLight.hours)} · ${worldAir()} °C · ${magicWorld.ticks} pas`;
+}
+function syncWorldControls(){
+  $("sysAnim").textContent = worldPaused ? "▶ Reprendre" : "⏸ Pause";
+  $("sysAnim").setAttribute("aria-pressed",String(worldPaused));
+  $("sysState").textContent = worldPaused ? "En pause" : "En cours";
+  $("sysState").toggleAttribute("data-paused",worldPaused);
+  $("sysStep").disabled = !worldPaused;
+  $("sysPlay").disabled = worldPaused;
+  $("sysLoop").disabled = worldPaused && !worldLoopOn;
+  $("sysLoop").classList.toggle("on",worldLoopOn && !worldPaused);
+  $("sysLoop").setAttribute("aria-pressed",String(worldLoopOn));
+  $("sysLoop").textContent = worldLoopOn && worldPaused ? "🔁 Boucle en pause" : "🔁 Boucle";
+  $("sysBrushValue").value = $("sysBrush").value;
+  $("sysZoomValue").value = `${Number($("sysZoom").value).toLocaleString("fr-FR")}×`;
+  $("sysHeatValue").value = `${climate.temperature} °C`;
+  $("sysWindValue").value = climate.wind===0 ? "Calme" : `${climate.wind<0 ? "←" : "→"} ${Math.abs(climate.wind)}`;
+  $("sysHourValue").value = worldTime(climate.hour);
+  updateWorldHud();
+}
+function requestWorldDraw(){
+  if (worldDrawFrame !== null || !expanded("sysWin")) return;
+  worldDrawFrame = requestAnimationFrame(() => {
+    worldDrawFrame = null;
+    if (!expanded("sysWin")) return;
+    const cursor = worldCursor && !cameraMode ? {...worldCursor,radius:Number($("sysBrush").value)-1,color:MATERIALS[curMat].color} : null;
+    worldRenderer.draw(SCENES[worldScene],climate,worldLight,cursor);
+  });
+}
+function worldEdited(){
+  worldStatsAt = -Infinity;
+  requestWorldDraw();
+}
+function writeWorldSettings(settings){
+  $("sysRain").checked = settings.rain;
+  $("sysDay").checked = settings.cycle;
+  $("sysHour").value = settings.hour;
+  $("sysHeat").value = settings.temperature;
+  $("sysWind").value = settings.wind;
+  $("sysSpeed").value = settings.speed;
+  $("sysRender").value = settings.render === "pixels" ? "pixels" : "cinema";
+  climate = worldSettings();
+  worldLight = daylight(magicWorld.ticks,climate.cycle,climate.hour);
+}
+function setWorldZoom(zoom,fx,fy){
+  $("sysZoom").value = clamp(zoom,1,4);
+  worldRenderer.zoom(Number($("sysZoom").value),fx,fy);
+  $("sysZoomValue").value = `${Number($("sysZoom").value).toLocaleString("fr-FR")}×`;
+  requestWorldDraw();
+}
+function installWorldScene(key){
+  worldScene=key;
+  const scene=SCENES[key];
+  buildScene(magicWorld,key);
+  $("sysScene").value=key;
+  writeWorldSettings({rain:scene.rain,cycle:true,hour:key==="volcano" ? 17 : key==="ice" ? 8 : 10.5,temperature:scene.air,wind:scene.wind,speed:1,render:climate.render});
+  setWorldZoom(1);
+  worldCursor = null; deliveredReaction = null; worldRemainder = 0;
+  $("sysTip").textContent = "";
+  worldEdited(); syncWorldControls();
+}
+for (const [id,scene] of Object.entries(SCENES)) $("sysScene").add(new Option(scene.label,id));
+installWorldScene(worldScene);
+$("sysLoadScene").addEventListener("click", () => {
+  stopWorldAudio();
+  pausedPhrase=null;
+  installWorldScene($("sysScene").value);
+  if (worldLoopOn && !worldPaused) repeatWorld();
 });
-$("sysClear").addEventListener("click", () => { world.fill(0); paintWorld(); });
-function playWorld(){
-  if (!ensureAudio()) return;
-  const matInstrument = [13,24,26,10,22,8,15,28,25];
-  const dt = 60 / bpmVal() / 4;
-  let played = 0;
-  for(let s = 0; s < STEPS; s++){
-    const palette = new Array(MATS.length + 1).fill(0);
-    let heights = 0, count = 0;
-    const from = Math.floor(s * SWD / STEPS), to = Math.floor((s + 1) * SWD / STEPS);
-    for (let y = 0; y < SHD; y++) for (let x = from; x < to; x++){
-      const m = world[y * SWD + x];
-      if (m){ palette[m]++; heights += y; count++; }
+$("sysClear").addEventListener("click", () => {
+  stopWorldAudio(); pausedPhrase=null;
+  installWorldScene("empty");
+  if (worldLoopOn && !worldPaused) repeatWorld();
+});
+
+function stepWorld(){
+  worldLight = daylight(magicWorld.ticks+1,climate.cycle,climate.hour);
+  magicWorld.step({rain:climate.rain,wind:climate.wind,ambient:worldAir(),light:worldLight.light});
+  if (magicWorld.reaction !== deliveredReaction){
+    deliveredReaction = magicWorld.reaction;
+    if (deliveredReaction) $("sysTip").textContent = deliveredReaction.text;
+  }
+}
+function worldTick(){ stepWorld(); worldEdited(); updateWorldHud(); }
+function tickWorldFrame(now){
+  sysTimer = null;
+  if (worldPaused || !worldActive) return;
+  const stepMs = 1000/WORLD_RATE;
+  if (lastWorldFrame!==null) worldRemainder = Math.min(stepMs*4,worldRemainder+(now-lastWorldFrame)*climate.speed);
+  lastWorldFrame = now;
+  let done = 0;
+  while (worldRemainder>=stepMs && done<4){ stepWorld(); worldRemainder -= stepMs; done++; }
+  if (done){
+    requestWorldDraw();
+    if (magicWorld.ticks % 6 < done) updateWorldHud();
+  }
+  sysTimer = requestAnimationFrame(tickWorldFrame);
+}
+function syncWorldWindow(){
+  if (!expanded("sysWin")) return;
+  if (!worldActive){
+    worldActive = true;
+    if (!worldPaused) sysTimer = requestAnimationFrame(tickWorldFrame);
+  }
+  requestWorldDraw();
+}
+function setWorldPaused(paused){
+  if (worldPaused === paused) return;
+  worldPaused = paused;
+  lastWorldFrame = null;
+  if (paused){
+    if (sysTimer !== null) cancelAnimationFrame(sysTimer);
+    sysTimer = null;
+    if (worldPhrase && worldLoopOn){
+      const {start,step} = worldPhrase;
+      pausedPhrase = {step,offset:clamp(AC.currentTime-start,0,STEPS*step-.001)};
     }
-    if (!count) continue;
-    const material = palette.indexOf(Math.max(...palette));
-    const note = rowFreq(clamp(Math.round((1 - heights / count / SHD) * 7),0,7));
-    instrument(matInstrument[material-1],AC.currentTime + 0.05 + s * dt,note,0.5,AC,master,dt * 2);
-    if ($("sysCap").checked) capturePerformance("sysWin",note,MATCOL[MATS[material-1]],s);
+    stopWorldAudio();
+  } else {
+    worldActive = true;
+    sysTimer = requestAnimationFrame(tickWorldFrame);
+    if (worldLoopOn) repeatWorld(false,false,pausedPhrase);
+    pausedPhrase=null;
+  }
+  syncWorldControls(); requestWorldDraw();
+  status(paused ? "🌍 Magic System en pause" : "🌍 Magic System reprend");
+}
+$("sysAnim").addEventListener("click", () => setWorldPaused(!worldPaused));
+$("sysStep").addEventListener("click", () => { if(worldPaused) worldTick(); });
+$("sysWin").addEventListener("keydown", e => {
+  if (!e.repeat && e.key.toLowerCase()==="p" && !e.target.closest?.("input, select, textarea")){
+    e.preventDefault(); setWorldPaused(!worldPaused);
+  }
+});
+
+function chooseMatter(material){
+  curMat = material;
+  $("sysMats").querySelectorAll("button").forEach(button => button.setAttribute("aria-pressed",String(Number(button.dataset.matter)===material)));
+  requestWorldDraw();
+}
+MATERIALS.forEach((material,i) => {
+  const button = document.createElement("button"), swatch = document.createElement("i");
+  swatch.className = "world-chip";
+  swatch.style.setProperty("--swatch",material.color);
+  swatch.setAttribute("aria-hidden","true");
+  button.dataset.matter = i;
+  button.append(swatch,material.label);
+  button.addEventListener("click",()=>chooseMatter(i));
+  $("sysMats").appendChild(button);
+});
+chooseMatter(curMat);
+function paintMat(i){ magicWorld.write(i,curMat); worldEdited(); }
+function paintTerrain(from,to){
+  const dx=to.x-from.x, dy=to.y-from.y, length=Math.max(1,Math.abs(dx),Math.abs(dy));
+  const radius=Number($("sysBrush").value)-1;
+  const spacing=Math.max(1,Math.floor((radius+1)*0.55));
+  for (let d=0;d<length;d+=spacing) magicWorld.brush(Math.round(from.x+dx*d/length),Math.round(from.y+dy*d/length),radius,curMat);
+  magicWorld.brush(to.x,to.y,radius,curMat);
+  worldEdited();
+}
+function terrainPoint(event){
+  const rect = sysGrid.getBoundingClientRect();
+  return worldRenderer.point(clamp((event.clientX-rect.left)/rect.width,0,0.9999),clamp((event.clientY-rect.top)/rect.height,0,0.9999));
+}
+$("sysMove").addEventListener("click",e=>{
+  cameraMode = !cameraMode;
+  e.currentTarget.setAttribute("aria-pressed",String(cameraMode));
+  e.currentTarget.classList.toggle("on",cameraMode);
+  sysGrid.dataset.panning = String(cameraMode);
+  if (cameraMode && worldRenderer.camera.zoom===1) setWorldZoom(1.6);
+  requestWorldDraw();
+});
+sysGrid.addEventListener("pointerdown", e=>{
+  if (terrainPointer!==null || e.button!==0) return;
+  terrainPointer=e.pointerId;
+  sysGrid.setPointerCapture(e.pointerId);
+  sysGrid.focus({preventScroll:true});
+  worldCursor=terrainPoint(e);
+  if (cameraMode){ worldDrag={clientX:e.clientX,clientY:e.clientY,camera:worldRenderer.camera}; return; }
+  worldDrag={point:worldCursor};
+  paintTerrain(worldCursor,worldCursor);
+});
+sysGrid.addEventListener("pointermove",e=>{
+  if (terrainPointer!==null && terrainPointer!==e.pointerId) return;
+  const next=terrainPoint(e);
+  worldCursor=next;
+  if (worldDrag && cameraMode){
+    const {camera,clientX,clientY}=worldDrag, rect=sysGrid.getBoundingClientRect();
+    worldRenderer.move(camera.x-(e.clientX-clientX)*SWD/(rect.width*camera.zoom),camera.y-(e.clientY-clientY)*SHD/(rect.height*camera.zoom),camera.zoom);
+  } else if (worldDrag && worldDrag.point){
+    if (next.x!==worldDrag.point.x || next.y!==worldDrag.point.y) paintTerrain(worldDrag.point,next);
+    worldDrag.point=next;
+  }
+  requestWorldDraw();
+});
+sysGrid.addEventListener("lostpointercapture",e=>{
+  if(e.pointerId===terrainPointer){ terrainPointer=null; worldDrag=null; }
+});
+sysGrid.addEventListener("pointerleave",()=>{ if(terrainPointer===null){ worldCursor=null; requestWorldDraw(); } });
+sysGrid.addEventListener("wheel",event=>{
+  if(!event.ctrlKey) return;
+  event.preventDefault();
+  const rect=sysGrid.getBoundingClientRect();
+  setWorldZoom(worldRenderer.camera.zoom+(event.deltaY>0 ? -0.2 : 0.2),(event.clientX-rect.left)/rect.width,(event.clientY-rect.top)/rect.height);
+},{passive:false});
+sysGrid.addEventListener("keydown",e=>{
+  const directions={ArrowLeft:[-1,0],ArrowRight:[1,0],ArrowUp:[0,-1],ArrowDown:[0,1]};
+  const offset=directions[e.key];
+  if (!offset && e.code!=="Space") return;
+  e.preventDefault();
+  worldCursor ||= worldRenderer.point(.5,.5);
+  if (offset){
+    const distance=e.shiftKey ? 6 : 1;
+    worldCursor={x:clamp(worldCursor.x+offset[0]*distance,0,SWD-1),y:clamp(worldCursor.y+offset[1]*distance,0,SHD-1)};
+    const {x,y,zoom}=worldRenderer.camera;
+    worldRenderer.move(clamp(x,worldCursor.x-SWD/zoom+2,worldCursor.x-1),clamp(y,worldCursor.y-SHD/zoom+2,worldCursor.y-1),zoom);
+    requestWorldDraw();
+  } else paintTerrain(worldCursor,worldCursor);
+});
+$("sysBrush").addEventListener("input",()=>{ $("sysBrushValue").value=$("sysBrush").value; requestWorldDraw(); });
+$("sysZoom").addEventListener("input",()=>setWorldZoom(Number($("sysZoom").value)));
+for (const id of ["sysRain","sysDay","sysHour","sysHeat","sysWind","sysSpeed","sysRender"]) $(id).addEventListener("input",()=>{
+  climate=worldSettings(); worldLight=daylight(magicWorld.ticks,climate.cycle,climate.hour); syncWorldControls(); requestWorldDraw();
+});
+if(typeof ResizeObserver==="function") new ResizeObserver(requestWorldDraw).observe(sysGrid);
+
+$("sysSeed").addEventListener("click",()=>{
+  let planted=0;
+  for(let x=4;x<SWD-3;x+=9){
+    let ground=SHD-1;
+    for(let y=SHD-1;y>2;y--){
+      const material=world[y*SWD+x];
+      if((material===MID.terre || material===MID.sable) && !world[(y-1)*SWD+x]){ ground=y-1; break; }
+      if(!world[y*SWD+x]) ground=y;
+    }
+    if(!world[ground*SWD+x]){ magicWorld.put(x,ground,MID.graine); planted++; }
+  }
+  worldEdited(); $("sysTip").textContent=`${planted} graines semées.`;
+});
+
+function updateWorldColor(){
+  const total=[0,0,0];
+  let weight=0;
+  for(let i=0;i<world.length;i++){
+    const m=world[i];
+    if(!m || MATERIALS[m].motion==="gas") continue;
+    // The exposed surface contributes more strongly than rock buried under the stage.
+    const importance=i<SWD || world[i-SWD]!==m ? 3 : 1;
+    for(let k=0;k<3;k++) total[k]+=MATERIAL_RGB[m][k]*importance;
+    weight+=importance;
+  }
+  const hex=weight && `#${total.map(v=>Math.round(v/weight).toString(16).padStart(2,"0")).join("")}`;
+  worldColor=hex ? hexToHsl(hex) : null;
+  worldStatsAt=magicWorld.ticks;
+}
+function worldColHsl(){
+  if (!worldActive) return null;
+  if(magicWorld.ticks-worldStatsAt>=8) updateWorldColor();
+  return worldColor;
+}
+function worldAlive(){ return world.some(m => m && MATERIALS[m].motion!=="gas"); }
+
+function stopWorldAudio(){
+  clearTimeout(worldPlayTimer); worldPlayTimer=null;
+  clearTimeout(worldBusTail); worldBusTail=null;
+  worldPhrase=null;
+  if(worldBus){ worldBus.disconnect(); worldBus=null; }
+}
+function playWorld(capture = false, report = false, resume = null){
+  if(worldPaused || !ensureAudio()) return 0;
+  const dt=resume?.step ?? 60/bpmVal()/4, offset=resume?.offset ?? 0;
+  const firstNote=AC.currentTime+.04, start=firstNote-offset;
+  if(!worldBus){ worldBus=AC.createGain(); worldBus.gain.value=.67; worldBus.connect(master); }
+  let played=0;
+  for(let s=0;s<STEPS;s++){
+    const weights=new Uint16Array(MATERIALS.length);
+    const from=Math.floor(s*SWD/STEPS), to=Math.floor((s+1)*SWD/STEPS);
+    let elevations=0,size=0;
+    for(let y=0;y<SHD;y++) for(let x=from;x<to;x++){
+      const i=y*SWD+x, m=world[i];
+      if(!m) continue;
+      const value=y===0 || world[i-SWD]!==m ? 8 : 1;
+      weights[m]+=value;
+      elevations+=y*value; size+=value;
+    }
+    if(!size) continue;
+    const material=weights.indexOf(Math.max(...weights));
+    const note=rowFreq(clamp(Math.round((1-elevations/size/SHD)*11),0,11));
+    const elapsed=Math.max(0,offset-s*dt);
+    if(elapsed<dt*2) instrument(MATERIALS[material].sound,Math.max(firstNote,start+s*dt),note,.48,AC,worldBus,dt*2-elapsed);
+    if(capture) capturePerformance("sysWin",note,MATERIALS[material].color,s);
     played++;
   }
-  if (played) pulseAudio("sysWin");
-  status(played ? `🌍 ${played} zones sonores` : "Le monde est vide");
+  if(played) pulseAudio("sysWin");
+  if(report) status(played ? `🌍 ${played} zones sonores` : "Le monde est vide");
+  worldPhrase={start,step:dt};
+  const length=(STEPS*dt-offset)*1000;
+  clearTimeout(worldBusTail);
+  if(!worldLoopOn) worldBusTail=setTimeout(stopWorldAudio,length+2700);
+  return length;
 }
-$("sysPlay").addEventListener("click", playWorld);
-$("sysLoop").addEventListener("click", () => {
-  if (worldPlayTimer !== null){
-    clearTimeout(worldPlayTimer); worldPlayTimer = null;
-    $("sysLoop").classList.remove("on");
-    return;
-  }
-  const repeat = () => { playWorld(); worldPlayTimer = setTimeout(repeat, STEPS * 60000 / bpmVal() / 4); };
-  $("sysLoop").classList.add("on");
-  repeat();
+function repeatWorld(capture = false,report = false,resume = null){
+  if(worldPaused || !worldLoopOn) return;
+  const time=playWorld(capture,report,resume);
+  if(time) worldPlayTimer=setTimeout(repeatWorld,time);
+}
+$("sysPlay").addEventListener("click",()=>{
+  stopWorldAudio();
+  if(worldLoopOn) repeatWorld($("sysCap").checked,true);
+  else playWorld($("sysCap").checked,true);
 });
-function worldColHsl(){
-  let r = 0, g = 0, b = 0, n = 0;
-  for (let i = 0; i < world.length; i++){
-    const m = world[i];
-    if (!m || m === MID.vapeur) continue;
-    const c = MATCOL[MATS[m - 1]];
-    r += parseInt(c.slice(1, 3), 16); g += parseInt(c.slice(3, 5), 16); b += parseInt(c.slice(5, 7), 16); n++;
-  }
-  if (!n) return null;
-  r /= 255 * n; g /= 255 * n; b /= 255 * n;
-  const mx = Math.max(r, g, b), mn = Math.min(r, g, b), l = (mx + mn) / 2, d = mx - mn;
-  let h = 0, s = 0;
-  if (d){
-    s = d / (1 - Math.abs(2 * l - 1));
-    h = mx === r ? ((g - b) / d % 6) : mx === g ? (b - r) / d + 2 : (r - g) / d + 4;
-    h *= 60; if (h < 0) h += 360;
-  }
-  return {h, s:s * 100, l:l * 100};
+$("sysLoop").addEventListener("click",()=>{
+  worldLoopOn=!worldLoopOn; stopWorldAudio(); pausedPhrase=null;
+  if(worldLoopOn && !worldPaused) repeatWorld($("sysCap").checked,true);
+  syncWorldControls();
+});
+
+$("sysSave").addEventListener("click",()=>{
+  try{
+    const data={version:1,scene:worldScene,climate,paused:worldPaused,ticks:magicWorld.ticks,seed:magicWorld.seed,
+      cells:Array.from(world),heat:Array.from(magicWorld.heat),age:Array.from(magicWorld.age),moisture:Array.from(magicWorld.moisture)};
+    localStorage.setItem(WORLD_SAVE_KEY,JSON.stringify(data));
+    $("sysTip").textContent="Scène sauvegardée dans ce navigateur.";
+  } catch(e){ $("sysTip").textContent="Sauvegarde locale indisponible."; }
+});
+function validWorldField(values,min,max,integer){
+  return Array.isArray(values) && values.length===world.length && values.every(v=>Number.isFinite(v) && (!integer || Number.isInteger(v)) && v>=min && v<=max);
 }
+$("sysRestore").addEventListener("click",()=>{
+  try{
+    const data=JSON.parse(localStorage.getItem(WORLD_SAVE_KEY) || "null");
+    if(!data){ $("sysTip").textContent="Aucune scène sauvegardée."; return; }
+    if(data.version!==1 || !Object.hasOwn(SCENES,data.scene) || !Number.isSafeInteger(data.ticks) || data.ticks<0 || data.ticks>1e9 ||
+      !Number.isSafeInteger(data.seed) || !validWorldField(data.cells,0,MATERIALS.length-1,true) ||
+      !validWorldField(data.heat,-100,1200,false) || !validWorldField(data.age,0,65535,true) || !validWorldField(data.moisture,0,100,true)) throw new Error("Scène illisible");
+    stopWorldAudio();
+    worldLoopOn=false; pausedPhrase=null;
+    worldScene=data.scene;
+    $("sysScene").value=data.scene;
+    magicWorld.reset(data.seed,18);
+    magicWorld.ticks=data.ticks;
+    magicWorld.cells.set(data.cells); magicWorld.heat.set(data.heat); magicWorld.age.set(data.age); magicWorld.moisture.set(data.moisture);
+    const config=data.climate || {};
+    writeWorldSettings({rain:Boolean(config.rain),cycle:Boolean(config.cycle),hour:numeric(config.hour,10.5,0,23.5),
+      temperature:numeric(config.temperature,18,-32,55),wind:numeric(config.wind,0,-3,3),speed:[0.5,1,2].includes(config.speed) ? config.speed : 1,render:config.render});
+    magicWorld.ambient=worldAir();
+    deliveredReaction=null; worldRemainder=0;
+    setWorldZoom(1); setWorldPaused(Boolean(data.paused)); worldEdited(); syncWorldControls();
+    $("sysTip").textContent="Scène restaurée.";
+  } catch(e){ $("sysTip").textContent="La scène sauvegardée est illisible."; }
+});
 
 const vibPads = $("vibPads");
 let vibLoopOn = false, vibTimer = null, lastPad = 0;
@@ -1882,7 +2612,7 @@ function fuseColor(base, addition, weight){
 function perceivedCol(){
   const mic = micStream && readSpectrum(micAnalyser);
   const studio = readSpectrum(studioAnalyser);
-  const wc = (sysTimer || worldPlayTimer) && worldColHsl();
+  const wc = worldColHsl();
   const studioModule = audibleSource?.until > performance.now() ? audibleSource.id : "seqPanel";
   const idle = {off:true,hue:0,sat:0,lit:0,lvl:0,hz:0,src:"veille",sources:[]};
   let pc = idle;
@@ -1894,7 +2624,7 @@ function perceivedCol(){
   }
   if (wc){
     const worldColor = {hue:wc.h,sat:wc.s,lit:wc.l,lvl:0.3,hz:colorFrequency(wc.h)};
-    pc = pc.off ? {...worldColor,off:false,src:"monde 🌍",sources:["sysWin"]} :
+    pc = pc.off ? {...worldColor,off:false,src:worldPaused ? "monde 🌍 en pause" : "monde 🌍",sources:["sysWin"]} :
       {...fuseColor(pc,worldColor,0.35),src:`${pc.src} + monde 🌍`,sources:[...new Set([...pc.sources,"sysWin"])]};
   }
   if (pc.off && micStream) return {...idle,off:false,hue:holdHue,sat:28,lit:34,src:"micro (silence)",sources:["micWin"]};
@@ -2702,6 +3432,9 @@ globalThis.__HOOK = {
   get timer(){ return timer; }, get grid(){ return grid; }, get tracks(){ return tracks; },
   get butins(){ return butins; }, get holdActive(){ return holdActive; }, get holdLatch(){ return holdLatch; },
   get sysTimer(){ return sysTimer; }, get world(){ return world; }, get drawGrid(){ return drawGrid; },
+  get worldPaused(){ return worldPaused; }, get worldTicks(){ return magicWorld.ticks; }, get worldLoopOn(){ return worldLoopOn; },
+  get worldSoundPlaying(){ return worldBus !== null; },
+  get worldAudioPhase(){ return pausedPhrase?.offset ?? (worldPhrase ? Math.max(0,AC.currentTime-worldPhrase.start) : 0); },
   get selTrack(){ return selTrack; }, get curHue(){ return curHue; }, get butinLoopId(){ return butinLoopId; }, get noteDetails(){ return noteDetails; },
   get padCur(){ return padCur; }, get lootRecipe(){ return lootRecipe; }, get lootPart(){ return lootPart; },
   get atOn(){ return atOn; }, get undoLen(){ return undoStack.length; },
