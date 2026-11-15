@@ -24,6 +24,7 @@ Version en ligne (pratique pour partager) : https://raw.githack.com/mourchoua-co
 - **🤝 Économie à par égal** : chaque butin lu rapporte +2 écus de recette, dont +1 pour celui qui a appuyé — co-propriété avec le navigateur, pas une taxe.
 - **🗄️ Coffre fort** : prélèvements persistants (IndexedDB), gardés entre les sessions, transfert ↔ butin dans les deux sens.
 - **🛰️ Sonde** : vision de l'espace pilotée par la couleur entendue. **🔮 Sachants / 📯 Écho** : tout ce qui va arriver est annoncé juste avant.
+- **🪜 Anatomie du portail** : ouvre la Passerelle et clique sur un module pour le retrouver. Les liens s'allument quand une teinte ou un prélèvement passe d'une fenêtre à l'autre.
 - **🦠 Grille vivante** : chaque note fait naître un organisme qui s'envole.
 - **⏺ Session** : enregistre toute la session studio → au coffre au butin (jamais de téléchargement surprise).
 - **⬇ WAV / JSON** : exporte un butin en audio, ou ton motif (réimportable).

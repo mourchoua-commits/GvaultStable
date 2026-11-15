@@ -20,8 +20,8 @@ button.acc{background:var(--acc); border-color:var(--acc); color:#fff}
 input,select{font:inherit; color:var(--txt); background:var(--panel2); border:1px solid var(--line); border-radius:8px; padding:4px 8px}
 input[type=range]{padding:0; accent-color:var(--acc)}
 
-#bar{position:sticky; top:0; z-index:50; display:flex; flex-wrap:wrap; gap:8px; align-items:center; padding:8px 12px; background:var(--panel); border-bottom:1px solid var(--line)}
-#bar .grp{display:flex; gap:6px; align-items:center; padding-right:10px; border-right:1px solid var(--line)}
+#bar{position:sticky; top:0; z-index:75; display:flex; flex-wrap:wrap; gap:8px; align-items:center; padding:8px 12px; background:var(--panel); border-bottom:1px solid var(--line)}
+#bar .grp{display:flex; flex-wrap:wrap; max-width:100%; gap:6px; align-items:center; padding-right:10px; border-right:1px solid var(--line)}
 #bar .grp:last-child{border-right:none}
 #bar .lbl{color:var(--dim); font-size:12px; display:flex; gap:5px; align-items:center}
 #bpm{width:58px}
@@ -43,16 +43,50 @@ input[type=range]{padding:0; accent-color:var(--acc)}
 .cell.pulse i{transform:scale(1.25)}
 .trow .sp{width:8px; flex:none}
 
-.fwindow{position:absolute; z-index:60; display:none; flex-direction:column; background:var(--panel); border:1px solid var(--line); border-radius:var(--r); box-shadow:0 10px 30px rgba(0,0,0,.5); min-width:220px}
+#windows{position:relative; z-index:60}
+.fwindow{position:fixed; display:none; flex-direction:column; background:var(--panel); border:1px solid var(--line); border-radius:var(--r); box-shadow:0 10px 30px rgba(0,0,0,.5); width:390px; max-width:calc(100vw - 16px); max-height:calc(100dvh - var(--bar-height, 58px) - var(--status-height, 30px) - 16px)}
 .fwindow.open{display:flex}
-.fwindow.min .wbody, .fwindow.min .wlinks{display:none}
-.wbar{display:flex; align-items:center; gap:8px; padding:7px 10px; border-bottom:1px solid var(--line); cursor:grab; user-select:none; touch-action:none}
+.fwindow.min{height:auto !important}
+.fwindow.min .wbody, .fwindow.min .wlinks, .fwindow.min .rsz{display:none}
+#drawWin,#sysWin,#nasaWin{width:480px}
+#gateWin{width:650px}
+.wbar{display:flex; flex:none; align-items:center; gap:8px; padding:7px 10px; border-bottom:1px solid var(--line); cursor:grab; user-select:none; touch-action:none}
 .wbar:active{cursor:grabbing}
 .wt{flex:1; font-size:13px; color:var(--acc2); white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
 .wmin,.wx{padding:1px 8px; font-size:12px}
-.wbody{padding:10px; display:flex; flex-direction:column; gap:8px; overflow:auto}
-.wlinks{display:flex; flex-wrap:wrap; gap:5px; padding:7px 10px; border-top:1px solid var(--line)}
+.wbody{padding:10px; display:flex; flex-direction:column; min-height:0; gap:8px; overflow:auto}
+.wlinks{display:flex; flex:none; flex-wrap:wrap; gap:5px; padding:7px 16px 9px 10px; border-top:1px solid var(--line)}
 .wlinks button{font-size:11px; padding:3px 8px; color:var(--dim)}
+.wlinks .portalShortcut{color:var(--acc2)}
+#seqPanel.portalFront, #viewer.portalFront{z-index:70; outline:1px solid var(--acc)}
+#seqPanel.portalFront{position:relative}
+
+.portal{display:grid; gap:8px}
+.portal h2{color:var(--acc2); font-size:16px; font-weight:650}
+.portalMap{position:relative; isolation:isolate; display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:14px 20px; padding:10px; background:radial-gradient(ellipse at top,#1b2a45,#101620 75%); border:1px solid var(--line); border-radius:var(--r)}
+#portalWires{position:absolute; inset:0; width:100%; height:100%; pointer-events:none; z-index:-1}
+.portalNode{--node-tone:#79b7ff; min-width:0; min-height:39px; display:flex; align-items:center; gap:5px; padding:5px 7px; text-align:left; font-size:12px; line-height:1.15; background:#1b2535; border-color:#40516b}
+.portalNode:nth-of-type(3n + 1){--node-tone:#d6a9ff}
+.portalNode:nth-of-type(3n){--node-tone:#f2c586}
+.portalNode[data-module="gateWin"]{background:#273b59; border-color:#6094dc}
+.portalNode .nodeLabel{flex:1; min-width:0; overflow-wrap:anywhere}
+.nodeState{width:8px; height:8px; flex:none; border:1px solid var(--node-tone); border-radius:50%}
+.portalNode[data-state="ouverte"] .nodeState,.portalNode[data-state="visible"] .nodeState{background:var(--node-tone)}
+.portalNode[data-state="repliée"] .nodeState{background:linear-gradient(90deg,var(--node-tone) 50%,transparent 50%)}
+.portalNode[data-signal]{border-color:var(--signal-color); box-shadow:0 0 10px color-mix(in srgb,var(--signal-color) 40%,transparent)}
+.portalNode:focus-visible,.wbar:focus-visible{outline:2px solid var(--acc2); outline-offset:2px}
+#portalSignal{min-height:2.8em; padding:6px 9px; border-left:2px solid var(--acc); background:var(--panel2); color:var(--txt); font-size:12px}
+.portControls{border-top:1px solid var(--line); padding-top:8px}
+.portControls > * + *{margin-top:5px}
+@media(max-width:480px){
+  #bar{gap:5px; padding:6px 8px}
+  #bar .grp{gap:4px; padding-right:5px}
+  #bar button{font-size:12px; padding:4px 6px}
+  .portalMap{gap:12px 8px; padding:7px}
+  .portalNode{font-size:11px; padding:4px; gap:3px}
+  .nodeState{width:6px; height:6px}
+}
+@media(max-height:420px){#bar{max-height:38dvh; overflow:auto}}
 
 .row{display:flex; gap:8px; align-items:center; flex-wrap:wrap}
 .hint{color:var(--dim); font-size:12px}
@@ -86,7 +120,7 @@ input[type=range]{padding:0; accent-color:var(--acc)}
 #micHold{width:100%; padding:14px; font-size:15px; border-radius:10px; touch-action:none}
 #micHold.rec{background:var(--bad); border-color:var(--bad); color:#fff}
 
-#viewer{position:fixed; right:14px; bottom:44px; z-index:70; display:flex; gap:10px; align-items:center; background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:8px 12px; box-shadow:0 8px 24px rgba(0,0,0,.45)}
+#viewer{position:fixed; right:14px; bottom:calc(var(--status-height, 30px) + 12px); z-index:55; display:flex; gap:10px; align-items:center; background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:8px 12px; box-shadow:0 8px 24px rgba(0,0,0,.45)}
 #vSwatch{width:34px; height:34px; border-radius:50%; border:2px solid rgba(255,255,255,.2)}
 #vName{font-size:13px}
 #vSrc{font-size:11px; color:var(--dim)}
@@ -128,7 +162,7 @@ input[type=range]{padding:0; accent-color:var(--acc)}
 </header>
 
 <main id="studio">
-  <section id="seqPanel">
+  <section id="seqPanel" tabindex="-1" aria-label="Séquenceur">
     <div id="tools">
       <button data-tool="crayon" class="on">✏️</button>
       <button data-tool="gomme">🧽</button>
@@ -143,6 +177,7 @@ input[type=range]{padding:0; accent-color:var(--acc)}
   </section>
 </main>
 
+<div id="windows">
 <section class="fwindow" id="colorWin">
   <header class="wbar"><span class="wt">🎨 Couleurs</span><button class="wmin">➖</button><button class="wx">✕</button></header>
   <div class="wbody">
@@ -224,11 +259,20 @@ input[type=range]{padding:0; accent-color:var(--acc)}
 <section class="fwindow" id="gateWin">
   <header class="wbar"><span class="wt">🪜 Passerelle</span><button class="wmin">➖</button><button class="wx">✕</button></header>
   <div class="wbody">
-    <p class="hint" id="gateHttps"></p>
-    <p class="hint" id="gatePerm"></p>
-    <p class="hint" id="gateDev"></p>
-    <button id="btnAborder">⚓ Aborder le port</button>
-    <p class="hint">On frappe à la porte du port — on ne la défonce jamais.</p>
+    <section class="portal" aria-labelledby="portalTitle">
+      <h2 id="portalTitle">Anatomie du portail</h2>
+      <div class="portalMap" id="portalMap">
+        <canvas id="portalWires" aria-hidden="true"></canvas>
+      </div>
+      <p class="hint">● ouverte · ◐ repliée · ○ fermée</p>
+      <p id="portalSignal" role="status">Choisis un module pour l’ouvrir. Les liens s’illuminent quand un signal passe.</p>
+    </section>
+    <div class="portControls">
+      <p class="hint" id="gateHttps"></p>
+      <p class="hint" id="gatePerm"></p>
+      <p class="hint" id="gateDev"></p>
+      <button id="btnAborder">⚓ Aborder le port</button>
+    </div>
   </div>
 </section>
 
@@ -249,8 +293,9 @@ input[type=range]{padding:0; accent-color:var(--acc)}
   <header class="wbar"><span class="wt">📯 Écho des agents</span><button class="wmin">➖</button><button class="wx">✕</button></header>
   <div class="wbody"><div class="itemList" id="echoList"></div></div>
 </section>
+</div>
 
-<section id="viewer">
+<section id="viewer" tabindex="-1" aria-label="Visionneuse de couleurs">
   <span id="vSwatch"></span>
   <div><div id="vName">—</div><div id="vSrc">veille</div></div>
 </section>
@@ -276,6 +321,135 @@ const LINKS = {
   fortWin:["butinWin","micWin"], gateWin:["micWin","fortWin"],
   nasaWin:["colorWin","avantWin"], avantWin:["echoWin","nasaWin"], echoWin:["avantWin","micWin"]
 };
+const PORTAL_MODULES = {
+  padWin:"Palette", gateWin:"Passerelle", avantWin:"Avant-sachants",
+  colorWin:"Couleurs", micWin:"Micro", echoWin:"Écho",
+  drawWin:"Dessinateur", sysWin:"Magic System", butinWin:"Butin",
+  vibWin:"Vibrations", viewer:"Visionneuse", fortWin:"Coffre fort",
+  seqPanel:"Séquenceur", nasaWin:"Sonde"
+};
+const PORTAL_LINKS = [
+  ["padWin","colorWin"], ["colorWin","drawWin"], ["colorWin","seqPanel"],
+  ["gateWin","micWin"], ["micWin","viewer"], ["sysWin","viewer"], ["viewer","nasaWin"],
+  ["micWin","butinWin"], ["butinWin","fortWin"], ["butinWin","seqPanel"]
+];
+const PORTAL_SHORTCUTS = [["vibWin","micWin"], ["gateWin","fortWin"], ["nasaWin","avantWin"], ["avantWin","echoWin"]];
+const portalMap = $("portalMap"), portalWires = $("portalWires");
+const portalCtx = portalWires.getContext("2d");
+const portalNodes = new Map(), portalSignals = new Map();
+const reducedMotion = matchMedia("(prefers-reduced-motion: reduce)");
+const signalDuration = 1600;
+let portalFrame = null, portalRects = null, lastPortalSignal = null;
+
+function expanded(id){
+  const w = $(id);
+  return w.classList.contains("open") && !w.classList.contains("min");
+}
+function moduleLabel(id){
+  return `${AGENTS[id]?.e || (id === "seqPanel" ? "🎹" : "🎨")} ${PORTAL_MODULES[id]}`;
+}
+function updatePortalWindow(id){
+  const node = portalNodes.get(id);
+  const w = $(id);
+  const state = !w.classList.contains("fwindow") ? "visible" : !w.classList.contains("open") ? "fermée" : w.classList.contains("min") ? "repliée" : "ouverte";
+  node.dataset.state = state;
+  node.setAttribute("aria-label", `${moduleLabel(id)}, ${state}`);
+  node.title = state;
+  const launcher = document.querySelector(`[data-win="${id}"]`);
+  if (launcher) launcher.setAttribute("aria-expanded", String(expanded(id)));
+  const minimize = w.querySelector(".wmin");
+  if (minimize) minimize.setAttribute("aria-label", `${state === "repliée" ? "Déplier" : "Replier"} ${PORTAL_MODULES[id]}`);
+}
+function portalTransit(from, to, message, hue){
+  if (from === to) return;
+  const now = performance.now();
+  for (const [key, signal] of portalSignals){
+    if (now - signal.start >= signalDuration) portalSignals.delete(key);
+  }
+  const color = hue == null ? "#9cccff" : `hsl(${hue},85%,70%)`;
+  const signal = {from, to, color, start:now};
+  portalSignals.set(`${from}/${to}`, signal);
+  if (message){
+    lastPortalSignal = signal;
+    $("portalSignal").textContent = `${PORTAL_MODULES[from]} → ${PORTAL_MODULES[to]} · ${message}`;
+  }
+  requestPortalDraw();
+}
+function requestPortalDraw(){
+  if (portalFrame === null && expanded("gateWin")) portalFrame = requestAnimationFrame(drawPortal);
+}
+function drawPortal(now){
+  portalFrame = null;
+  if (!portalCtx || !expanded("gateWin")) return;
+  const {width, height, left, top} = portalWires.getBoundingClientRect();
+  if (!width || !height) return;
+  const scale = Math.min(devicePixelRatio || 1, 2);
+  if (portalWires.width !== Math.round(width * scale) || portalWires.height !== Math.round(height * scale)){
+    portalWires.width = Math.round(width * scale);
+    portalWires.height = Math.round(height * scale);
+    portalRects = null;
+  }
+  portalCtx.setTransform(scale, 0, 0, scale, 0, 0);
+  portalCtx.clearRect(0, 0, width, height);
+  if (!portalRects){
+    portalRects = new Map();
+    for (const [id, node] of portalNodes){
+      const rect = node.getBoundingClientRect();
+      portalRects.set(id, {x:rect.left - left + rect.width / 2, y:rect.top - top + rect.height / 2, w:rect.width, h:rect.height});
+    }
+  }
+  function wire(from, to, color, progress){
+    const a = portalRects.get(from), b = portalRects.get(to);
+    const dx = b.x - a.x, dy = b.y - a.y;
+    const vertical = Math.abs(dx) < 1 && Math.abs(dy) < a.h + b.h;
+    const detour = Math.abs(dx) < 1 && !vertical;
+    const side = Math.sign(dx) || 1;
+    const x1 = vertical ? a.x : a.x + side * a.w / 2;
+    const y1 = vertical ? a.y + Math.sign(dy) * a.h / 2 : a.y;
+    const x2 = vertical ? b.x : b.x + (detour ? side : -side) * b.w / 2;
+    const y2 = vertical ? b.y - Math.sign(dy) * b.h / 2 : b.y;
+    const cx = detour ? Math.min(width - 2, x1 + 12) : (x1 + x2) / 2;
+    portalCtx.beginPath();
+    portalCtx.moveTo(x1, y1);
+    portalCtx.bezierCurveTo(cx, y1, cx, y2, x2, y2);
+    portalCtx.strokeStyle = color;
+    portalCtx.lineWidth = progress == null ? 1.25 : 2;
+    portalCtx.stroke();
+    if (progress == null || reducedMotion.matches) return;
+    const p = progress, q = 1 - p;
+    const x = q ** 3 * x1 + 3 * p * q * cx + p ** 3 * x2;
+    const y = (q ** 3 + 3 * p * q ** 2) * y1 + (p ** 3 + 3 * p ** 2 * q) * y2;
+    portalCtx.beginPath();
+    portalCtx.arc(x, y, 3, 0, Math.PI * 2);
+    portalCtx.fillStyle = color;
+    portalCtx.fill();
+  }
+  portalCtx.lineCap = "round";
+  for (const [from, to] of PORTAL_LINKS) wire(from, to, "#52667e");
+  portalCtx.setLineDash([3, 4]);
+  for (const [from, to] of PORTAL_SHORTCUTS) wire(from, to, "#52667e");
+  portalCtx.setLineDash([]);
+  if (lastPortalSignal){
+    const {from, to, color} = lastPortalSignal;
+    portalCtx.globalAlpha = 0.65;
+    wire(from, to, color);
+    portalCtx.globalAlpha = 1;
+  }
+  const activeColors = new Map();
+  for (const [key, signal] of portalSignals){
+    const elapsed = Math.max(0, now - signal.start);
+    if (elapsed >= signalDuration){ portalSignals.delete(key); continue; }
+    wire(signal.from, signal.to, signal.color, Math.min(1, elapsed / 1000));
+    activeColors.set(signal.from, signal.color);
+    activeColors.set(signal.to, signal.color);
+  }
+  for (const [id, node] of portalNodes){
+    const color = activeColors.get(id);
+    node.toggleAttribute("data-signal", Boolean(color));
+    if (color && node.style.getPropertyValue("--signal-color") !== color) node.style.setProperty("--signal-color", color);
+  }
+  if (portalSignals.size) requestPortalDraw();
+}
 
 function avantSay(m){
   const c = document.createElement("div");
@@ -291,62 +465,178 @@ function echoSay(m){
   $("echoList").appendChild(c);
 }
 
-let zTop = 60, cascade = 0;
-function openWin(id){
-  const w = $(id);
-  if (!w) return;
-  if (!w.classList.contains("open")){
-    if (!w.style.left){
-      const x = 80 + (cascade % 6) * 30, y = 70 + (cascade % 6) * 26;
-      w.style.left = x + "px"; w.style.top = y + "px"; cascade++;
-    }
-    w.classList.add("open");
-    const a = AGENTS[id];
-    if (a) echoSay("l'agent " + a.n + " " + a.e + " place la fenêtre " + a.e);
-  }
-  w.style.zIndex = ++zTop;
-  refreshCounts();
-}
-function closeWin(id){ $(id).classList.remove("open"); refreshCounts(); }
+let zTop = 1, cascade = 0, frontModule = null;
+const windowOpeners = new Map();
 
-document.querySelectorAll("[data-win]").forEach(b => b.addEventListener("click", () => openWin(b.dataset.win)));
+function windowBounds(){
+  return {left:8, top:$("bar").offsetHeight + 8, right:document.documentElement.clientWidth - 8, bottom:window.innerHeight - $("status").offsetHeight - 8};
+}
+function placeWin(w, x, y){
+  const area = windowBounds(), rect = w.getBoundingClientRect();
+  w.style.left = `${Math.max(area.left, Math.min(x, area.right - rect.width))}px`;
+  w.style.top = `${Math.max(area.top, Math.min(y, area.bottom - rect.height))}px`;
+}
+function placeNear(w, from){
+  const area = windowBounds(), source = from && from !== w.id && expanded(from) && $(from).getBoundingClientRect();
+  if (source){
+    if (source.right + 12 + w.offsetWidth <= area.right){ placeWin(w, source.right + 12, source.top); return; }
+    if (source.left - 12 - w.offsetWidth >= area.left){ placeWin(w, source.left - 12 - w.offsetWidth, source.top); return; }
+    if (source.bottom + 12 + w.offsetHeight <= area.bottom){ placeWin(w, source.left, source.bottom + 12); return; }
+  }
+  const offset = cascade++ % 6 * 22;
+  placeWin(w, area.left + offset, area.top + offset);
+}
+function fitWin(w){
+  const {left, top} = w.getBoundingClientRect();
+  placeWin(w, left, top);
+}
+function raiseWin(w){
+  frontModule?.classList.remove("portalFront");
+  frontModule = null;
+  w.style.zIndex = ++zTop;
+}
+function openWin(id, from, opener){
+  const w = $(id);
+  if (!w?.classList.contains("fwindow")) return;
+  const wasOpen = w.classList.contains("open");
+  w.classList.add("open");
+  w.classList.remove("min");
+  if (!w.style.left) placeNear(w, from);
+  else fitWin(w);
+  if (!wasOpen){
+    const a = AGENTS[id];
+    if (a){
+      echoSay("l'agent " + a.n + " " + a.e + " place la fenêtre " + a.e);
+      portalTransit(id, "echoWin");
+    }
+  }
+  raiseWin(w);
+  updatePortalWindow(id);
+  if (id === "fortWin") renderFort();
+  if (id === "gateWin"){ refreshGate(); requestPortalDraw(); }
+  if (id === "nasaWin") syncNasa();
+  if (opener){
+    if (!w.contains(opener)) windowOpeners.set(id, opener);
+    w.querySelector(".wbar").focus({preventScroll:true});
+  }
+}
+function closeWin(id){
+  const w = $(id);
+  const hadFocus = w.contains(document.activeElement);
+  w.classList.remove("open");
+  updatePortalWindow(id);
+  if (id === "nasaWin") syncNasa();
+  if (hadFocus){
+    const opener = windowOpeners.get(id);
+    const target = opener?.getClientRects().length ? opener : document.querySelector(`[data-win="${id}"]`);
+    target?.focus({preventScroll:true});
+  }
+  windowOpeners.delete(id);
+}
+function openModule(from, id, opener){
+  const module = $(id);
+  if (from === "gateWin" && id === from){ $("btnAborder").focus(); return; }
+  if (module.classList.contains("fwindow")) openWin(id, from, opener);
+  else {
+    frontModule?.classList.remove("portalFront");
+    frontModule = module;
+    module.classList.add("portalFront");
+    module.focus({preventScroll:true});
+    if (id === "seqPanel") window.scrollTo(0, 0);
+  }
+  portalTransit(from, id);
+}
+function moveWithPointer(handle, event, move){
+  const track = e => { if (e.pointerId === event.pointerId) move(e); };
+  handle.setPointerCapture(event.pointerId);
+  handle.addEventListener("pointermove", track);
+  handle.addEventListener("lostpointercapture", () => handle.removeEventListener("pointermove", track), {once:true});
+  event.preventDefault();
+}
+function fitWindows(){
+  document.documentElement.style.setProperty("--bar-height", `${$("bar").offsetHeight}px`);
+  document.documentElement.style.setProperty("--status-height", `${$("status").offsetHeight}px`);
+  document.querySelectorAll(".fwindow.open").forEach(fitWin);
+  requestPortalDraw();
+}
+
+document.querySelectorAll("[data-win]").forEach(b => {
+  b.setAttribute("aria-controls", b.dataset.win);
+  b.addEventListener("click", () => openWin(b.dataset.win, null, b));
+});
+for (const id of Object.keys(PORTAL_MODULES)){
+  const button = document.createElement("button");
+  button.className = "portalNode";
+  button.dataset.module = id;
+  button.setAttribute("aria-controls", id);
+  const label = document.createElement("span"), state = document.createElement("span");
+  label.className = "nodeLabel";
+  label.textContent = moduleLabel(id);
+  state.className = "nodeState";
+  state.setAttribute("aria-hidden", "true");
+  button.append(label, state);
+  portalNodes.set(id, button);
+  updatePortalWindow(id);
+  button.addEventListener("click", () => openModule("gateWin", id, button));
+  portalMap.appendChild(button);
+}
 document.querySelectorAll(".fwindow").forEach(w => {
-  w.querySelector(".wx").addEventListener("click", e => { e.stopPropagation(); closeWin(w.id); });
-  w.querySelector(".wmin").addEventListener("click", e => { e.stopPropagation(); w.classList.toggle("min"); });
-  w.addEventListener("pointerdown", () => { w.style.zIndex = ++zTop; });
   const bar = w.querySelector(".wbar");
+  bar.tabIndex = -1;
+  bar.setAttribute("aria-label", moduleLabel(w.id));
+  const close = w.querySelector(".wx"), minimize = w.querySelector(".wmin");
+  close.setAttribute("aria-label", `Fermer ${PORTAL_MODULES[w.id]}`);
+  close.addEventListener("click", () => closeWin(w.id));
+  minimize.addEventListener("click", () => {
+    w.classList.toggle("min");
+    fitWin(w);
+    updatePortalWindow(w.id);
+    if (w.id === "nasaWin") syncNasa();
+    if (w.id === "gateWin") requestPortalDraw();
+  });
+  w.addEventListener("pointerdown", () => raiseWin(w));
   bar.addEventListener("pointerdown", e => {
-    if (e.target.tagName === "BUTTON") return;
+    if (e.button !== 0 || !e.isPrimary || e.target.closest("button")) return;
     const r = w.getBoundingClientRect(), dx = e.clientX - r.left, dy = e.clientY - r.top;
-    const mv = ev => { w.style.left = Math.max(0, ev.clientX - dx) + "px"; w.style.top = Math.max(0, ev.clientY - dy) + "px"; };
-    const up = () => { window.removeEventListener("pointermove", mv); window.removeEventListener("pointerup", up); };
-    window.addEventListener("pointermove", mv);
-    window.addEventListener("pointerup", up);
-    e.preventDefault();
+    moveWithPointer(bar, e, ev => placeWin(w, ev.clientX - dx, ev.clientY - dy));
   });
-  const lw = w.querySelector(".wlinks");
-  (LINKS[w.id] || []).forEach(t => {
-    const b = document.createElement("button");
-    b.textContent = "→ " + (AGENTS[t] ? AGENTS[t].n : t);
-    b.addEventListener("click", ev => { ev.stopPropagation(); openWin(t); });
-    lw.appendChild(b);
-  });
+  if (w.id !== "gateWin"){
+    const links = document.createElement("nav");
+    links.className = "wlinks";
+    links.setAttribute("aria-label", "Fenêtres reliées");
+    const ids = new Set(["gateWin", ...LINKS[w.id]]);
+    for (const id of ids){
+      const button = document.createElement("button");
+      button.textContent = id === "gateWin" ? "🪜 Anatomie" : moduleLabel(id);
+      button.classList.toggle("portalShortcut", id === "gateWin");
+      button.setAttribute("aria-controls", id);
+      button.addEventListener("click", () => openModule(w.id, id, button));
+      links.appendChild(button);
+    }
+    w.appendChild(links);
+  }
   const rz = document.createElement("div");
   rz.className = "rsz";
   rz.addEventListener("pointerdown", e => {
-    e.stopPropagation();
+    if (e.button !== 0 || !e.isPrimary) return;
     const r = w.getBoundingClientRect(), sx = e.clientX, sy = e.clientY, sw0 = r.width, sh0 = r.height;
-    const mv = ev => {
-      w.style.width = Math.max(220, sw0 + ev.clientX - sx) + "px";
-      w.style.height = Math.max(140, sh0 + ev.clientY - sy) + "px";
-    };
-    const up = () => { window.removeEventListener("pointermove", mv); window.removeEventListener("pointerup", up); };
-    window.addEventListener("pointermove", mv);
-    window.addEventListener("pointerup", up);
-    e.preventDefault();
+    moveWithPointer(rz, e, ev => {
+      const area = windowBounds();
+      w.style.width = `${Math.min(area.right - r.left, Math.max(220, sw0 + ev.clientX - sx))}px`;
+      w.style.height = `${Math.min(area.bottom - r.top, Math.max(140, sh0 + ev.clientY - sy))}px`;
+    });
   });
   w.appendChild(rz);
 });
+window.addEventListener("resize", fitWindows);
+if (typeof ResizeObserver === "function"){
+  const viewportObserver = new ResizeObserver(fitWindows);
+  viewportObserver.observe($("bar"));
+  viewportObserver.observe($("status"));
+  document.querySelectorAll(".fwindow").forEach(w => viewportObserver.observe(w));
+  new ResizeObserver(requestPortalDraw).observe(portalMap);
+}
+fitWindows();
 
 let AC = null, master = null, masterDest = null, micSrcNode = null, micStream = null;
 function ensureAudio(){
@@ -602,28 +892,28 @@ function refreshCol(){
   $("colSw").style.background = curCol();
   $("colHex").value = hslToHex(curHue, curSat, curLit);
 }
+function selectColor(h, s, l){
+  curHue = h; curSat = s; curLit = l;
+  $("colHue").value = h; $("colSat").value = s; $("colLit").value = l;
+  refreshCol();
+}
 $("colHue").addEventListener("input", e => { curHue = Number(e.target.value); refreshCol(); });
 $("colSat").addEventListener("input", e => { curSat = Number(e.target.value); refreshCol(); });
 $("colLit").addEventListener("input", e => { curLit = Number(e.target.value); refreshCol(); });
 $("colHex").addEventListener("change", e => {
   const c = hexToHsl(e.target.value);
   if (!c) return;
-  curHue = Math.round(c.h); curSat = Math.round(c.s); curLit = Math.round(c.l);
-  $("colHue").value = curHue; $("colSat").value = curSat; $("colLit").value = curLit;
-  refreshCol();
+  selectColor(Math.round(c.h) % 360, Math.round(c.s), Math.round(c.l));
 });
 $("colApply").addEventListener("click", () => {
   tracks[selTrack].hue = curHue;
   seq.querySelectorAll(".tdot")[selTrack].style.background = `hsl(${curHue},80%,55%)`;
   for (let s = 0; s < STEPS; s++) paintCell(selTrack, s);
+  portalTransit("colorWin", "seqPanel", `Piste ${selTrack + 1} teintée en ${hueName(curHue)}`, curHue);
   status("piste " + (selTrack + 1) + " teintée " + hueName(curHue));
 });
 $("colNeg").addEventListener("click", () => {
-  curHue = (curHue + 180) % 360;
-  curSat = 100 - curSat;
-  curLit = 100 - curLit;
-  $("colHue").value = Math.round(curHue); $("colSat").value = Math.round(curSat); $("colLit").value = Math.round(curLit);
-  refreshCol();
+  selectColor((curHue + 180) % 360, 100 - curSat, 100 - curLit);
   status("🔄 négatif : " + hueName(curHue));
 });
 for (let i = 0; i < 24; i++){
@@ -632,9 +922,7 @@ for (let i = 0; i < 24; i++){
   b.style.background = `hsl(${h},${s}%,${l}%)`;
   b.title = hueName(h);
   b.addEventListener("click", () => {
-    curHue = h; curSat = s; curLit = l;
-    $("colHue").value = h; $("colSat").value = s; $("colLit").value = l;
-    refreshCol();
+    selectColor(h, s, l);
     status("🎨 " + hueName(h) + " choisi dans la palette XXL");
   });
   $("xxlRow").appendChild(b);
@@ -661,6 +949,8 @@ function padHit(i){
   const t = AC ? AC.currentTime : 0;
   const h = padCur[i];
   if (AC) vo(t, hueToFreq(h), 0.6, "triangle", 0.2, 6000, 800);
+  selectColor(h, 75, 45 + (i % 8) * 3);
+  portalTransit("padWin", "colorWin", `Teinte ${hueName(h)} sélectionnée`, h);
   padCur[i] = (padCur[i] + 69) % 360;
   [[i - 1, i % 8 !== 0], [i + 1, i % 8 !== 7], [i - 8, i >= 8], [i + 8, i < NPADS - 8]].forEach(([j, ok]) => {
     if (ok) padCur[j] = (padCur[j] + 12) % 360;
@@ -718,7 +1008,11 @@ function drawCellAt(ev){
   drawPaint();
 }
 let drawing = false;
-drawCv.addEventListener("pointerdown", e => { drawing = true; drawCellAt(e); });
+drawCv.addEventListener("pointerdown", e => {
+  drawing = true;
+  drawCellAt(e);
+  if (drawTool === "pen") portalTransit("colorWin", "drawWin", `Pinceau ${hueName(curHue)}`, curHue);
+});
 drawCv.addEventListener("pointermove", e => { if (drawing) drawCellAt(e); });
 window.addEventListener("pointerup", () => { drawing = false; });
 $("drawErase").addEventListener("click", () => { drawTool = drawTool === "pen" ? "eraser" : "pen"; $("drawErase").classList.toggle("on", drawTool === "eraser"); });
@@ -867,6 +1161,7 @@ $("vibLoop").addEventListener("click", () => {
 });
 
 let micAnalyser = null, holdActive = false, holdLatch = false, holdT0 = 0, holdRec = null, gateTO = null, holdHue = 200, holdWarm = 0;
+let holdGeneration = 0, holdMix = null;
 async function listDevices(){
   try{
     const ds = await navigator.mediaDevices.enumerateDevices();
@@ -879,22 +1174,38 @@ async function listDevices(){
     });
     const pref = localStorage.getItem("rsMicDev");
     if (pref && [...s.options].some(o => o.value === pref)) s.value = pref;
+    showGateDevice();
   } catch (e){}
 }
-$("micDev").addEventListener("change", e => { try { localStorage.setItem("rsMicDev", e.target.value); } catch (err){} });
-async function boardMic(){
-  if (micStream) return true;
+$("micDev").addEventListener("change", e => {
+  try { localStorage.setItem("rsMicDev", e.target.value); } catch (err){}
+  showGateDevice();
+  portalTransit("micWin", "gateWin", "Terminal préféré mis à jour");
+});
+let pendingMic = null;
+function boardMic(){
+  if (micStream) return Promise.resolve(true);
+  if (!pendingMic) pendingMic = connectMic().finally(() => { pendingMic = null; });
+  return pendingMic;
+}
+async function connectMic(){
+  let stream;
   try{
-    micStream = await navigator.mediaDevices.getUserMedia({audio:true});
-    ensureAudio();
-    micSrcNode = AC.createMediaStreamSource(micStream);
+    const device = $("micDev").value;
+    const audio = ensureAudio();
+    if (!audio) throw new Error("audio indisponible");
+    stream = await navigator.mediaDevices.getUserMedia({audio:device ? {deviceId:{ideal:device}} : true});
+    micSrcNode = audio.createMediaStreamSource(stream);
     micAnalyser = AC.createAnalyser();
     micAnalyser.fftSize = 2048;
     micSrcNode.connect(micAnalyser);
+    micStream = stream;
     $("micStatus").textContent = "micro à bord 🎤";
+    portalTransit("gateWin", "micWin", "Micro à bord");
     listDevices();
     return true;
   } catch (e){
+    stream?.getTracks().forEach(track => track.stop());
     $("micStatus").textContent = "le port a refusé l'abordage — réessaie via la Passerelle";
     status("🎤 abordage refusé : " + e.name);
     return false;
@@ -909,12 +1220,14 @@ function mixedDest(){
 }
 function startRec(stream){
   if (!window.MediaRecorder || !MediaRecorder.isTypeSupported("audio/webm")) return null;
-  const mr = new MediaRecorder(stream);
-  const chunks = [];
-  mr.ondataavailable = e => { if (e.data && e.data.size) chunks.push(e.data); };
-  mr.start();
-  mr.__chunks = chunks;
-  return mr;
+  try{
+    const mr = new MediaRecorder(stream);
+    const chunks = [];
+    mr.ondataavailable = e => { if (e.data && e.data.size) chunks.push(e.data); };
+    mr.start();
+    mr.__chunks = chunks;
+    return mr;
+  } catch (e){ return null; }
 }
 function perceivedCol(){
   if (micAnalyser && micStream){
@@ -924,18 +1237,19 @@ function perceivedCol(){
     for (let i = 0; i < buf.length; i++){ num += i * buf[i]; den += buf[i]; lvl += buf[i]; }
     if (den > 8){
       const centroid = num / den / buf.length;
-      return {off:false, hue:centroid * 360, sat:70, lit:45 + Math.min(25, lvl / buf.length), lvl:Math.min(1, lvl / buf.length / 80), src:"micro"};
+      return {off:false, hue:centroid * 360, sat:70, lit:45 + Math.min(25, lvl / buf.length), lvl:Math.min(1, lvl / buf.length / 80), src:"micro", module:"micWin"};
     }
-    return {off:false, hue:holdHue, sat:30, lit:35, lvl:0.05, src:"micro (silence)"};
+    return {off:false, hue:holdHue, sat:30, lit:35, lvl:0.05, src:"micro (silence)", module:"micWin"};
   }
   if (sysTimer){
     const wc = worldColHsl();
-    if (wc) return {off:false, hue:wc.h, sat:wc.s, lit:wc.l, lvl:0.3, src:"monde 🌍"};
+    if (wc) return {off:false, hue:wc.h, sat:wc.s, lit:wc.l, lvl:0.3, src:"monde 🌍", module:"sysWin"};
   }
   return {off:true, hue:0, sat:0, lit:0, lvl:0, src:"veille"};
 }
-function viewerLoop(){
-  const pc = perceivedCol();
+let viewerColor = null, lastViewerSource = null, nextViewerSignal = 0;
+function viewerLoop(now){
+  const pc = viewerColor = perceivedCol();
   const sw = $("vSwatch");
   if (pc.off){
     $("vName").textContent = "—";
@@ -946,79 +1260,95 @@ function viewerLoop(){
     $("vName").textContent = "🎨 " + hueName(pc.hue) + (holdActive ? " (prélèvement…)" : "");
     $("vSrc").textContent = pc.src + (holdActive ? " · réchauffe +" + Math.round(holdWarm) : "");
     holdHue = pc.hue;
+    const sourceChanged = pc.module !== lastViewerSource;
+    if (sourceChanged || (expanded("gateWin") && now >= nextViewerSignal)){
+      portalTransit(pc.module, "viewer", sourceChanged ? `Couleur perçue depuis ${pc.src}` : null, pc.hue);
+      if (expanded("nasaWin")) portalTransit("viewer", "nasaWin", null, pc.hue);
+      nextViewerSignal = now + 2000;
+    }
   }
+  lastViewerSource = pc.module;
   requestAnimationFrame(viewerLoop);
 }
 requestAnimationFrame(viewerLoop);
 
 function holdStart(ev){
-  if (ev && ev.button) return;
-  if (ev && ev.preventDefault) ev.preventDefault();
+  if (ev.button || ev.isPrimary === false && ev.isTrusted) return;
+  ev.preventDefault();
+  if (holdLatch){ finishHold(); return; }
   if (holdActive) return;
+  if (!ensureAudio()){ status("audio indisponible"); return; }
+  if (ev.isTrusted) ev.currentTarget.setPointerCapture(ev.pointerId);
   holdActive = true;
   holdT0 = Date.now();
   holdWarm = 0;
+  const generation = ++holdGeneration;
   $("micHold").classList.add("rec");
   $("micHold").textContent = "⏺ prélèvement en cours…";
   avantSay("Si tu maintiens encore 3 s, la Passerelle s'ouvrira — et à la relâche, un butin naîtra avec sa fragrance !");
-  boardMic().then(ok => {
-    if (!holdActive) return;
+  gateTO = setTimeout(() => {
+    if (!holdActive || holdLatch) return;
+    avantSay("La Passerelle va s'ouvrir — le port va montrer ses permissions !");
+    openWin("gateWin", "micWin");
+    portalTransit("micWin", "gateWin", "Maintien de 3 s · état du port");
+  }, 3000);
+  boardMic().then(() => {
+    if (!holdActive || generation !== holdGeneration) return;
     const dest = mixedDest();
+    const mic = micSrcNode;
+    holdMix = () => {
+      master.disconnect(dest);
+      if (mic) mic.disconnect(dest);
+      dest.stream.getTracks().forEach(track => track.stop());
+    };
     holdRec = startRec(dest.stream);
-    gateTO = setTimeout(() => {
-      if (holdActive){ avantSay("La Passerelle va s'ouvrir — le port va montrer ses permissions !"); openWin("gateWin"); refreshGate(); }
-    }, 3000);
+    if (!holdRec){ finishHold(); status("enregistrement indisponible ici"); }
   });
 }
-function closeHold(){
+function finishHold(){
   clearTimeout(gateTO); gateTO = null;
+  holdActive = false;
+  holdLatch = false;
+  $("micHold").classList.remove("rec");
+  $("micHold").textContent = "🎤 Maintenir pour prélever";
   const mr = holdRec;
+  const releaseMix = holdMix;
   holdRec = null;
+  holdMix = null;
   if (!mr){
+    releaseMix?.();
     status("aucun prélèvement en cours");
     return;
   }
   const hue = holdHue;
   holdWarm = 0;
   mr.onstop = () => {
+    releaseMix?.();
     const blob = new Blob(mr.__chunks, {type:"audio/webm"});
+    if (!blob.size){ status("prélèvement vide"); return; }
     butins.push({blob, hue, name:hueName(hue), date:new Date().toLocaleTimeString("fr-FR"), warm:0});
     renderButins();
+    portalTransit("micWin", "butinWin", `Prélèvement ${hueName(hue)} reçu`, hue);
     avantSay("La relâche a clos le prélèvement — le butin « " + hueName(hue) + " » est au coffre !");
   };
-  try { mr.stop(); } catch (e){}
+  try { mr.stop(); } catch (e){ releaseMix?.(); }
 }
-function holdEnd(){
-  if (!holdActive) return;
-  const quick = Date.now() - holdT0 < 400;
-  if (quick && !holdLatch){
+function holdEnd(ev){
+  if (!holdActive || holdLatch || ev.isPrimary === false && ev.isTrusted) return;
+  if (ev.type === "pointerup" && Date.now() - holdT0 < 400){
     holdLatch = true;
+    clearTimeout(gateTO); gateTO = null;
     $("micHold").textContent = "⏺ verrouillé — re-clic pour clore";
     status("🎤 prélèvement verrouillé");
     return;
   }
-  if (quick && holdLatch){
-    holdLatch = false;
-    holdActive = false;
-    $("micHold").classList.remove("rec");
-    $("micHold").textContent = "🎤 Maintenir pour prélever";
-    closeHold();
-    return;
-  }
-  if (holdLatch){
-    status("🎤 prélèvement verrouillé — re-clic pour clore");
-    return;
-  }
-  holdActive = false;
-  $("micHold").classList.remove("rec");
-  $("micHold").textContent = "🎤 Maintenir pour prélever";
-  closeHold();
+  finishHold();
 }
 const mh = $("micHold");
 mh.addEventListener("pointerdown", holdStart);
 mh.addEventListener("pointerup", holdEnd);
-mh.addEventListener("pointerleave", holdEnd);
 mh.addEventListener("pointercancel", holdEnd);
+mh.addEventListener("lostpointercapture", () => { if (holdActive && !holdLatch) finishHold(); });
 let atOn = false, atTimer = null;
 function autoTune(){
   if (!micAnalyser || !micAnalyser.getFloatTimeDomainData || !AC) return;
@@ -1060,14 +1390,22 @@ $("btnAtune").addEventListener("click", () => {
   }
 });
 
+function showGateDevice(){
+  let preferred;
+  try { preferred = localStorage.getItem("rsMicDev"); } catch (e){}
+  const device = [...$("micDev").options].find(option => option.value === preferred);
+  $("gateDev").textContent = `Terminal préféré : ${device?.textContent || (preferred ? "mémorisé" : "aucun (auto)")}`;
+}
 function refreshGate(){
-  $("gateHttps").textContent = (window.isSecureContext ? "✅ https : le port est sûr" : "⚠️ pas de https : le port reste fermé (le micro exige https)");
+  $("gateHttps").textContent = window.isSecureContext
+    ? (location.protocol === "https:" ? "✅ https : le port est sûr" : "✅ contexte local sécurisé")
+    : "⚠️ le micro exige un contexte sécurisé (HTTPS ou navigateur local compatible)";
   if (navigator.permissions && navigator.permissions.query){
     navigator.permissions.query({name:"microphone"}).then(p => {
       $("gatePerm").textContent = p.state === "granted" ? "✅ permission micro : accordée" : p.state === "denied" ? "⛔ permission micro : refusée (à réautoriser dans le navigateur)" : "❔ permission micro : à demander";
     }).catch(() => { $("gatePerm").textContent = "❔ permission micro : inconnue"; });
   }
-  $("gateDev").textContent = "terminal préféré : " + (localStorage.getItem("rsMicDev") || "aucun (auto)");
+  showGateDevice();
 }
 $("btnAborder").addEventListener("click", async () => {
   avantSay("On frappe à la porte du port — jamais on ne la défonce !");
@@ -1139,11 +1477,13 @@ async function armSample(i){
   if (!AC){ status("audio indisponible"); return; }
   const b = butins[i];
   if (!b) return;
+  const track = selTrack;
   try{
     if (!b.buf) b.buf = await AC.decodeAudioData(await b.blob.arrayBuffer());
-    tracks[selTrack].sample = b.buf;
-    avantSay("Le butin va devenir l'instrument de la piste " + (selTrack + 1) + " !");
-    status("⬆ butin « " + b.name + " » armé comme sample de la piste " + (selTrack + 1));
+    tracks[track].sample = b.buf;
+    portalTransit("butinWin", "seqPanel", `Sample prêt sur la piste ${track + 1}`, b.hue);
+    avantSay("Le butin va devenir l'instrument de la piste " + (track + 1) + " !");
+    status("⬆ butin « " + b.name + " » armé comme sample de la piste " + (track + 1));
   } catch (e){ status("sample impossible : " + e.message); }
 }
 let prelevDB = null;
@@ -1155,17 +1495,20 @@ function prelevOpen(){
     rq.onupgradeneeded = () => rq.result.createObjectStore("prelevs", {keyPath:"id", autoIncrement:true});
     rq.onsuccess = () => { prelevDB = rq.result; res(prelevDB); };
     rq.onerror = () => res(null);
-  });
+  }).catch(() => null);
 }
 async function prelevSave(p){
   const db = await prelevOpen();
-  if (!db){ status("coffre fort indisponible (IndexedDB absent)"); return; }
-  await new Promise(res => {
+  if (!db){ status("coffre fort indisponible (IndexedDB absent)"); return false; }
+  const saved = await new Promise(res => {
     const tx = db.transaction("prelevs", "readwrite");
+    tx.oncomplete = () => res(true);
+    tx.onabort = () => res(false);
     tx.objectStore("prelevs").add(p);
-    tx.oncomplete = res; tx.onerror = res;
-  });
-  renderFort();
+  }).catch(() => false);
+  if (saved) await renderFort();
+  else status("échec de l'entreposage au coffre fort");
+  return saved;
 }
 async function prelevAll(){
   const db = await prelevOpen();
@@ -1197,8 +1540,10 @@ async function storeButin(i){
     const buf = await AC.decodeAudioData(await b.blob.arrayBuffer());
     blob = new Blob([encodeWav(buf)], {type:"audio/wav"});
   } catch (e){}
-  await prelevSave({blob, hue:b.hue, name:b.name, date:b.date});
-  status("🗄️ butin « " + b.name + " » entreposé au coffre fort");
+  if (await prelevSave({blob, hue:b.hue, name:b.name, date:b.date})){
+    portalTransit("butinWin", "fortWin", `« ${b.name} » entreposé`, b.hue);
+    status("🗄️ butin « " + b.name + " » entreposé au coffre fort");
+  }
 }
 function encodeWav(buf){
   const nCh = buf.numberOfChannels, len = buf.length, sr = buf.sampleRate;
@@ -1221,10 +1566,13 @@ function encodeWav(buf){
   }
   return ab;
 }
+let fortRender = 0;
 async function renderFort(){
+  const revision = ++fortRender;
   const l = $("fortList");
-  l.innerHTML = "";
   const ps = await prelevAll();
+  if (revision !== fortRender) return;
+  l.replaceChildren();
   ps.forEach(p => {
     const row = document.createElement("div");
     row.className = "itemRow";
@@ -1237,7 +1585,12 @@ async function renderFort(){
     const bp = document.createElement("button"); bp.textContent = "▶️";
     bp.addEventListener("click", () => playPrelev(p));
     const br = document.createElement("button"); br.textContent = "↩️";
-    br.addEventListener("click", () => { butins.push({blob:p.blob, hue:p.hue, name:p.name, date:p.date, warm:0}); renderButins(); status("↩️ rapporté au coffre au butin"); });
+    br.addEventListener("click", () => {
+      butins.push({blob:p.blob, hue:p.hue, name:p.name, date:p.date, warm:0});
+      renderButins();
+      portalTransit("fortWin", "butinWin", `« ${p.name} » rapporté`, p.hue);
+      status("↩️ rapporté au coffre au butin");
+    });
     const bd = document.createElement("button"); bd.textContent = "🗑️";
     bd.addEventListener("click", () => prelevDel(p.id));
     row.appendChild(dot); row.appendChild(nm); row.appendChild(bp); row.appendChild(br); row.appendChild(bd);
@@ -1257,7 +1610,6 @@ async function playPrelev(p){
     status("▶ prélèvement « " + p.name + " » sonne");
   } catch (e){ status("prélèvement illisible : " + e.message); }
 }
-function refreshCounts(){ renderButins(); }
 renderButins();
 renderFort();
 
@@ -1279,8 +1631,11 @@ $("btnSession").addEventListener("click", () => {
   mr.__stop = () => {
     mr.onstop = () => {
       const blob = new Blob(mr.__chunks, {type:"audio/webm"});
-      butins.push({blob, hue:holdHue, name:"session", date:new Date().toLocaleTimeString("fr-FR"), warm:0});
+      if (!blob.size){ status("session vide"); return; }
+      const hue = holdHue;
+      butins.push({blob, hue, name:"session", date:new Date().toLocaleTimeString("fr-FR"), warm:0});
       renderButins();
+      portalTransit("seqPanel", "butinWin", "Session studio reçue", hue);
       status("⏹ session rangée au coffre au butin 🎁");
     };
     try { mr.stop(); } catch (e){}
@@ -1326,11 +1681,17 @@ $("fileJson").addEventListener("change", e => {
 });
 
 let nasaRaf = null, nasaStars = null;
+function syncNasa(){
+  if (expanded("nasaWin")){
+    if (nasaRaf === null) nasaRaf = requestAnimationFrame(nasaLoop);
+  } else if (nasaRaf !== null){
+    cancelAnimationFrame(nasaRaf);
+    nasaRaf = null;
+  }
+}
 function nasaLoop(){
-  const w = $("nasaWin");
-  if (!w.classList.contains("open")){ nasaRaf = null; return; }
   const cv = $("nasaCv"), c = cv.getContext("2d"), W = cv.width, H = cv.height;
-  const pc = perceivedCol();
+  const pc = viewerColor || perceivedCol();
   const hue = pc.off ? (Date.now() / 60) % 360 : pc.hue;
   const lvl = pc.off ? 0.2 : Math.max(0.15, pc.lvl);
   if (!nasaStars){
@@ -1362,10 +1723,6 @@ function nasaLoop(){
   $("nasaTel").textContent = "🛰 SONDE ROUTESTUDIO-1 · teinte " + Math.round(hue) + "° · " + hueName(hue) + " · niveau " + Math.round(lvl * 100) + "%" + (pc.off ? "" : " · cible : " + pc.src);
   nasaRaf = requestAnimationFrame(nasaLoop);
 }
-setInterval(() => {
-  const w = $("nasaWin");
-  if (w.classList.contains("open") && !nasaRaf) nasaRaf = requestAnimationFrame(nasaLoop);
-}, 500);
 
 function gardenReport(){
   const loops = [timer && "grille", drawTimer && "dessin", sysTimer && "monde", vibTimer && "médley"].filter(Boolean);
