@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🎮 Mes Jeux — Gvault</title>
+<style>
+  *{box-sizing:border-box}
+  html,body{margin:0;min-height:100%;color:#f5efff;font-family:"Segoe UI",system-ui,sans-serif;
+    background:radial-gradient(circle at 15% -10%,#3b2a6e 0%,transparent 45%),radial-gradient(circle at 95% 10%,#7a3b5e 0%,transparent 40%),linear-gradient(180deg,#1a1033,#0c0722);
+    background-attachment:fixed}
+  .wrap{max-width:760px;margin:0 auto;padding:40px 20px}
+  h1{font-size:34px;margin:0 0 4px;letter-spacing:1px}
+  h1 .rainbow{background:linear-gradient(90deg,#ffd76a,#ff7eb6,#6ee7ff);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .sub{color:#a99cc9;margin:0 0 34px;font-size:15px}
+  .card{display:flex;gap:18px;align-items:center;border:1px solid rgba(255,255,255,0.14);border-radius:20px;
+    padding:20px;margin-bottom:18px;background:rgba(255,255,255,0.06);text-decoration:none;color:#f5efff;
+    transition:transform .15s,box-shadow .2s,background .2s}
+  .card:hover{transform:translateY(-3px);background:rgba(255,255,255,0.1);box-shadow:0 12px 40px rgba(0,0,0,0.4)}
+  .emoji{font-size:44px;flex:none}
+  .card h2{margin:0 0 6px;font-size:20px}
+  .card p{margin:0;color:#a99cc9;font-size:14px;line-height:1.5}
+  .card .go{margin-left:auto;flex:none;border:1px solid rgba(255,255,255,0.2);border-radius:999px;padding:8px 18px;
+    font-weight:bold;font-size:14px;background:rgba(255,255,255,0.08)}
+  .card.miroir .go{background:linear-gradient(90deg,#2c3f74,#7a5a8a)}
+  .card.studio .go{background:linear-gradient(90deg,#a76a3a,#c9543f)}
+  .gazette{border:1px dashed rgba(255,215,106,0.45);border-radius:20px;padding:18px 20px;margin-bottom:18px;background:rgba(255,215,106,0.06)}
+  .gazette h3{margin:0 0 10px;font-size:16px;color:#ffd76a}
+  .gazette ul{margin:0;padding-left:20px;color:#a99cc9;font-size:14px;line-height:1.6}
+  .gazette b{color:#f5efff}
+  .tip{margin-top:30px;color:#a99cc9;font-size:13px;border-top:1px solid rgba(255,255,255,0.1);padding-top:16px;line-height:1.6}
+  .tip b{color:#ffd76a}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>🎮 MES <span class="rainbow">JEUX</span></h1>
+  <p class="sub">Toutes mes créations au même endroit — clique, joue, et garde en local 🧡</p>
+
+  <a class="card miroir" href="route-miroir.html">
+    <span class="emoji">🪞🚗</span>
+    <span>
+      <h2>Route Miroir</h2>
+      <p>Traverse les voitures au crépuscule 🌗 Cycle jour/nuit, sons, 3 vies, record sauvegardé — et la route reflète tout comme un miroir mouillé.</p>
+    </span>
+    <span class="go">▶️ JOUER</span>
+  </a>
+
+  <a class="card studio" href="route-studio.html">
+    <span class="emoji">🎵🎛️</span>
+    <span>
+      <h2>Route Studio CLEAN</h2>
+      <p>Compose dans le piano roll ou la grille de pas. Renomme et colore tes notes, mixe tes pistes et exporte en MIDI ou WAV. La Passerelle relie le studio à la simulation Route Miroir.</p>
+    </span>
+    <span class="go">▶️ JOUER</span>
+  </a>
+
+  <div class="gazette">
+    <h3>Dans la Passerelle</h3>
+    <ul>
+      <li><b>Simulation</b> · Route Miroir se joue dans une fenêtre, avec le mode Jardin et la récolte reliée à Écho.</li>
+      <li><b>Création</b> · Grille instant, instruments, prises sur les pistes, palette et dessin sonore.</li>
+      <li><b>Magic System</b> · Cinq scènes en rendu Cinéma ou Pixels. Les matières réagissent au climat et entre elles. Pause, reprise et pas à pas contrôlent le temps.</li>
+      <li><b>Au port</b> · Visionneuse et Sonde en direct, thèmes et pavillons, prélèvements au micro, Écho et Avant-sachants.</li>
+    </ul>
+    <details>
+      <summary>Versions précédentes sur GitHub</summary>
+      <p><a href="https://github.com/mourchoua-commits/GvaultStable/pull/3">PR nº 3 · Route Miroir</a> · <a href="https://github.com/mourchoua-commits/GvaultStable/pull/4">PR nº 4 · Route Studio</a></p>
+    </details>
+  </div>
+
+  <div class="tip">
+    💡 <b>Jeu hors ligne</b> · Décompresse le paquet Route Studio et ouvre <code>jeux.html</code>. Garde les deux jeux dans le même dossier pour lancer la Simulation depuis la Passerelle.
+  </div>
+</div>
+</body>
+</html>
