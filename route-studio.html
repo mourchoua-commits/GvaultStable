@@ -1279,8 +1279,7 @@
     n.vel = Math.max(0.1, n.vel * 0.9);
     const ns = n.step + n.len;
     if (ns < STEPS && !collides(t, n.row, ns, 1, n)) {
-      const dst = { step: ns, row: n.row, len: 1, vel: Math.max(0.15, n.vel * 0.75), col: mixCol(src, t.color, 0.35) };
-      t.notes.push(dst);
+      t.notes.push({ step: ns, row: n.row, len: 1, vel: Math.max(0.15, n.vel * 0.75), col: mixCol(src, t.color, 0.35) });
     } else {
       const hit2 = noteHit(t, ns, n.row);
       if (hit2 && hit2 !== n) hit2.col = mixCol(src, hit2.col || t.color, 0.5);
@@ -2048,7 +2047,7 @@
   const world = new Uint8Array(WW * WH);
   const wlife = new Uint8Array(WW * WH);
   const wmv = new Uint8Array(WW * WH);
-  let worldBrush = 3, worldTimer = null;
+  let worldBrush = 3, worldTimer = null, resonant = -1, resonantUntil = 0;
   const rnd = n => Math.floor(Math.random() * n);
   const wIdx = (x, y) => y * WW + x;
   const wGet = (x, y) => (x < 0 || x >= WW || y < 0 || y >= WH) ? 1 : world[wIdx(x, y)];
@@ -2156,6 +2155,16 @@
     ctx.imageSmoothingEnabled = false;
     ctx.clearRect(0, 0, WW * WCELL, WH * WCELL);
     ctx.drawImage(wcv, 0, 0, WW * WCELL, WH * WCELL);
+    const nowR = performance.now();
+    if (resonant >= 0 && nowR < resonantUntil) {
+      for (let ri = 0; ri < WW * WH; ri++) {
+        if (world[ri] !== resonant || Math.random() > 0.25) continue;
+        const rc = MATCOL[resonant];
+        const rx = (ri % WW) * WCELL, ry = Math.floor(ri / WW) * WCELL;
+        ctx.fillStyle = "rgba(" + rc[0] + "," + rc[1] + "," + rc[2] + ",0.9)";
+        ctx.fillRect(rx + Math.floor(Math.random() * 3) - 1, ry + Math.floor(Math.random() * 3) - 1, WCELL, WCELL);
+      }
+    }
   }
   const wp = $("worldPad");
   let worldPainting = false;
@@ -2170,6 +2179,7 @@
       if (worldBrush === 0) wPut(cx + dx, cy + dy, 0);
       else if (!wGet(cx + dx, cy + dy) || worldBrush === 1 || worldBrush === 8) wPut(cx + dx, cy + dy, worldBrush);
     }
+    if (worldBrush > 0 && AC) { resonant = worldBrush; resonantUntil = performance.now() + 1400; try { padVoice(AC.currentTime, 60 + worldBrush * 3, 0.5, MATS.find(m => m.id === worldBrush).inst || null); } catch(e){} }
     worldRender();
   }
   wp.addEventListener("pointerdown", e => { e.preventDefault(); worldPainting = true; worldPaint(e); });
@@ -2444,7 +2454,11 @@
     if (!sweep) return;
     const p = (AC.currentTime - sweep.start) / sweep.total;
     drawGrid();
-    if (p >= 0 && p <= 1) { dctx.fillStyle = "rgba(255,255,255,0.75)"; dctx.fillRect(p * dp.width, 0, 2, dp.height); }
+    if (p >= 0 && p <= 1) {
+      dctx.fillStyle = "rgba(255,255,255,0.75)"; dctx.fillRect(p * dp.width, 0, 2, dp.height);
+      const RWg = dp.width / CELL; const cc = Math.floor(p * RWg);
+      for (const [k2, col2] of drawn) { const pr = k2.split(","); if (Number(pr[0]) === cc) { dctx.fillStyle = "rgba(255,255,255,0.4)"; dctx.fillRect(Number(pr[0]) * CELL, Number(pr[1]) * CELL, CELL, CELL); } }
+    }
     else if (p > 1.05) sweep = null;
   })();
 
@@ -4159,111 +4173,6 @@ function dockCallWin() {
   selectTrack(0);
   drawViz();
   status("🎧 Clique la grille pour poser des notes — barre espace = GO/STOP");
-})();
-</script>
-<style>
-#consent{position:fixed; inset:0; z-index:300; display:flex; align-items:center; justify-content:center; background:rgba(16,16,20,.6); backdrop-filter:blur(8px); padding:1.2rem; animation:fadeIn .35s ease}
-#consent.hidden{display:none}
-@keyframes fadeIn{from{opacity:0}to{opacity:1}}
-#consent .box{max-width:560px; width:100%; background:#fff; border:1px solid #e5e7eb; border-radius:20px; padding:2rem 2.2rem; box-shadow:0 30px 80px rgba(0,0,0,.3); color:#101014; font-size:.93rem; line-height:1.6; animation:pop .35s cubic-bezier(.2,.9,.3,1.2)}
-@keyframes pop{from{transform:translateY(16px) scale(.97); opacity:0}to{transform:none; opacity:1}}
-#consent h2{margin:0 0 .3rem; font-size:1.3rem; letter-spacing:-.01em}
-#consent h2 span{color:#e11d2e}
-#consent .sub{color:#6b7280; font-size:.85rem; margin:0 0 1rem}
-#consent p{margin:0 0 .9rem; color:#374151}
-#consent label{display:flex; gap:.7rem; align-items:flex-start; margin:.6rem 0; padding:.7rem .9rem; border:1px solid #e5e7eb; border-radius:12px; cursor:pointer; transition:border-color .15s, background .15s}
-#consent label:hover{border-color:#fca5ad; background:#fff7f7}
-#consent input[type=checkbox]{margin-top:.2rem; accent-color:#e11d2e; width:17px; height:17px; flex:none}
-#consent .req{color:#e11d2e; font-weight:700}
-#consent .actions{display:flex; gap:.7rem; margin-top:1.2rem; flex-wrap:wrap}
-#consent button{font:inherit; border-radius:999px; padding:.7rem 1.6rem; cursor:pointer; border:1px solid #e5e7eb; background:#fff; color:#101014; transition:transform .15s, box-shadow .15s}
-#consent button:hover{transform:translateY(-1px)}
-#consent #consentOk{background:#e11d2e; border-color:#e11d2e; color:#fff; font-weight:600; box-shadow:0 6px 18px rgba(225,29,46,.3)}
-#consent #consentOk:disabled{opacity:.35; cursor:not-allowed; transform:none; box-shadow:none}
-#consent #consentNo{color:#6b7280}
-#consent .note{font-size:.78rem; color:#6b7280; margin-top:1rem; padding-top:.9rem; border-top:1px dashed #e5e7eb}
-</style>
-<div id="consent" class="hidden">
-  <div class="box" role="dialog" aria-modal="true" aria-labelledby="consentTitle">
-    <h2 id="consentTitle">Consentement <span>clair &amp; révocable</span></h2>
-    <p class="sub">Rien ne sort de ton appareil. Tu choisis, case par case, avant d'entrer.</p>
-    <label><input type="checkbox" id="ckLocal"> <span><strong>Stockage local</strong> (morceau, butins, préférences) dans ton navigateur — nécessaire au fonctionnement.</span></label>
-    <label><input type="checkbox" id="ckMic"> <span><strong>Micro</strong> uniquement si tu maintiens le bouton 🎤 — jamais en arrière-plan, jamais sans ton geste.</span></label>
-    <label><input type="checkbox" id="ckReq" checked disabled> <span><strong>Aucun envoi de données</strong> <span class="req">*</span> — aucune analítica, aucun cookie tiers, aucune transmission.</span></label>
-    <p class="note">Consentement libre et éclairé (rien de pré-coché, aucune pression) et révocable à tout moment via les réglages du navigateur. RGPD art. 6 et 7 : un consentement obtenu par contrainte ou tromperie (dol) est nul.</p>
-    <div class="actions">
-      <button id="consentOk" disabled>J'accepte et j'entre</button>
-      <button id="consentNo">Je refuse</button>
-    </div>
-  </div>
-</div>
-<script>
-(function(){
-  var KEY = "rsc_consent_v2";
-  var box = document.getElementById("consent");
-  var ok = document.getElementById("consentOk");
-  var ckLocal = document.getElementById("ckLocal");
-  var ckMic = document.getElementById("ckMic");
-  function saved(){ try { return JSON.parse(localStorage.getItem(KEY) || "null"); } catch(e){ return null; } }
-  function refresh(){ ok.disabled = !(ckLocal.checked && ckMic.checked); }
-  ckLocal.addEventListener("change", refresh);
-  ckMic.addEventListener("change", refresh);
-  ok.addEventListener("click", function(){
-    try { localStorage.setItem(KEY, JSON.stringify({ local: ckLocal.checked, mic: ckMic.checked, date: new Date().toISOString() })); } catch(e){}
-    box.classList.add("hidden");
-    var u = document.getElementById("une");
-    if (u) u.classList.remove("hidden");
-  });
-  document.getElementById("consentNo").addEventListener("click", function(){
-    box.classList.add("hidden");
-    var s = document.getElementById("status");
-    if (s) s.textContent = "Consentement refusé — le studio reste verrouillé. Tu peux revenir quand tu veux.";
-  });
-  if (!saved()) box.classList.remove("hidden"); else { var u = document.getElementById("une"); if (u) u.classList.remove("hidden"); }
-  refresh();
-})();
-</script>
-<style>
-:root{--rouge:#e11d2e}
-#une{position:fixed; inset:0; z-index:200; display:none; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:2rem; background:radial-gradient(circle at 50% -20%,#fff1f2 0%,transparent 55%),linear-gradient(180deg,#ffffff,#f6f6f8); overflow-y:auto}
-#une:not(.hidden){display:flex; animation:fadeIn .4s ease}
-@keyframes fadeIn{from{opacity:0}to{opacity:1}}
-#une .kicker{display:inline-block; font-size:.78rem; font-weight:700; letter-spacing:.3em; text-transform:uppercase; color:var(--rouge); margin-bottom:1.2rem; padding:.35rem 1rem; border:1px solid #fecdd3; border-radius:999px; background:#fff}
-#une h1{font-size:clamp(2.6rem,8vw,5rem); font-weight:800; letter-spacing:-.03em; line-height:1.02; color:#101014; margin:0}
-#une h1 span{color:var(--rouge); display:block}
-#une .lead{margin:1.6rem auto 2rem; max-width:600px; color:#6b7280; font-size:1.12rem; line-height:1.65}
-#une .lead strong{color:#101014}
-#une .cta{display:inline-block; background:var(--rouge); color:#fff; padding:1rem 2.6rem; border-radius:999px; font-weight:700; font-size:1.05rem; border:none; cursor:pointer; transition:transform .18s, box-shadow .18s; box-shadow:0 10px 30px rgba(225,29,46,.35)}
-#une .cta:hover{transform:translateY(-3px) scale(1.02); box-shadow:0 16px 40px rgba(225,29,46,.45)}
-#une .feats{display:flex; gap:.6rem; flex-wrap:wrap; justify-content:center; margin:2rem auto .4rem; max-width:720px}
-#une .feats span{font-size:.8rem; color:#374151; background:#fff; border:1px solid #e5e7eb; border-radius:999px; padding:.4rem .95rem}
-#une .hint{margin-top:1.4rem; font-size:.82rem; color:#9ca3af}
-#une .privacy{margin-top:.5rem; font-size:.78rem; color:#9ca3af}
-#une .privacy a{color:var(--rouge); cursor:pointer; text-decoration:none; border-bottom:1px dotted var(--rouge)}
-</style>
-<section id="une" class="hidden">
-  <span class="kicker">La une</span>
-  <h1>Route Studio <span>Clean</span></h1>
-  <p class="lead">Le studio musical complet dans un habillage <strong>propre et rapide</strong> : séquenceur, pistes, estompe façon peinture à l'huile, fenêtres qui ne se chevauchent jamais — et un <strong>consentement clair</strong> avant toute utilisation. <strong>100&nbsp;% local, zéro serveur, zéro pistage.</strong></p>
-  <button class="cta" id="uneEnter">Entrer dans le studio</button>
-  <div class="feats">
-    <span>🎹 Séquenceur 16 pas</span><span>🫳 Estompe huile</span><span>🎈 Ballon qui explose</span><span>🧱 Mur du son découpé</span><span>🎨 Palette magique</span><span>🌍 Magic System</span><span>🎤 Micro sur geste</span><span>🧰 Butin &amp; coffre</span><span>📁 Export WAV / JSON</span><span>🔒 Consentement RGPD</span>
-  </div>
-  <span class="hint">Astuce : barre espace = GO/STOP · glisse les fenêtres librement</span>
-  <span class="privacy"><a id="revokeConsent">Retirer mon consentement</a> · aucune donnée ne quitte ton appareil</span>
-</section>
-<script>
-(function(){
-  var u = document.getElementById("une");
-  document.getElementById("uneEnter").addEventListener("click", function(){
-    u.classList.add("hidden");
-    var s = document.getElementById("status");
-    if (s) s.textContent = "🎧 Clique la grille pour poser des notes — barre espace = GO/STOP";
-  });
-  document.getElementById("revokeConsent").addEventListener("click", function(){
-    try { localStorage.removeItem("rsc_consent_v2"); } catch(e){}
-    location.reload();
-  });
 })();
 </script>
 </body>
