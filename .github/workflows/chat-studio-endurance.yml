@@ -38,6 +38,12 @@ jobs:
         run: python -u chat-studio/tests/ultra_regression.py
       - name: Modèle IA gratuit par défaut (PC et Android)
         run: python -u chat-studio/tests/test_free_default.py
+      - name: Validation syntaxique du Worker IA local
+        run: |
+          node --check chat-studio/mini-moi-local-worker.js
+          python -m py_compile chat-studio/tests/auto_model_test.py
+      - name: Modèle intégré automatique, PC et Android simulé
+        run: python -u chat-studio/tests/auto_model_test.py
       - name: Archiver les résultats du banc de test
         if: always()
         uses: actions/upload-artifact@v4

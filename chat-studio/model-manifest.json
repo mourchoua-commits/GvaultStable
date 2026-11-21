@@ -1,0 +1,18 @@
+{
+  "schema": "gvault.mini-moi.model-local.v1",
+  "runtime": "@huggingface/transformers@3.8.1",
+  "architecture": "text-generation / WebAssembly / Web Worker",
+  "model_id": "onnx-community/SmolLM2-135M-Instruct-ONNX-MHA",
+  "base_model": "HuggingFaceTB/SmolLM2-135M-Instruct",
+  "license": "Apache-2.0",
+  "quantization": "q4",
+  "weight_file": "onnx/model_q4.onnx",
+  "weight_file_approx_mb": 182,
+  "weight_sha256_upstream": "dc846d8aa41f67480f4b3f94b71ab78d5b229bb6da576d7d90b7510924eda615",
+  "upstream_checksum_is_enforced_by_client": false,
+  "automatic_on_page_load": true,
+  "installed_within_github_repository": false,
+  "delivered_via": "Hugging Face Hub to browser Cache API",
+  "requires_personal_api_key": false,
+  "model_page": "https://huggingface.co/onnx-community/SmolLM2-135M-Instruct-ONNX-MHA"
+}
