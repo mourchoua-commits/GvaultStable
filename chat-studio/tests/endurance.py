@@ -31,7 +31,9 @@ with sync_playwright() as p:
         ctx,page,errs=make_page(browser,viewport)
         check(page.locator('#depth').input_value()=='deep',label+' profondeur initiale approfondie')
         check(page.locator('#thread').is_visible(),label+' interface de chat visible')
-        check(page.locator('#provider').input_value()=='local',label+' local prêt')
+        check(page.locator('#provider').input_value()=='free',label+' IA gratuite par défaut')
+        page.locator('#provider').select_option('local')
+        check(page.locator('#provider').input_value()=='local',label+' atelier documentaire toujours disponible')
         count=130 if label=='desktop' else 80
         stress=stress_local(page,count)
         check(stress['errors']==0,label+' messages en rafale '+str(count),str(stress))

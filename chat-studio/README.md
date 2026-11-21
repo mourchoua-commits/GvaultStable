@@ -49,3 +49,19 @@ python chat-studio/tests/ultra_regression.py
 ```
 
 La suite `ultra_regression.py` utilise un fournisseur de test simulé, un stockage de session simulé, un catalogue réel, et des écrans PC et Android. Aucune clé ni accès à un modèle distant réel n'est nécessaire. Elle vérifie notamment le mode compact, les brouillons, la sélection des fiches, la non-conservation des clés et l'absence d'erreurs JavaScript. À exécuter sur GitHub Actions pour valider la version déposée.
+
+---
+
+# Mini Moi · IA gratuite par défaut
+
+La page `chat-studio/index.html` propose un **modèle génératif gratuit** dès l'ouverture de la configuration, sans service payant implicite.
+
+- **Cloud gratuit recommandé** : NVIDIA Nemotron 3 Ultra (free), `nvidia/nemotron-3-ultra-550b-a55b:free`, servi par l'API OpenRouter. Une **clé API personnelle** et une connexion Internet restent indispensables. Les quotas des variantes `:free` s'appliquent et peuvent évoluer ; un modèle gratuit n'est pas un serveur sans authentification. La clé demeure dans la mémoire volatile de la page et n'est ni sauvegardée ni intégrée au code publié.
+- **Local sans compte** : Qwen3 0.6B ONNX (WebGPU, téléchargement du modèle pouvant dépasser 500 Mo), avec repli SmolLM2 135M (WASM) si WebGPU ou Qwen3 est indisponible. **Téléchargement seulement après clic** ; aucune compatibilité Android universelle n'est promise. Le cache dépend du navigateur. Le modèle n'est pas inclus dans le fichier HTML.
+- **Sans activation** : la page conserve le message dans le champ et ouvre la configuration au lieu de prétendre répondre avec un modèle non chargé. L'ancien atelier documentaire reste disponible comme mode séparé.
+
+Aucun téléchargement volumineux, aucune sortie réseau vers un fournisseur d'IA et aucun coût ne sont déclenchés à l'ouverture de la page. Les réponses de fournisseurs externes demandent une activation explicite puis l'envoi volontaire d'un message. Les fonctions de GVAULT Stable, le catalogue des capacités, les réglages personnels et l'historique restent séparés.
+
+**Tests de cette mise à jour** : les contrôles Playwright simulent un endpoint OpenRouter, et simulent le chargement du modèle Qwen3. Ils ne démontrent pas l'accès à une clé réelle ou la compatibilité GPU de chaque téléphone. La suite de tests existante reste exécutée en CI. 
+
+Documentation des sources : https://openrouter.ai/nvidia/nemotron-3-ultra-550b-a55b:free ; https://openrouter.ai/collections/free-models/ ; https://huggingface.co/onnx-community/Qwen3-0.6B-ONNX

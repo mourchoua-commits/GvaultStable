@@ -36,6 +36,8 @@ jobs:
         run: python -u chat-studio/tests/endurance.py
       - name: Ultra Slim · tests de régression PC + Android
         run: python -u chat-studio/tests/ultra_regression.py
+      - name: Modèle IA gratuit par défaut (PC et Android)
+        run: python -u chat-studio/tests/test_free_default.py
       - name: Archiver les résultats du banc de test
         if: always()
         uses: actions/upload-artifact@v4
