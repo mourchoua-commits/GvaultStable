@@ -1,0 +1,44 @@
+name: Mini Moi Chat Studio · Endurance
+
+on:
+  pull_request:
+    paths:
+      - 'chat-studio/**'
+      - '.github/workflows/chat-studio-endurance.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'chat-studio/**'
+      - '.github/workflows/chat-studio-endurance.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: chat-studio-endurance-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  endurance:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Installer le banc de test Playwright
+        run: |
+          python -m pip install --disable-pip-version-check playwright==1.57.0
+          python -m playwright install --with-deps chromium
+      - name: Test d'endurance PC + Android simulé
+        run: python -u chat-studio/tests/endurance.py
+      - name: Archiver les résultats du banc de test
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mini-moi-endurance
+          path: chat-studio/tests/reports/endurance-results.json
+          if-no-files-found: ignore
+          retention-days: 10
