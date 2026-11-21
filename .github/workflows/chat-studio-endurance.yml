@@ -34,6 +34,8 @@ jobs:
           python -m playwright install --with-deps chromium
       - name: Test d'endurance PC + Android simulé
         run: python -u chat-studio/tests/endurance.py
+      - name: Ultra Slim · tests de régression PC + Android
+        run: python -u chat-studio/tests/ultra_regression.py
       - name: Archiver les résultats du banc de test
         if: always()
         uses: actions/upload-artifact@v4

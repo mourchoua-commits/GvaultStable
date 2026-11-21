@@ -28,3 +28,24 @@ Le sélecteur de profondeur permet trois budgets de réponse : **Rapide** (500 j
 L'utilisateur peut interrompre une réponse avec **Stop** ; le texte partiel reçu est conservé. Une réponse reste attachée à la conversation où elle a commencé, même si une autre discussion est ouverte pendant le traitement. La sauvegarde locale, les 38 fiches de capacités et les clés non persistées sont préservées.
 
 Un auto-test synthétique de 200 cycles se trouve dans les paramètres ; il n'envoie aucun message à une API. Pour la vérification réelle avec Chromium, exécuter `python chat-studio/tests/endurance.py` après avoir installé Playwright et Chromium. Le workflow GitHub Actions `chat-studio-endurance.yml` peut répéter ce contrôle depuis une PR ou manuellement. Les tests utilisent des fournisseurs **simulés** et ne garantissent pas le débit ni les quotas d'une vraie API.
+
+## Ultra Smart · Ultra Slim · Ultra Fiable (2026-11-21)
+
+- **Vue compacte par défaut** : menu historique replié ; bouton `▥` pour passer de la vue compacte à l'interface classique, sur PC et mobile. Les conversations et les fonctionnalités d'origine restent disponibles.
+- **Contexte documentaire pertinent** : quand un modèle est choisi volontairement, Mini Moi joint au maximum trois fiches de capacités pertinentes à la demande courante. Aucune installation de capacité ni appel réseau supplémentaire. Le réglage est désactivable dans `⚙ → Cerveau léger`.
+- **Brouillons résistants aux rechargements** : sauvegarde légère immédiate du texte saisi, associée à la conversation ; la conversation originale reste stockée dans le même format `gvault-stable.chat-studio.v1`.
+- **Réessayer manuellement** : après une erreur, le texte du dernier message utilisateur revient dans le champ. Aucun deuxième appel au fournisseur n'est lancé sans action explicite.
+- **Contexte borné** : historique de conversation envoyé au modèle limité par un budget en caractères selon le réglage Rapide / Équilibré / Approfondi, sans supprimer les messages stockés localement.
+- **Secrets** : clés seulement en mémoire d'onglet, toujours absentes des exports et de `localStorage`. Une clé perdue au rechargement doit être ressaisie.
+- **Respect du réel** : en mode local, ce sont des règles et une bibliothèque documentaire, pas un modèle génératif. Les fonctions IA distantes restent opt-in et soumises à l'URL, aux quotas et à la disponibilité des fournisseurs.
+
+### Tests
+
+Lancer les deux suites :
+
+```bash
+python chat-studio/tests/endurance.py
+python chat-studio/tests/ultra_regression.py
+```
+
+La suite `ultra_regression.py` utilise un fournisseur de test simulé, un stockage de session simulé, un catalogue réel, et des écrans PC et Android. Aucune clé ni accès à un modèle distant réel n'est nécessaire. Elle vérifie notamment le mode compact, les brouillons, la sélection des fiches, la non-conservation des clés et l'absence d'erreurs JavaScript. À exécuter sur GitHub Actions pour valider la version déposée.
