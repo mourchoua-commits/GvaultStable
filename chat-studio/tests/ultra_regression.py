@@ -20,7 +20,7 @@ with sync_playwright() as p:
   page.locator('#slimToggle').click();check(device+' toggles expanded','ultra-slim' not in (page.locator('body').get_attribute('class') or ''))
   page.locator('#slimToggle').click();check(device+' toggles slim','ultra-slim' in (page.locator('body').get_attribute('class') or ''))
   page.locator('#prompt').fill('Brouillon durable mobile et desktop');page.set_content(markup,wait_until='domcontentloaded');check(device+' draft survives',page.locator('#prompt').input_value()=='Brouillon durable mobile et desktop')
-  page.locator('#prompt').fill('Explique Playwright');page.locator('#send').click();page.wait_for_timeout(200)
+  page.locator('#provider').select_option('local');page.locator('#prompt').fill('Explique Playwright');page.locator('#send').click();page.wait_for_timeout(200)
   check(device+' user preserved',page.locator('.message.user').last.locator('.bubble').inner_text()=='Explique Playwright')
   check(device+' local answer',page.locator('.message.assistant').count()>0)
   check(device+' draft cleared',page.locator('#prompt').input_value()=='')
