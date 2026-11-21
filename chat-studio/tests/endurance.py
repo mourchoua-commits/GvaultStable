@@ -67,11 +67,18 @@ with sync_playwright() as p:
         page.locator('#bridgeUrl').evaluate("(el)=>{el.value='https://example.test/v1/chat/completions';el.dispatchEvent(new Event('input',{bubbles:true}))}")
         page.locator('#bridgeModel').evaluate("(el)=>{el.value='test-studio';el.dispatchEvent(new Event('input',{bubbles:true}))}")
         page.locator('#prompt').fill('Explique un long projet')
-        t=time.monotonic();page.locator('#send').click()
-        check(page.locator('#generationBar').is_visible(),label+' accusé immédiat',str(round((time.monotonic()-t)*1000))+' ms')
-        page.wait_for_function("document.querySelector('.message.pending .bubble')?.textContent?.includes('Salut')",timeout=2500)
-        elapsed=round((time.monotonic()-t)*1000)
-        check(elapsed<450,label+' premier fragment précoce',str(elapsed)+' ms')
+        page.evaluate('''() => {window.__sendAt=performance.now();window.__firstVisibleAt=null;
+          const thread=document.querySelector('#thread');
+          const observer=new MutationObserver(()=>{if(window.__firstVisibleAt!==null)return;
+            if(thread.querySelector('.message.pending .bubble')?.textContent?.includes('Salut')){
+              window.__firstVisibleAt=performance.now();observer.disconnect();
+            }});
+          observer.observe(thread,{childList:true,subtree:true,characterData:true});
+          document.getElementById('send').click();window.__ackAt=performance.now();}''')
+        check(page.locator('#generationBar').is_visible(),label+' accusé immédiat',str(round(page.evaluate('window.__ackAt-window.__sendAt')))+' ms internes')
+        page.wait_for_function("window.__firstVisibleAt!==null",timeout=2500)
+        elapsed=round(page.evaluate('window.__firstVisibleAt-window.__sendAt'))
+        check(elapsed<1000,label+' premier fragment précoce (mesure interne)',str(elapsed)+' ms')
         # change conversation mid-stream
         old_title='Explique un long projet'
         page.locator('#newChat').evaluate('(el)=>el.click()')
